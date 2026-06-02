@@ -1,14 +1,10 @@
 import { useState } from "react";
 import { Outlet, NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
-  LayoutDashboard,
-  User,
-  Settings,
   Menu,
   LogOut,
   Circle,
   UserCircle,
-  FolderLock,
 } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -19,6 +15,7 @@ import {
   AccordionContent,
 } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
+import SidebarConf from "@/configurations/sidebarConf";
 
 export default function MainLayout() {
   const { pathname } = useLocation();
@@ -80,43 +77,35 @@ export default function MainLayout() {
           <nav className="p-4 space-y-2">
             {/* FLAT TABS */}
             <div className="space-y-1">
-              <NavLink
-                to="/dashboard"
-                onClick={() => setIsSidebarOpen(false)}
-                className={({ isActive }) => `
-                  flex items-center gap-3.5 px-4 py-3 rounded-(--radius) text-sm font-medium transition-all duration-250 relative group
-                  ${
-                    isActive || pathname === "/"
-                      ? "text-primary dark:text-white bg-primary/10 border-l-3 border-primary"
-                      : "text-muted-foreground hover:text-foreground hover:bg-white/5"
-                  }
-                `}
-              >
-                <LayoutDashboard className="w-5 h-5 transition-transform duration-200 group-hover:scale-110" />
-                <span>Dashboard</span>
-                {(pathname === "/dashboard" || pathname === "/") && (
-                  <div className="absolute right-3 w-1.5 h-1.5 bg-primary rounded-full animate-pulse"></div>
-                )}
-              </NavLink>
+              {SidebarConf.navMain.map((item) => {
+                const IconComponent = item.icon;
+                const isDashboard = item.url === "/dashboard";
+                const isSelected = isDashboard
+                  ? pathname === "/dashboard" || pathname === "/"
+                  : pathname === item.url;
 
-              <NavLink
-                to="/profile"
-                onClick={() => setIsSidebarOpen(false)}
-                className={({ isActive }) => `
-                  flex items-center gap-3.5 px-4 py-3 rounded-(--radius) text-sm font-medium transition-all duration-250 relative group
-                  ${
-                    isActive
-                      ? "text-primary dark:text-white bg-primary/10 border-l-3 border-primary"
-                      : "text-muted-foreground hover:text-foreground hover:bg-white/5"
-                  }
-                `}
-              >
-                <User className="w-5 h-5 transition-transform duration-200 group-hover:scale-110" />
-                <span>My Profile</span>
-                {pathname === "/profile" && (
-                  <div className="absolute right-3 w-1.5 h-1.5 bg-primary rounded-full animate-pulse"></div>
-                )}
-              </NavLink>
+                return (
+                  <NavLink
+                    key={item.url}
+                    to={item.url}
+                    onClick={() => setIsSidebarOpen(false)}
+                    className={({ isActive }) => `
+                      flex items-center gap-3.5 px-4 py-3 rounded-(--radius) text-sm font-medium transition-all duration-250 relative group
+                      ${
+                        isSelected || isActive
+                          ? "text-primary dark:text-white bg-primary/10 border-l-3 border-primary"
+                          : "text-muted-foreground hover:text-foreground hover:bg-white/5"
+                      }
+                    `}
+                  >
+                    <IconComponent className="w-5 h-5 transition-transform duration-200 group-hover:scale-110" />
+                    <span>{item.title}</span>
+                    {isSelected && (
+                      <div className="absolute right-3 w-1.5 h-1.5 bg-primary rounded-full animate-pulse"></div>
+                    )}
+                  </NavLink>
+                );
+              })}
             </div>
 
             {/* COLLAPSIBLE ACCORDION TABS */}
@@ -125,89 +114,39 @@ export default function MainLayout() {
               collapsible
               className="w-full border-none rounded-none p-0 space-y-1"
             >
-              {/* ACCORDION 1: MANAGEMENT */}
-              <AccordionItem value="management" className="border-none p-0">
-                <AccordionTrigger className="flex items-center gap-3.5 px-4 py-3 rounded-(--radius) text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-white/5 justify-between w-full hover:no-underline transition-all duration-200">
-                  <span className="flex items-center gap-3.5">
-                    <FolderLock className="w-5 h-5 text-muted-foreground" />
-                    <span>Management</span>
-                  </span>
-                </AccordionTrigger>
-                <AccordionContent className="p-0 pl-7 space-y-1 mt-1">
-                  <NavLink
-                    to="/management/users"
-                    onClick={() => setIsSidebarOpen(false)}
-                    className={({ isActive }) => `
-                      flex items-center gap-3 px-4 py-2.5 rounded-(--radius) text-xs font-medium transition-all duration-200
-                      ${
-                        isActive
-                          ? "text-primary dark:text-white bg-primary/5"
-                          : "text-muted-foreground hover:text-foreground hover:bg-white/5"
-                      }
-                    `}
-                  >
-                    <Circle className="w-2.5 h-2.5 fill-current opacity-70 mr-1.5" />
-                    <span>User Management</span>
-                  </NavLink>
-                  <NavLink
-                    to="/management/logs"
-                    onClick={() => setIsSidebarOpen(false)}
-                    className={({ isActive }) => `
-                      flex items-center gap-3 px-4 py-2.5 rounded-(--radius) text-xs font-medium transition-all duration-200
-                      ${
-                        isActive
-                          ? "text-primary dark:text-white bg-primary/5"
-                          : "text-muted-foreground hover:text-foreground hover:bg-white/5"
-                      }
-                    `}
-                  >
-                    <Circle className="w-2.5 h-2.5 fill-current opacity-70 mr-1.5" />
-                    <span>System Logs</span>
-                  </NavLink>
-                </AccordionContent>
-              </AccordionItem>
-
-              {/* ACCORDION 2: SETTINGS */}
-              <AccordionItem value="settings" className="border-none p-0">
-                <AccordionTrigger className="flex items-center gap-3.5 px-4 py-3 rounded-(--radius) text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-white/5 justify-between w-full hover:no-underline transition-all duration-200">
-                  <span className="flex items-center gap-3.5">
-                    <Settings className="w-5 h-5 text-muted-foreground" />
-                    <span>System Settings</span>
-                  </span>
-                </AccordionTrigger>
-                <AccordionContent className="p-0 pl-7 space-y-1 mt-1">
-                  <NavLink
-                    to="/settings/theme"
-                    onClick={() => setIsSidebarOpen(false)}
-                    className={({ isActive }) => `
-                      flex items-center gap-3 px-4 py-2.5 rounded-(--radius) text-xs font-medium transition-all duration-200
-                      ${
-                        isActive
-                          ? "text-primary dark:text-white bg-primary/5"
-                          : "text-muted-foreground hover:text-foreground hover:bg-white/5"
-                      }
-                    `}
-                  >
-                    <Circle className="w-2.5 h-2.5 fill-current opacity-70 mr-1.5" />
-                    <span>Theme Options</span>
-                  </NavLink>
-                  <NavLink
-                    to="/settings/account"
-                    onClick={() => setIsSidebarOpen(false)}
-                    className={({ isActive }) => `
-                      flex items-center gap-3 px-4 py-2.5 rounded-(--radius) text-xs font-medium transition-all duration-200
-                      ${
-                        isActive
-                          ? "text-primary dark:text-white bg-primary/5"
-                          : "text-muted-foreground hover:text-foreground hover:bg-white/5"
-                      }
-                    `}
-                  >
-                    <Circle className="w-2.5 h-2.5 fill-current opacity-70 mr-1.5" />
-                    <span>Account Settings</span>
-                  </NavLink>
-                </AccordionContent>
-              </AccordionItem>
+              {SidebarConf.navCategories.map((category) => {
+                const CategoryIcon = category.icon;
+                return (
+                  <AccordionItem key={category.value} value={category.value} className="border-none p-0">
+                    <AccordionTrigger className="flex items-center gap-3.5 px-4 py-3 rounded-(--radius) text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-white/5 justify-between w-full hover:no-underline transition-all duration-200">
+                      <span className="flex items-center gap-3.5">
+                        <CategoryIcon className="w-5 h-5 text-muted-foreground" />
+                        <span>{category.title}</span>
+                      </span>
+                    </AccordionTrigger>
+                    <AccordionContent className="p-0 pl-7 space-y-1 mt-1">
+                      {category.items.map((subItem) => (
+                        <NavLink
+                          key={subItem.url}
+                          to={subItem.url}
+                          onClick={() => setIsSidebarOpen(false)}
+                          className={({ isActive }) => `
+                            flex items-center gap-3 px-4 py-2.5 rounded-(--radius) text-xs font-medium transition-all duration-200
+                            ${
+                              isActive
+                                ? "text-primary dark:text-white bg-primary/5"
+                                : "text-muted-foreground hover:text-foreground hover:bg-white/5"
+                            }
+                          `}
+                        >
+                          <Circle className="w-2.5 h-2.5 fill-current opacity-70 mr-1.5" />
+                          <span>{subItem.title}</span>
+                        </NavLink>
+                      ))}
+                    </AccordionContent>
+                  </AccordionItem>
+                );
+              })}
             </Accordion>
           </nav>
         </div>
