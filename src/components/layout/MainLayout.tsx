@@ -1,12 +1,7 @@
 import { useState } from "react";
 import { Outlet, NavLink, useLocation, useNavigate } from "react-router-dom";
-import {
-  Menu,
-  LogOut,
-  Circle,
-  UserCircle,
-} from "lucide-react";
-import { useAuthStore } from "@/store/authStore";
+import { Menu, LogOut, Circle, UserCircle } from "lucide-react";
+import { useAppStore } from "@/store";
 import { ThemeToggle } from "@/components/theme-toggle";
 import {
   Accordion,
@@ -20,7 +15,7 @@ import SidebarConf from "@/configurations/sidebarConf";
 export default function MainLayout() {
   const { pathname } = useLocation();
   const navigate = useNavigate();
-  const { user, logout } = useAuthStore();
+  const { user, logout } = useAppStore();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const handleLogout = () => {
@@ -58,7 +53,7 @@ export default function MainLayout() {
         <div className="flex-1 flex flex-col min-h-0 overflow-y-auto">
           {/* Brand Header */}
           <div className="p-6 flex items-center gap-3 border-b border-border">
-            <div className="w-9 h-9 bg-linear-to-br from-primary to-primary/60 rounded-(--radius) flex items-center justify-center shadow-lg shadow-primary/25 transform transition-all hover:scale-105">
+            <div className="w-9 h-9 bg-linear-to-br from-primary to-primary/60 rounded-lg flex items-center justify-center shadow-lg shadow-primary/25 transform transition-all hover:scale-105">
               <span className="text-primary-foreground text-lg font-bold">
                 D
               </span>
@@ -68,7 +63,7 @@ export default function MainLayout() {
                 DSP-UI Console
               </h2>
               <span className="text-[10px] uppercase tracking-wider text-primary dark:text-blue-400 font-semibold">
-                {user?.role || "Console Administrator"}
+                {user?.type || "Console Administrator"}
               </span>
             </div>
           </div>
@@ -90,7 +85,7 @@ export default function MainLayout() {
                     to={item.url}
                     onClick={() => setIsSidebarOpen(false)}
                     className={({ isActive }) => `
-                      flex items-center gap-3.5 px-4 py-3 rounded-(--radius) text-sm font-medium transition-all duration-250 relative group
+                      flex items-center gap-3.5 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-250 relative group
                       ${
                         isSelected || isActive
                           ? "text-primary dark:text-white bg-primary/10 border-l-3 border-primary"
@@ -117,8 +112,12 @@ export default function MainLayout() {
               {SidebarConf.navCategories.map((category) => {
                 const CategoryIcon = category.icon;
                 return (
-                  <AccordionItem key={category.value} value={category.value} className="border-none p-0">
-                    <AccordionTrigger className="flex items-center gap-3.5 px-4 py-3 rounded-(--radius) text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-white/5 justify-between w-full hover:no-underline transition-all duration-200">
+                  <AccordionItem
+                    key={category.value}
+                    value={category.value}
+                    className="border-none p-0"
+                  >
+                    <AccordionTrigger className="flex items-center gap-3.5 px-4 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-white/5 justify-between w-full hover:no-underline transition-all duration-200">
                       <span className="flex items-center gap-3.5">
                         <CategoryIcon className="w-5 h-5 text-muted-foreground" />
                         <span>{category.title}</span>
@@ -131,7 +130,7 @@ export default function MainLayout() {
                           to={subItem.url}
                           onClick={() => setIsSidebarOpen(false)}
                           className={({ isActive }) => `
-                            flex items-center gap-3 px-4 py-2.5 rounded-(--radius) text-xs font-medium transition-all duration-200
+                            flex items-center gap-3 px-4 py-2.5 rounded-lg text-xs font-medium transition-all duration-200
                             ${
                               isActive
                                 ? "text-primary dark:text-white bg-primary/5"
@@ -153,7 +152,7 @@ export default function MainLayout() {
 
         {/* Sidebar Footer User Detail and Logout */}
         <div className="p-4 border-t border-border bg-card">
-          <div className="flex items-center justify-between gap-3 px-2 py-2 mb-2 rounded-(--radius)">
+          <div className="flex items-center justify-between gap-3 px-2 py-2 mb-2 rounded-lg">
             <div className="flex items-center gap-2.5">
               <UserCircle className="w-8 h-8 text-muted-foreground" />
               <div className="flex flex-col">
@@ -161,7 +160,7 @@ export default function MainLayout() {
                   {user?.name || "Console User"}
                 </span>
                 <span className="text-[10px] text-muted-foreground mt-0.5 font-medium uppercase tracking-wide">
-                  {user?.role || "Console Admin"}
+                  {user?.type || "Console Admin"}
                 </span>
               </div>
             </div>

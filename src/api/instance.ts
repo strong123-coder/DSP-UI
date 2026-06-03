@@ -1,8 +1,8 @@
 import axios, { AxiosError, type AxiosInstance } from "axios";
-import { useAuthStore } from "@/store/authStore";
+import { useAppStore } from "@/store";
 
 const instance: AxiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "http://localhost:5000/api/v1",
+  baseURL: import.meta.env.VITE_API_URL || "http://localhost:3000/",
   headers: {
     "Content-Type": "application/json",
   },
@@ -10,7 +10,7 @@ const instance: AxiosInstance = axios.create({
 
 instance.interceptors.request.use(
   (config) => {
-    const token = useAuthStore.getState().token;
+    const token = useAppStore.getState().token;
     if (token) {
       config.headers["Authorization"] = `Bearer ${token}`;
     }
@@ -30,11 +30,11 @@ instance.interceptors.response.use(
       error.response &&
       (error.response.status === 401 || error.response.status === 403)
     ) {
-      useAuthStore.getState().logout();
+      useAppStore.getState().logout();
       window.location.href = "/login";
       return Promise.reject(error);
     }
-    
+
     return Promise.reject(error);
   },
 );

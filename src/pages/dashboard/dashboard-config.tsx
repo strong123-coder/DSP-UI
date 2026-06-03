@@ -12,7 +12,7 @@ const DashboardContainer: React.FC = () => {
 };
 
 const DashboardConfig = {
-  path: "/",
+  path: "/dashboard",
   element: <DashboardContainer />,
 };
 

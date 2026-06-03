@@ -5,5 +5,5 @@ export interface ApiEndpoint {
 }
 
 export const apiConfig: ApiEndpoint[] = [
-  // Keeping config empty as no backend API endpoints are defined yet for DSP-UI
+  { name: "login", path: "/api/v1/user/login" },
 ];

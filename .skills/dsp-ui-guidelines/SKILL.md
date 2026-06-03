@@ -13,7 +13,7 @@ This document serves as the mandatory ruleset and design guideline for the DSP-U
 
 ### Service-Query-View Pattern
 We follow the **Vanshavali** patterns for page and route structures:
-* Each page **must** be isolated and have its own configuration file (`*config.tsx`).
+* Each page/feature **must** be isolated and have its own configuration file (`*config.tsx`).
 * **Route Configuration**: Each page folder (e.g., `src/pages/dashboard`) must contain:
   1. `[page-name].tsx` - The primary view page.
   2. `[page-name]-config.tsx` - The routing configuration block using lazy imports.
@@ -36,13 +36,47 @@ export const dashboardRoute = {
 };
 ```
 
+### Nested Routing & Children Layouts (e.g., Campaign Structure)
+For features containing multiple sub-views (e.g., `campaign`), organize sub-pages under nested children:
+* **Layout/Router Boundary**: Create a parent config (e.g. `campaign-config.tsx`) mapping the parent path (e.g. `path: "/campaign"`). It must render `<Outlet />` (from `react-router-dom`) as its element or parent boundary.
+* **Nested Children Routes**: Declare nested route configurations (e.g. `CampaignListConfig`, `CampaignAddConfig`) in the parent config's `children` array.
+* **Default Redirect/Index Route**: Always define an index redirect route using `<Navigate to="..." replace />` to point to the primary sub-page on parent path matches:
+  ```typescript
+  const CampaignConfig = {
+    path: "/campaign",
+    children: [
+      {
+        index: true,
+        element: <Navigate to="/campaign/list" replace />,
+      },
+      CampaignListConfig,
+      CampaignAddConfig,
+    ],
+  };
+  ```
+
 ---
 
 ## 2. State & Data Layer
 
-* **Global State Management**: Use **Zustand** with storage persistence for light/dark theme states, auth state (`authStore.ts`), and localized application-wide parameters.
-* **Server State**: Use **React Query** (`@tanstack/react-query`) for handling remote API resources.
-* **Mock Integrations**: As there is no backend API, simulate realistic delays for CRUD/auth states using `setTimeout` to emulate network latency and provide a premium user experience with active loaders.
+* **Global State Management (Zustand)**: Implement Zustand store files using the decoupled slice-based combined store setup under `src/store/`:
+  - Declare state slices inside `src/store/slices/` (e.g., `authSlice.ts`), containing state properties and creators.
+  - Combine slices in `src/store/index.ts` to export the global `useAppStore` hook.
+  - **Hydration & Storage Safety**: Track store persistence status using `hasHydrated` status flags, configuring rehydration completion using `onRehydrateStorage` callbacks to avoid auth redirect flicker. Limit LocalStorage serialization strictly to data fields (e.g., `token`, `user`) using `partialize`.
+* **Server State (React Query)**: Isolate remote API mutations and query hooks under `src/query/` (e.g., `useUserManagement.ts`):
+  - Do not handle state mutations or toast alerts directly inside UI components. Let query hook `onSuccess` and `onError` callbacks update Zustand stores and issue Sonner alerts, keeping form submission handlers minimal.
+  - Always destructure hook return properties when using them inside components:
+    ```typescript
+    const { mutate: loginMutation, isPending: loginPending } = useLogin();
+    ```
+* **API Services**: All network calls must be consolidated under `src/services/` (e.g. `userManagement-service.ts`) using the `apiClient()` helper. Do not write inline API calls or mock timeouts.
+* **Zod Form Schema & Payload Type-safety**: Centralize validation schemas under `src/utils/schemas/` (e.g., `auth.ts`):
+  - Always define strict Zod validation schemas for form inputs.
+  - Export types inferred from schemas using `InferSchemaType` utility:
+    ```typescript
+    export type LoginFormValues = InferSchemaType<typeof loginSchema>;
+    ```
+  - Use these inferred type signatures across Hook Forms, React Query mutation functions, and API payload arguments to enforce compilation-level type-safety.
 
 ---
 
