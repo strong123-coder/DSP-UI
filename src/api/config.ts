@@ -6,4 +6,17 @@ export interface ApiEndpoint {
 
 export const apiConfig: ApiEndpoint[] = [
   { name: "login", path: "/api/v1/user/login" },
+
+  { name: "addCampaign", path: "/api/v1/campaign/add" },
+  { name: "campaignList", path: "/api/v1/campaign/list" },
+
+  // media
+
+  { name: "addMedia", path: "/api/v1/media/add" },
+  { name: "deleteMedias", path: "/api/v1/media/delete-many" },
+  {
+    name: "deleteMedia",
+    path: "/api/v1/media/delete/{id}",
+    hasPathParams: true,
+  },
 ];

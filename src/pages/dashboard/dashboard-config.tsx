@@ -13,6 +13,7 @@ const DashboardContainer: React.FC = () => {
 
 const DashboardConfig = {
   path: "/dashboard",
+  title: "Dashboard Overview",
   element: <DashboardContainer />,
 };
 

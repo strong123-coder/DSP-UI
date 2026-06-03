@@ -12,6 +12,7 @@ const CampaignAddContainer: React.FC = () => {
 
 const CampaignAddConfig = {
   path: "/campaign/add",
+  title: "Add Campaign",
   element: <CampaignAddContainer />,
 };
 

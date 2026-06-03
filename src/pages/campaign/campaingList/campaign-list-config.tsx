@@ -13,6 +13,7 @@ const CampaignListContainer: React.FC = () => {
 
 const CampaignListConfig = {
   path: "/campaign/list",
+  title: "Campaign List",
   element: <CampaignListContainer />,
 };
 

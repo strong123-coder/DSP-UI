@@ -1,5 +1,11 @@
 import { useState } from "react";
-import { Outlet, NavLink, useLocation, useNavigate } from "react-router-dom";
+import {
+  Outlet,
+  NavLink,
+  useLocation,
+  useNavigate,
+  matchRoutes,
+} from "react-router-dom";
 import { Menu, LogOut, Circle, UserCircle } from "lucide-react";
 import { useAppStore } from "@/store";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -11,9 +17,11 @@ import {
 } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import SidebarConf from "@/configurations/sidebarConf";
+import { routes } from "@/routes/router";
 
 export default function MainLayout() {
   const { pathname } = useLocation();
+  const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAppStore();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -23,15 +31,18 @@ export default function MainLayout() {
     navigate("/login");
   };
 
-  // Find page title for top header
+  // Find page title dynamically based on route configuration
   const getPageTitle = () => {
-    if (pathname === "/" || pathname === "/dashboard")
-      return "Dashboard Overview";
-    if (pathname === "/profile") return "User Profile";
-    if (pathname.includes("/management/users")) return "User Management";
-    if (pathname.includes("/management/logs")) return "System Security Logs";
-    if (pathname.includes("/settings/theme")) return "Theme Preferences";
-    if (pathname.includes("/settings/account")) return "Account Configurations";
+    const matches = matchRoutes(routes, location);
+    if (matches) {
+      // Find the last matched route that has a title
+      for (let i = matches.length - 1; i >= 0; i--) {
+        const route = matches[i].route as any;
+        if (route.title) {
+          return route.title;
+        }
+      }
+    }
     return "DSP-UI Console";
   };
 
@@ -75,9 +86,12 @@ export default function MainLayout() {
               {SidebarConf.navMain.map((item) => {
                 const IconComponent = item.icon;
                 const isDashboard = item.url === "/dashboard";
+                const isCampaign = item.url === "/campaign/list";
                 const isSelected = isDashboard
                   ? pathname === "/dashboard" || pathname === "/"
-                  : pathname === item.url;
+                  : isCampaign
+                    ? pathname.startsWith("/campaign")
+                    : pathname === item.url;
 
                 return (
                   <NavLink

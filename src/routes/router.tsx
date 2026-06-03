@@ -10,7 +10,7 @@ import AccountConfig from "@/pages/settings/account/account-config";
 import LoginConfig from "@/pages/auth/login-config";
 import CampaignConfig from "@/pages/campaign/campaign-config";
 
-const router = createBrowserRouter([
+export const routes = [
   {
     path: "/",
     element: (
@@ -33,6 +33,9 @@ const router = createBrowserRouter([
     element: <Navigate to="/" replace />,
   },
   LoginConfig,
-]);
+];
+
+const router = createBrowserRouter(routes);
 
 export default router;
+
