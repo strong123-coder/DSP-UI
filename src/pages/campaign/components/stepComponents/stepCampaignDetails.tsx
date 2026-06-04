@@ -96,8 +96,6 @@ const StepCampaignDetails = () => {
       ? extractApiErrors((appDetailsError as any).response?.data)[0]
       : undefined;
 
-  console.log(watchAppIconLink);
-
   return (
     <Card>
       <CardHeader>
