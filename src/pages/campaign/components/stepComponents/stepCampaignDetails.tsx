@@ -84,6 +84,13 @@ const StepCampaignDetails = () => {
     }
   }, [appDetailsData, appDetailsIsError, appDetailsError, setValue]);
 
+  useEffect(() => {
+    if (!isEdit) {
+      setValue("appIconLink", "");
+      setValue("appName", "");
+    }
+  }, [watchBundleId, watchAppOs, isEdit, setValue]);
+
   const appDetailsErrorMessage =
     appDetailsIsError && appDetailsError
       ? extractApiErrors((appDetailsError as any).response?.data)[0]
