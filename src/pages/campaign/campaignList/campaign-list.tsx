@@ -7,7 +7,7 @@ const CampaignList: React.FC = () => {
   const navigate = useNavigate();
 
   return (
-    <div>
+    <div className="h-full w-full">
       {/* Campaign List Table (loaded lazily or normally) */}
       <CampaignListTable />
 

@@ -10,6 +10,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { Campaign } from "../../types";
+import { useNavigate } from "react-router-dom";
 
 interface CampaignTableBodyProps {
   campaigns: Campaign[];
@@ -24,6 +25,8 @@ const CampaignTableBody: React.FC<CampaignTableBodyProps> = ({
   onViewCampaign,
   getDisplayValue,
 }) => {
+  const navigate = useNavigate();
+
   if (campaigns.length === 0) {
     return (
       <TableBody>
@@ -41,7 +44,7 @@ const CampaignTableBody: React.FC<CampaignTableBodyProps> = ({
 
   return (
     <TableBody>
-      {campaigns.map((campaign) => (
+      {campaigns.map((campaign: Campaign) => (
         <TableRow
           key={campaign._id}
           className="hover:bg-muted/20 cursor-pointer transition-colors"
@@ -70,6 +73,13 @@ const CampaignTableBody: React.FC<CampaignTableBodyProps> = ({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  onClick={() => {
+                    navigate(`/campaign/edit/${campaign._id}`);
+                  }}
+                >
+                  Edit
+                </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => onViewCampaign(campaign)}>
                   View Details
                 </DropdownMenuItem>

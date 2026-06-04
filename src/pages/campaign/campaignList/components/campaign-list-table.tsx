@@ -4,7 +4,6 @@ import { Search } from "lucide-react";
 import { useGetCampaign, useGetCampaignPrefetch } from "@/query/useCampaign";
 import { Table } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
-import { Loader2 } from "lucide-react";
 import ThreeButtonPagination from "@/components/pagination/three-button-pagination";
 import CampaignFilter from "./campaign-filter";
 import CampaignTableHeader from "./campaign-table-header";
@@ -14,6 +13,7 @@ import CampaignTableBody, {
 } from "./campaign-table-body";
 import CampaignDetailsModal from "./campaign-details-modal";
 import type { Campaign, SortDirection } from "../../types";
+import LoadingFallback from "@/components/ui/loading-fallback";
 
 const sortableKeys = new Set<string>([
   "title",
@@ -209,11 +209,7 @@ const CampaignListTable: React.FC = () => {
 
   // --- Loading / Error states ---
   if (!initialized || isLoading) {
-    return (
-      <div className="flex justify-center items-center h-96">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    );
+    return <LoadingFallback />;
   }
 
   if (isError) {

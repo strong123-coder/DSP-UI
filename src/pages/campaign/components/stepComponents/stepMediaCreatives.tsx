@@ -8,13 +8,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import {
-  Upload,
-  Trash2,
-  Loader2,
-  FileImage,
-  ExternalLink,
-} from "lucide-react";
+import { Upload, Trash2, Loader2, FileImage, ExternalLink } from "lucide-react";
 import { useAddMedia, useDeleteMedia } from "@/query/useMedia";
 import type { AddCampaignFormValues } from "@/utils/schemas/campaign";
 import { Badge } from "@/components/ui/badge";
@@ -32,14 +26,16 @@ const StepMediaCreatives: React.FC = () => {
   });
 
   // Watch the media form values reactively to get correct data properties
-  const mediaValues = useWatch({
-    control,
-    name: "media",
-  }) || [];
+  const mediaValues =
+    useWatch({
+      control,
+      name: "media",
+    }) || [];
 
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  const { mutate: addMediaMutation, isPending: addMediaPending } = useAddMedia();
+  const { mutate: addMediaMutation, isPending: addMediaPending } =
+    useAddMedia();
   const { mutate: deleteMediaMutation } = useDeleteMedia();
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -111,10 +107,12 @@ const StepMediaCreatives: React.FC = () => {
       <Card className="border border-border/50 rounded-xl bg-card shadow-none">
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2">
-            <FileImage className="w-5 h-5 text-primary" /> Campaign Media Creatives
+            <FileImage className="w-5 h-5 text-primary" /> Campaign Media
+            Creatives
           </CardTitle>
           <CardDescription>
-            Upload and manage the creative image or video assets for your campaign.
+            Upload and manage the creative image or video assets for your
+            campaign.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -138,7 +136,9 @@ const StepMediaCreatives: React.FC = () => {
                 <Upload className="w-10 h-10 text-muted-foreground group-hover:text-primary transition-colors" />
               )}
               <span className="text-sm font-semibold text-foreground">
-                {addMediaPending ? "Uploading Asset..." : "Click to select or drag creative files here"}
+                {addMediaPending
+                  ? "Uploading Asset..."
+                  : "Click to select or drag creative files here"}
               </span>
               <span className="text-xs text-muted-foreground">
                 Supports PNG, JPG, JPEG, GIF, SVG, MP4 (Max 10MB)
@@ -154,7 +154,8 @@ const StepMediaCreatives: React.FC = () => {
 
             {fields.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground border border-dashed border-border rounded-xl">
-                No creatives selected yet. Please upload at least one image or video asset.
+                No creatives selected yet. Please upload at least one image or
+                video asset.
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
@@ -198,12 +199,15 @@ const StepMediaCreatives: React.FC = () => {
                       {/* Info & Action Row */}
                       <div className="p-3 flex items-start gap-2 justify-between">
                         <div className="flex-1 min-w-0">
-                          <p className="text-xs font-semibold text-foreground truncate" title={filename}>
+                          <p
+                            className="text-xs font-semibold text-foreground truncate"
+                            title={filename}
+                          >
                             {filename}
                           </p>
-                          <p className="text-[10px] text-muted-foreground truncate" title={`ID: ${actualId}`}>
+                          {/* <p className="text-[10px] text-muted-foreground truncate" title={`ID: ${actualId}`}>
                             ID: {actualId}
-                          </p>
+                          </p> */}
                         </div>
                         <div className="flex items-center gap-1 shrink-0">
                           {link && (
