@@ -1,4 +1,4 @@
-import { useState, lazy, Suspense, useEffect } from "react";
+import { useState, lazy, Suspense, useEffect, useRef } from "react";
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate, useParams } from "react-router-dom";
@@ -13,6 +13,7 @@ import {
 import LoadingFallback from "@/components/ui/loading-fallback";
 import UpdatePopupModal from "@/components/popupModals/update-popup-modal";
 import { useDeleteMedias } from "@/query/useMedia";
+import { deleteMediaOnUnload } from "@/utils/mediaCleanup";
 
 const StepObjectiveInfo = lazy(
   () => import("../components/stepComponents/stepObjectiveInfo"),
@@ -82,6 +83,30 @@ const CamapaingEdit = () => {
   const [newlyUploadedMediaIds, setNewlyUploadedMediaIds] = useState<string[]>(
     [],
   );
+  const newlyUploadedMediaIdsRef = useRef<string[]>([]);
+  const isSubmitted = useRef(false);
+
+  useEffect(() => {
+    newlyUploadedMediaIdsRef.current = newlyUploadedMediaIds;
+  }, [newlyUploadedMediaIds]);
+
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (!isSubmitted.current && newlyUploadedMediaIdsRef.current.length > 0) {
+        deleteMediaOnUnload(newlyUploadedMediaIdsRef.current);
+      }
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      
+      if (!isSubmitted.current && newlyUploadedMediaIdsRef.current.length > 0) {
+        deleteMediasMutation(newlyUploadedMediaIdsRef.current);
+      }
+    };
+  }, [deleteMediasMutation]);
 
   const methods = useForm<EditCampaignFormValues>({
     resolver: zodResolver(editCampaignSchema),
@@ -249,9 +274,6 @@ const CamapaingEdit = () => {
               type="button"
               variant="outline"
               onClick={() => {
-                if (newlyUploadedMediaIds.length > 0) {
-                  deleteMediasMutation(newlyUploadedMediaIds);
-                }
                 navigate("/campaign/list");
               }}
               disabled={editCampaignPending}
@@ -282,6 +304,7 @@ const CamapaingEdit = () => {
         }}
         updateButtonAction={() => {
           if (formData && id) {
+            isSubmitted.current = true;
             editCampaignMutation(
               { id, payload: formData },
               {
@@ -292,6 +315,9 @@ const CamapaingEdit = () => {
                   setShowUpdateModal(false);
                   setFormData(null);
                   navigate("/campaign/list");
+                },
+                onError: () => {
+                  isSubmitted.current = false;
                 },
               },
             );

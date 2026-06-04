@@ -14,18 +14,164 @@ import type { AddCampaignFormValues } from "@/utils/schemas/campaign";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 
-interface StepMediaCreativesProps {
-  setDeletedMediaIds: React.Dispatch<React.SetStateAction<string[]>>;
+// Helper to extract clean filename from URL
+const getFilenameFromUrl = (url: string) => {
+  if (!url) return "Creative Asset";
+  try {
+    const decoded = decodeURIComponent(url);
+    const path = decoded.split("?")[0];
+    const parts = path.split("/");
+    const lastPart = parts[parts.length - 1];
+    const nameParts = lastPart.split("_");
+    if (nameParts.length > 1) {
+      return nameParts.slice(1).join("_");
+    }
+    return lastPart;
+  } catch {
+    return "Creative Asset";
+  }
+};
+
+interface MediaCreativeCardProps {
+  idx: number;
+  actualId: string;
+  link: string;
+  type: string;
+  filename: string;
   newlyUploadedMediaIds: string[];
   setNewlyUploadedMediaIds: React.Dispatch<React.SetStateAction<string[]>>;
+  setDeletedMediaIds?: React.Dispatch<React.SetStateAction<string[]>>;
+  removeMedia: (index?: number | number[]) => void;
+  getValues: any;
+}
+
+const MediaCreativeCard: React.FC<MediaCreativeCardProps> = ({
+  idx,
+  actualId,
+  link,
+  type,
+  filename,
+  newlyUploadedMediaIds,
+  setNewlyUploadedMediaIds,
+  setDeletedMediaIds,
+  removeMedia,
+  getValues,
+}) => {
+  const { mutate: deleteMediaMutation, isPending: isDeleting } = useDeleteMedia();
+
+  const handleDelete = () => {
+    if (!actualId) {
+      removeMedia(idx);
+      return;
+    }
+
+    if (newlyUploadedMediaIds.includes(actualId)) {
+      // If it was newly uploaded in this session, delete it immediately from server
+      deleteMediaMutation(actualId, {
+        onSuccess: (response: any) => {
+          const deletedId = response?.data?.data?.id || response?.data?.id || response?.id || actualId;
+          const currentMedia = getValues("media") || [];
+          const currentIdx = currentMedia.findIndex((m: any) => m?.id === deletedId);
+          if (currentIdx !== -1) {
+            removeMedia(currentIdx);
+          }
+          setNewlyUploadedMediaIds((prev) => prev.filter((id) => id !== deletedId));
+        },
+      });
+    } else {
+      // It's an original media from the database.
+      // Defer API deletion: queue it in deletedMediaIds and remove from form UI state.
+      if (setDeletedMediaIds) {
+        setDeletedMediaIds((prev) => [...prev, actualId]);
+      }
+      removeMedia(idx);
+    }
+  };
+
+  return (
+    <div className="flex flex-col border border-border bg-muted/10 rounded-xl group relative overflow-hidden transition-all hover:border-primary/30">
+      {/* Media Preview container */}
+      <div className="aspect-video w-full bg-background border-b border-border relative flex items-center justify-center overflow-hidden">
+        {type === "video" ? (
+          <video
+            src={link || undefined}
+            className="w-full h-full object-cover"
+            controls={false}
+            muted
+          />
+        ) : (
+          <img
+            src={link || undefined}
+            alt={filename}
+            className="w-full h-full object-cover"
+            onError={(e) => {
+              (e.target as HTMLElement).style.display = "none";
+            }}
+          />
+        )}
+        <Badge className="absolute top-2 right-2 capitalize font-medium text-[10px]">
+          {type}
+        </Badge>
+      </div>
+
+      {/* Info & Action Row */}
+      <div className="p-3 flex items-start gap-2 justify-between">
+        <div className="flex-1 min-w-0">
+          <p
+            className="text-xs font-semibold text-foreground truncate"
+            title={filename}
+          >
+            {filename}
+          </p>
+        </div>
+        <div className="flex items-center gap-1 shrink-0">
+          {link && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 text-muted-foreground hover:text-foreground"
+              onClick={() => window.open(link, "_blank")}
+            >
+              <ExternalLink className="w-3.5 h-3.5" />
+            </Button>
+          )}
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 text-destructive hover:bg-destructive/10"
+            onClick={handleDelete}
+            disabled={isDeleting}
+          >
+            {isDeleting ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <Trash2 className="w-3.5 h-3.5" />
+            )}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+interface StepMediaCreativesProps {
+  setDeletedMediaIds?: React.Dispatch<React.SetStateAction<string[]>>;
+  newlyUploadedMediaIds?: string[];
+  setNewlyUploadedMediaIds?: React.Dispatch<React.SetStateAction<string[]>>;
 }
 
 const StepMediaCreatives: React.FC<StepMediaCreativesProps> = ({
   setDeletedMediaIds,
-  newlyUploadedMediaIds,
-  setNewlyUploadedMediaIds,
+  newlyUploadedMediaIds: newlyUploadedMediaIdsProp,
+  setNewlyUploadedMediaIds: setNewlyUploadedMediaIdsProp,
 }) => {
-  const { control } = useFormContext<AddCampaignFormValues>();
+  const { control, getValues } = useFormContext<AddCampaignFormValues>();
+
+  const [localNewlyUploadedMediaIds, setLocalNewlyUploadedMediaIds] = useState<string[]>([]);
+  const newlyUploadedMediaIds = newlyUploadedMediaIdsProp ?? localNewlyUploadedMediaIds;
+  const setNewlyUploadedMediaIds = setNewlyUploadedMediaIdsProp ?? setLocalNewlyUploadedMediaIds;
 
   const {
     fields,
@@ -43,11 +189,8 @@ const StepMediaCreatives: React.FC<StepMediaCreativesProps> = ({
       name: "media",
     }) || [];
 
-  const [deletingId, setDeletingId] = useState<string | null>(null);
-
   const { mutate: addMediaMutation, isPending: addMediaPending } =
     useAddMedia();
-  const { mutate: deleteMediaMutation } = useDeleteMedia();
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -94,53 +237,6 @@ const StepMediaCreatives: React.FC<StepMediaCreativesProps> = ({
         }
       },
     });
-  };
-
-  const handleDeleteMedia = (idx: number) => {
-    const value = mediaValues[idx];
-    const actualId = value?.id;
-    if (!actualId) {
-      removeMedia(idx);
-      return;
-    }
-
-    if (newlyUploadedMediaIds.includes(actualId)) {
-      // If it was newly uploaded in this session, delete it immediately from server
-      setDeletingId(actualId);
-      deleteMediaMutation(actualId, {
-        onSuccess: () => {
-          removeMedia(idx);
-          setNewlyUploadedMediaIds((prev) => prev.filter((id) => id !== actualId));
-          setDeletingId(null);
-        },
-        onError: () => {
-          setDeletingId(null);
-        },
-      });
-    } else {
-      // It's an original media from the database.
-      // Defer API deletion: queue it in deletedMediaIds and remove from form UI state.
-      setDeletedMediaIds((prev) => [...prev, actualId]);
-      removeMedia(idx);
-    }
-  };
-
-  // Helper to extract clean filename from URL
-  const getFilenameFromUrl = (url: string) => {
-    if (!url) return "Creative Asset";
-    try {
-      const decoded = decodeURIComponent(url);
-      const path = decoded.split("?")[0];
-      const parts = path.split("/");
-      const lastPart = parts[parts.length - 1];
-      const nameParts = lastPart.split("_");
-      if (nameParts.length > 1) {
-        return nameParts.slice(1).join("_");
-      }
-      return lastPart;
-    } catch {
-      return "Creative Asset";
-    }
   };
 
   return (
@@ -206,79 +302,21 @@ const StepMediaCreatives: React.FC<StepMediaCreativesProps> = ({
                   const link = val.link || "";
                   const type = val.type || "image";
                   const filename = getFilenameFromUrl(link);
-                  const isDeleting = deletingId === actualId;
 
                   return (
-                    <div
+                    <MediaCreativeCard
                       key={field.id}
-                      className="flex flex-col border border-border bg-muted/10 rounded-xl group relative overflow-hidden transition-all hover:border-primary/30"
-                    >
-                      {/* Media Preview container */}
-                      <div className="aspect-video w-full bg-background border-b border-border relative flex items-center justify-center overflow-hidden">
-                        {type === "video" ? (
-                          <video
-                            src={link || undefined}
-                            className="w-full h-full object-cover"
-                            controls={false}
-                            muted
-                          />
-                        ) : (
-                          <img
-                            src={link || undefined}
-                            alt={filename}
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                              (e.target as HTMLElement).style.display = "none";
-                            }}
-                          />
-                        )}
-                        <Badge className="absolute top-2 right-2 capitalize font-medium text-[10px]">
-                          {type}
-                        </Badge>
-                      </div>
-
-                      {/* Info & Action Row */}
-                      <div className="p-3 flex items-start gap-2 justify-between">
-                        <div className="flex-1 min-w-0">
-                          <p
-                            className="text-xs font-semibold text-foreground truncate"
-                            title={filename}
-                          >
-                            {filename}
-                          </p>
-                          {/* <p className="text-[10px] text-muted-foreground truncate" title={`ID: ${actualId}`}>
-                            ID: {actualId}
-                          </p> */}
-                        </div>
-                        <div className="flex items-center gap-1 shrink-0">
-                          {link && (
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              className="h-7 w-7 text-muted-foreground hover:text-foreground"
-                              onClick={() => window.open(link, "_blank")}
-                            >
-                              <ExternalLink className="w-3.5 h-3.5" />
-                            </Button>
-                          )}
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7 text-destructive hover:bg-destructive/10"
-                            onClick={() => handleDeleteMedia(idx)}
-                            disabled={isDeleting}
-                          >
-                            {isDeleting ? (
-                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                            ) : (
-                              <Trash2 className="w-3.5 h-3.5" />
-                            )}
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
+                      idx={idx}
+                      actualId={actualId}
+                      link={link}
+                      type={type}
+                      filename={filename}
+                      newlyUploadedMediaIds={newlyUploadedMediaIds}
+                      setNewlyUploadedMediaIds={setNewlyUploadedMediaIds}
+                      setDeletedMediaIds={setDeletedMediaIds}
+                      removeMedia={removeMedia}
+                      getValues={getValues}
+                    />
                   );
                 })}
               </div>

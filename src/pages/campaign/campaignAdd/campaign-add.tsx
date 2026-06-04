@@ -1,12 +1,14 @@
-import { useState, lazy, Suspense } from "react";
+import { useState, lazy, Suspense, useEffect, useRef } from "react";
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, ArrowRight, Check } from "lucide-react";
 import { toast } from "sonner";
+import { deleteMediaOnUnload } from "@/utils/mediaCleanup";
 
 import { Button } from "@/components/ui/button";
 import { useAddCampaign } from "@/query/useCampaign";
+import { useDeleteMedias } from "@/query/useMedia";
 import {
   addCampaignSchema,
   type AddCampaignFormValues,
@@ -71,6 +73,34 @@ const CamapaingAdd = () => {
   const [maxStepReached, setMaxStepReached] = useState(1);
   const { mutate: addCampaignMutation, isPending: addCampaignPending } =
     useAddCampaign();
+  const { mutate: deleteMediasMutation } = useDeleteMedias();
+  const [newlyUploadedMediaIds, setNewlyUploadedMediaIds] = useState<string[]>(
+    [],
+  );
+  const newlyUploadedMediaIdsRef = useRef<string[]>([]);
+  const isSubmitted = useRef(false);
+
+  useEffect(() => {
+    newlyUploadedMediaIdsRef.current = newlyUploadedMediaIds;
+  }, [newlyUploadedMediaIds]);
+
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (!isSubmitted.current && newlyUploadedMediaIdsRef.current.length > 0) {
+        deleteMediaOnUnload(newlyUploadedMediaIdsRef.current);
+      }
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      
+      if (!isSubmitted.current && newlyUploadedMediaIdsRef.current.length > 0) {
+        deleteMediasMutation(newlyUploadedMediaIdsRef.current);
+      }
+    };
+  }, [deleteMediasMutation]);
 
   const methods = useForm<AddCampaignFormValues>({
     resolver: zodResolver(addCampaignSchema),
@@ -183,6 +213,7 @@ const CamapaingAdd = () => {
   };
 
   const onSubmit = (data: AddCampaignFormValues) => {
+    isSubmitted.current = true;
     const cleanedData = { ...data };
 
     // Remove dates from the payload if scheduling is disabled, or if they are empty
@@ -201,6 +232,9 @@ const CamapaingAdd = () => {
     addCampaignMutation(cleanedData, {
       onSuccess: () => {
         navigate("/campaign/list");
+      },
+      onError: () => {
+        isSubmitted.current = false;
       },
     });
   };
@@ -275,7 +309,12 @@ const CamapaingAdd = () => {
                       {s.id === 2 && <StepMmpIntegration />}
                       {s.id === 3 && <StepTargeting />}
                       {s.id === 4 && <StepInventoryType />}
-                      {s.id === 5 && <StepMediaCreatives />}
+                      {s.id === 5 && (
+                        <StepMediaCreatives
+                          newlyUploadedMediaIds={newlyUploadedMediaIds}
+                          setNewlyUploadedMediaIds={setNewlyUploadedMediaIds}
+                        />
+                      )}
                     </Suspense>
                   </AccordionContent>
                 </AccordionItem>
@@ -284,7 +323,7 @@ const CamapaingAdd = () => {
           </Accordion>
 
           {/* Form Action Controls */}
-          <div className="flex justify-between items-center pt-4 border-t border-border">
+          <div className="flex justify-between items-center pt-4 mb-10 border-t border-border">
             <Button
               type="button"
               variant="ghost"
