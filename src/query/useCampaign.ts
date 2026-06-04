@@ -145,3 +145,25 @@ export const useGetCampaignPrefetch = (
     queryClient,
   ]);
 };
+
+export const useDeleteCampaign = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => campaignService.deleteCampaign(id),
+    onSuccess: (response: any) => {
+      const message =
+        response?.message ||
+        response?.data?.message ||
+        "Campaign deleted successfully";
+      toast.success(message);
+      queryClient.invalidateQueries({ queryKey: ["campaigns"] });
+    },
+    onError: (
+      error: AxiosError<{ message?: string; data?: { message?: string } }>,
+    ) => {
+      const errorMsg = extractApiErrors(error.response?.data);
+      errorMsg.forEach((msg) => toast.error(msg));
+    },
+  });
+};

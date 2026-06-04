@@ -12,8 +12,19 @@ import { Upload, Trash2, Loader2, FileImage, ExternalLink } from "lucide-react";
 import { useAddMedia, useDeleteMedia } from "@/query/useMedia";
 import type { AddCampaignFormValues } from "@/utils/schemas/campaign";
 import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
 
-const StepMediaCreatives: React.FC = () => {
+interface StepMediaCreativesProps {
+  setDeletedMediaIds: React.Dispatch<React.SetStateAction<string[]>>;
+  newlyUploadedMediaIds: string[];
+  setNewlyUploadedMediaIds: React.Dispatch<React.SetStateAction<string[]>>;
+}
+
+const StepMediaCreatives: React.FC<StepMediaCreativesProps> = ({
+  setDeletedMediaIds,
+  newlyUploadedMediaIds,
+  setNewlyUploadedMediaIds,
+}) => {
   const { control } = useFormContext<AddCampaignFormValues>();
 
   const {
@@ -42,6 +53,25 @@ const StepMediaCreatives: React.FC = () => {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // Validate file size (Max 10MB)
+    const MAX_FILE_SIZE = 10 * 1024 * 1024;
+    if (file.size > MAX_FILE_SIZE) {
+      toast.error("File size exceeds the 10MB limit.");
+      e.target.value = "";
+      return;
+    }
+
+    // Validate file extension
+    const ALLOWED_EXTENSIONS = ["png", "jpg", "jpeg", "gif", "svg", "mp4"];
+    const extension = file.name.split(".").pop()?.toLowerCase();
+    if (!extension || !ALLOWED_EXTENSIONS.includes(extension)) {
+      toast.error(
+        "Unsupported format. Please upload PNG, JPG, JPEG, GIF, SVG, or MP4."
+      );
+      e.target.value = "";
+      return;
+    }
+
     const formData = new FormData();
     formData.append("name", file.name);
     formData.append("type", "campaign");
@@ -54,8 +84,10 @@ const StepMediaCreatives: React.FC = () => {
       onSuccess: (response: any) => {
         const mediaData = response?.data?.data || response?.data || response;
         if (mediaData) {
+          const mediaId = mediaData._id || mediaData.id || `creative_${Date.now()}`;
+          setNewlyUploadedMediaIds((prev) => [...prev, mediaId]);
           appendMedia({
-            id: mediaData._id || mediaData.id || `creative_${Date.now()}`,
+            id: mediaId,
             link: mediaData.link1 || mediaData.link,
             type: mediaData.fileType?.includes("video") ? "video" : "image",
           });
@@ -72,16 +104,25 @@ const StepMediaCreatives: React.FC = () => {
       return;
     }
 
-    setDeletingId(actualId);
-    deleteMediaMutation(actualId, {
-      onSuccess: () => {
-        removeMedia(idx);
-        setDeletingId(null);
-      },
-      onError: () => {
-        setDeletingId(null);
-      },
-    });
+    if (newlyUploadedMediaIds.includes(actualId)) {
+      // If it was newly uploaded in this session, delete it immediately from server
+      setDeletingId(actualId);
+      deleteMediaMutation(actualId, {
+        onSuccess: () => {
+          removeMedia(idx);
+          setNewlyUploadedMediaIds((prev) => prev.filter((id) => id !== actualId));
+          setDeletingId(null);
+        },
+        onError: () => {
+          setDeletingId(null);
+        },
+      });
+    } else {
+      // It's an original media from the database.
+      // Defer API deletion: queue it in deletedMediaIds and remove from form UI state.
+      setDeletedMediaIds((prev) => [...prev, actualId]);
+      removeMedia(idx);
+    }
   };
 
   // Helper to extract clean filename from URL
@@ -176,14 +217,14 @@ const StepMediaCreatives: React.FC = () => {
                       <div className="aspect-video w-full bg-background border-b border-border relative flex items-center justify-center overflow-hidden">
                         {type === "video" ? (
                           <video
-                            src={link}
+                            src={link || undefined}
                             className="w-full h-full object-cover"
                             controls={false}
                             muted
                           />
                         ) : (
                           <img
-                            src={link}
+                            src={link || undefined}
                             alt={filename}
                             className="w-full h-full object-cover"
                             onError={(e) => {

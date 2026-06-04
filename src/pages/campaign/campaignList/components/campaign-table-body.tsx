@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { MoreVertical } from "lucide-react";
 import { TableBody, TableCell, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -11,6 +11,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import type { Campaign } from "../../types";
 import { useNavigate } from "react-router-dom";
+import DeletePopupModal from "@/components/popupModals/delete-popup-modal";
+import { useDeleteCampaign } from "@/query/useCampaign";
 
 interface CampaignTableBodyProps {
   campaigns: Campaign[];
@@ -26,6 +28,10 @@ const CampaignTableBody: React.FC<CampaignTableBodyProps> = ({
   getDisplayValue,
 }) => {
   const navigate = useNavigate();
+
+  const [showDeleteModal, setShowDeleteModal] = useState<Campaign | null>(null);
+  const { mutate: deleteCampaignMutation, isPending: deleteCampaignPending } =
+    useDeleteCampaign();
 
   if (campaigns.length === 0) {
     return (
@@ -47,8 +53,10 @@ const CampaignTableBody: React.FC<CampaignTableBodyProps> = ({
       {campaigns.map((campaign: Campaign) => (
         <TableRow
           key={campaign._id}
-          className="hover:bg-muted/20 cursor-pointer transition-colors"
-          onClick={() => onViewCampaign(campaign)}
+          className="cursor-pointer"
+          onClick={() => {
+            navigate(`/campaign/edit/${campaign._id}`);
+          }}
         >
           {Object.keys(dataMapping).map((key) => (
             <TableCell
@@ -64,11 +72,7 @@ const CampaignTableBody: React.FC<CampaignTableBodyProps> = ({
           >
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 cursor-pointer"
-                >
+                <Button variant="ghost" size="icon" className="h-8 w-8 ">
                   <MoreVertical className="w-4 h-4" />
                 </Button>
               </DropdownMenuTrigger>
@@ -80,14 +84,45 @@ const CampaignTableBody: React.FC<CampaignTableBodyProps> = ({
                 >
                   Edit
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onViewCampaign(campaign)}>
-                  View Details
+                <DropdownMenuItem
+                  variant="destructive"
+                  onClick={() => {
+                    setShowDeleteModal(campaign);
+                  }}
+                >
+                  Delete
                 </DropdownMenuItem>
+
+                {/* <DropdownMenuItem onClick={() => onViewCampaign(campaign)}>
+                  View Details
+                </DropdownMenuItem> */}
               </DropdownMenuContent>
             </DropdownMenu>
           </TableCell>
         </TableRow>
       ))}
+      <DeletePopupModal
+        isOpen={!!showDeleteModal}
+        title={<strong>Delete Campaign</strong>}
+        description={
+          <span>
+            Are you sure you want to delete the campaign{" "}
+            <strong>{showDeleteModal?.title}</strong>? This action cannot be
+            undone.
+          </span>
+        }
+        cancelButtonAction={() => setShowDeleteModal(null)}
+        deleteButtonAction={() => {
+          if (showDeleteModal?._id) {
+            deleteCampaignMutation(showDeleteModal._id, {
+              onSuccess: () => {
+                setShowDeleteModal(null);
+              },
+            });
+          }
+        }}
+        isDeleting={deleteCampaignPending}
+      />
     </TableBody>
   );
 };

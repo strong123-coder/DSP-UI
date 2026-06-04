@@ -19,6 +19,11 @@ export const apiConfig: ApiEndpoint[] = [
     path: "/api/v1/campaign/update/{id}",
     hasPathParams: true,
   },
+  {
+    name: "deletCampaign",
+    path: "/api/v1/campaign/delete/{id}",
+    hasPathParams: true,
+  },
 
   // media
 

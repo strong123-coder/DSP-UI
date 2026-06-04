@@ -31,4 +31,13 @@ export const campaignService = {
     );
     return response.data;
   },
+  deleteCampaign: async (id: string) => {
+    const response = await apiClient().del(
+      "deletCampaign",
+      undefined,
+      undefined,
+      { id },
+    );
+    return response.data;
+  },
 };

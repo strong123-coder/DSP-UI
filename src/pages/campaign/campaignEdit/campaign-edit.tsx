@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect } from "react";
+import { useState, lazy, Suspense, useEffect } from "react";
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate, useParams } from "react-router-dom";
@@ -12,6 +12,8 @@ import {
   type EditCampaignFormValues,
 } from "@/utils/schemas/campaign";
 import LoadingFallback from "@/components/ui/loading-fallback";
+import UpdatePopupModal from "@/components/popupModals/update-popup-modal";
+import { useDeleteMedias } from "@/query/useMedia";
 
 const StepObjectiveInfo = lazy(
   () => import("../components/stepComponents/stepObjectiveInfo"),
@@ -72,6 +74,13 @@ const CamapaingEdit = () => {
   const { data: campaignResponse, isLoading } = useGetSingleCampaign(id || "");
   const { mutate: editCampaignMutation, isPending: editCampaignPending } =
     useEditCampaign();
+  const { mutate: deleteMediasMutation } = useDeleteMedias();
+
+  const [showUpdateModal, setShowUpdateModal] = useState(false);
+  const [formData, setFormData] = useState<EditCampaignFormValues | null>(null);
+
+  const [deletedMediaIds, setDeletedMediaIds] = useState<string[]>([]);
+  const [newlyUploadedMediaIds, setNewlyUploadedMediaIds] = useState<string[]>([]);
 
   const methods = useForm<EditCampaignFormValues>({
     resolver: zodResolver(editCampaignSchema),
@@ -181,14 +190,8 @@ const CamapaingEdit = () => {
       return;
     }
 
-    editCampaignMutation(
-      { id, payload: cleanedData },
-      {
-        onSuccess: () => {
-          navigate("/campaign/list");
-        },
-      },
-    );
+    setFormData(cleanedData);
+    setShowUpdateModal(true);
   };
 
   if (isLoading) {
@@ -203,9 +206,9 @@ const CamapaingEdit = () => {
           className="space-y-6"
         >
           <div className="w-full space-y-6">
-            {SECTIONS.map(({ id, title, description, Component }) => (
+            {SECTIONS.map(({ id: secId, title, description, Component }) => (
               <div
-                key={id}
+                key={secId}
                 className="border border-border rounded-2xl overflow-hidden bg-card shadow-xs transition-all duration-200"
               >
                 <div className="px-6 py-4 border-b border-border bg-muted/5">
@@ -224,7 +227,15 @@ const CamapaingEdit = () => {
                       </div>
                     }
                   >
-                    <Component />
+                    {secId === "media" ? (
+                      <StepMediaCreatives
+                        setDeletedMediaIds={setDeletedMediaIds}
+                        newlyUploadedMediaIds={newlyUploadedMediaIds}
+                        setNewlyUploadedMediaIds={setNewlyUploadedMediaIds}
+                      />
+                    ) : (
+                      <Component />
+                    )}
                   </Suspense>
                 </div>
               </div>
@@ -232,13 +243,17 @@ const CamapaingEdit = () => {
           </div>
 
           {/* Form Action Controls */}
-          <div className="flex justify-end items-center gap-3 pt-4 border-t border-border">
+          <div className="flex justify-end items-center gap-3 pt-4 mb-10 border-t border-border">
             <Button
               type="button"
               variant="outline"
-              onClick={() => navigate("/campaign/list")}
+              onClick={() => {
+                if (newlyUploadedMediaIds.length > 0) {
+                  deleteMediasMutation(newlyUploadedMediaIds);
+                }
+                navigate("/campaign/list");
+              }}
               disabled={editCampaignPending}
-              className="flex items-center gap-1.5 w-40 justify-center"
             >
               Cancel
             </Button>
@@ -246,19 +261,45 @@ const CamapaingEdit = () => {
             <Button
               type="submit"
               disabled={editCampaignPending}
-              className="flex items-center gap-1.5 w-40 justify-center"
             >
-              {editCampaignPending ? (
-                <>
-                  <Loader2 className="w-4.5 h-4.5 animate-spin" /> Saving...
-                </>
-              ) : (
-                "Update Campaign"
-              )}
+              Update Campaign
             </Button>
           </div>
         </form>
       </div>
+
+      <UpdatePopupModal
+        isOpen={showUpdateModal}
+        title={<strong>Update Campaign</strong>}
+        description={
+          <span>
+            Are you sure you want to update the campaign{" "}
+            <strong>{campaignData?.title}</strong>? This will apply all changes immediately.
+          </span>
+        }
+        cancelButtonAction={() => {
+          setShowUpdateModal(false);
+          setFormData(null);
+        }}
+        updateButtonAction={() => {
+          if (formData && id) {
+            editCampaignMutation(
+              { id, payload: formData },
+              {
+                onSuccess: () => {
+                  if (deletedMediaIds.length > 0) {
+                    deleteMediasMutation(deletedMediaIds);
+                  }
+                  setShowUpdateModal(false);
+                  setFormData(null);
+                  navigate("/campaign/list");
+                },
+              },
+            );
+          }
+        }}
+        isUpdating={editCampaignPending}
+      />
     </FormProvider>
   );
 };
