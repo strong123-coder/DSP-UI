@@ -3,7 +3,10 @@ import { campaignService } from "@/services/campaign";
 import { toast } from "sonner";
 import { AxiosError } from "axios";
 import { extractApiErrors } from "@/utils/getErrorMessage";
-import type { AddCampaignFormValues, EditCampaignFormValues } from "@/utils/schemas/campaign";
+import type {
+  AddCampaignFormValues,
+  EditCampaignFormValues,
+} from "@/utils/schemas/campaign";
 
 export const useAddCampaign = () => {
   const queryClient = useQueryClient();
@@ -40,8 +43,13 @@ export const useEditCampaign = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, payload }: { id: string; payload: EditCampaignFormValues }) =>
-      campaignService.editCampaign(id, payload),
+    mutationFn: ({
+      id,
+      payload,
+    }: {
+      id: string;
+      payload: EditCampaignFormValues;
+    }) => campaignService.editCampaign(id, payload),
     onSuccess: (response: any, variables) => {
       const message =
         response?.message ||
@@ -189,5 +197,13 @@ export const useUpdateCampaignStatus = () => {
       const errorMsg = extractApiErrors(error.response?.data);
       errorMsg.forEach((msg) => toast.error(msg));
     },
+  });
+};
+
+export const useGetCampaignOptions = (enabled = true) => {
+  return useQuery({
+    queryKey: ["campaignOptions"],
+    queryFn: () => campaignService.campaignOptions(),
+    enabled,
   });
 };

@@ -9,6 +9,7 @@ export const apiConfig: ApiEndpoint[] = [
 
   { name: "addCampaign", path: "/api/v1/campaign/add" },
   { name: "campaignList", path: "/api/v1/campaign/list" },
+  { name: "campaignOptions", path: "/api/v1/campaign/options" },
   {
     name: "getCampaign",
     path: "/api/v1/campaign/get/{id}",
@@ -39,4 +40,8 @@ export const apiConfig: ApiEndpoint[] = [
     path: "/api/v1/media/delete/{id}",
     hasPathParams: true,
   },
+  { name: "dashboardSummary", path: "/api/v1/dashboard/summary" },
+  { name: "dashboardPerformance", path: "/api/v1/dashboard/performance" },
+  { name: "dashboardGoalReport", path: "/api/v1/dashboard/goal-report" },
+  { name: "dashboardTopCampaigns", path: "/api/v1/dashboard/top-campaigns" },
 ];
