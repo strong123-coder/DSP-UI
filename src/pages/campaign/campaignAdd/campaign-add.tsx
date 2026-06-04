@@ -17,14 +17,20 @@ import {
   AccordionTrigger,
   AccordionContent,
 } from "@/components/ui/accordion";
-const StepObjectiveInfo = lazy(() => import("./components/StepObjectiveInfo"));
-const StepMmpIntegration = lazy(
-  () => import("./components/StepMmpIntegrations"),
+const StepObjectiveInfo = lazy(
+  () => import("../components/stepComponents/stepObjectiveInfo"),
 );
-const StepTargeting = lazy(() => import("./components/StepTargeting"));
-const StepInventoryType = lazy(() => import("./components/StepInventoryType"));
+const StepMmpIntegration = lazy(
+  () => import("../components/stepComponents/stepMmpIntegrations"),
+);
+const StepTargeting = lazy(
+  () => import("../components/stepComponents/stepTargeting"),
+);
+const StepInventoryType = lazy(
+  () => import("../components/stepComponents/stepInventoryType"),
+);
 const StepMediaCreatives = lazy(
-  () => import("./components/StepMediaCreatives"),
+  () => import("../components/stepComponents/stepMediaCreatives"),
 );
 
 const STEPS = [

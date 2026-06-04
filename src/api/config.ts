@@ -9,6 +9,16 @@ export const apiConfig: ApiEndpoint[] = [
 
   { name: "addCampaign", path: "/api/v1/campaign/add" },
   { name: "campaignList", path: "/api/v1/campaign/list" },
+  {
+    name: "getCampaign",
+    path: "/api/v1/campaign/get/{id}",
+    hasPathParams: true,
+  },
+  {
+    name: "editCampaign",
+    path: "/api/v1/campaign/update/{id}",
+    hasPathParams: true,
+  },
 
   // media
 

@@ -1,8 +1,8 @@
 import React from "react";
 import { useFormContext } from "react-hook-form";
-import CampaingObjective from "../../components/campaign-objective";
-import CampaignDetails from "../../components/campaign-details";
 import type { AddCampaignFormValues } from "@/utils/schemas/campaign";
+import CampaingObjective from "../campaign-objective";
+import StepCampaignDetails from "./stepCampaignDetails";
 
 const StepObjectiveInfo: React.FC = () => {
   const { watch, setValue } = useFormContext<AddCampaignFormValues>();
@@ -16,7 +16,7 @@ const StepObjectiveInfo: React.FC = () => {
           setValue("goal", goal, { shouldValidate: true })
         }
       />
-      <CampaignDetails />
+      <StepCampaignDetails />
     </div>
   );
 };

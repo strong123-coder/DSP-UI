@@ -3,7 +3,7 @@ import { campaignService } from "@/services/campaign";
 import { toast } from "sonner";
 import { AxiosError } from "axios";
 import { extractApiErrors } from "@/utils/getErrorMessage";
-import type { AddCampaignFormValues } from "@/utils/schemas/campaign";
+import type { AddCampaignFormValues, EditCampaignFormValues } from "@/utils/schemas/campaign";
 
 export const useAddCampaign = () => {
   const queryClient = useQueryClient();
@@ -17,6 +17,38 @@ export const useAddCampaign = () => {
         response?.data?.message ||
         "Campaign created successfully";
       toast.success(message);
+      queryClient.invalidateQueries({ queryKey: ["campaigns"] });
+    },
+    onError: (
+      error: AxiosError<{ message?: string; data?: { message?: string } }>,
+    ) => {
+      const errorMsg = extractApiErrors(error.response?.data);
+      errorMsg.forEach((msg) => toast.error(msg));
+    },
+  });
+};
+
+export const useGetSingleCampaign = (id: string, enabled = true) => {
+  return useQuery({
+    queryKey: ["campaign", id],
+    queryFn: () => campaignService.getCampaign(id),
+    enabled: enabled && !!id,
+  });
+};
+
+export const useEditCampaign = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, payload }: { id: string; payload: EditCampaignFormValues }) =>
+      campaignService.editCampaign(id, payload),
+    onSuccess: (response: any, variables) => {
+      const message =
+        response?.message ||
+        response?.data?.message ||
+        "Campaign updated successfully";
+      toast.success(message);
+      queryClient.invalidateQueries({ queryKey: ["campaign", variables.id] });
       queryClient.invalidateQueries({ queryKey: ["campaigns"] });
     },
     onError: (

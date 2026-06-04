@@ -13,7 +13,7 @@ import { Controller, useFormContext } from "react-hook-form";
 import { DatePickerComponent } from "@/components/inputComponents/date-picker-component";
 import type { AddCampaignFormValues } from "@/utils/schemas/campaign";
 
-const CampaignDetails = () => {
+const StepCampaignDetails = () => {
   const {
     register,
     control,
@@ -50,9 +50,9 @@ const CampaignDetails = () => {
           {/* Bundle ID */}
           <div className="space-y-2">
             <Label htmlFor="bundleId">Bundle / Package ID</Label>
-            <Input 
-              id="bundleId" 
-              {...register("bundleId")} 
+            <Input
+              id="bundleId"
+              {...register("bundleId")}
               aria-invalid={!!errors.bundleId}
               errorTooltip={errors.bundleId?.message}
             />
@@ -70,10 +70,10 @@ const CampaignDetails = () => {
           </div>
           <div className="space-y-2">
             <Label htmlFor="budget">Total Budget</Label>
-            <Input 
-              id="budget" 
-              type="number" 
-              {...register("budget")} 
+            <Input
+              id="budget"
+              type="number"
+              {...register("budget")}
               aria-invalid={!!errors.budget}
               errorTooltip={errors.budget?.message}
             />
@@ -81,9 +81,9 @@ const CampaignDetails = () => {
 
           <div className="space-y-2 col-span-2">
             <Label htmlFor="kpi">KPI</Label>
-            <Textarea 
-              id="kpi" 
-              {...register("kpi")} 
+            <Textarea
+              id="kpi"
+              {...register("kpi")}
               aria-invalid={!!errors.kpi}
               errorTooltip={errors.kpi?.message}
             />
@@ -171,4 +171,4 @@ const CampaignDetails = () => {
   );
 };
 
-export default CampaignDetails;
+export default StepCampaignDetails;

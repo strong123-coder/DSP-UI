@@ -5,25 +5,25 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Download } from "lucide-react";
+import { Download, SquareMousePointer, VectorSquare } from "lucide-react";
 
 const CampaingObjectiveData = [
   {
-    icon: "Download",
+    icon: Download,
     title: "App Install",
     value: "install",
     description:
       "This feature allows advertiser to maximize app installs for new user acquisition.",
   },
   {
-    icon: "Download",
+    icon: VectorSquare,
     title: "Engagement",
     value: "engagement",
     description:
       "This function guarantees installs based on deeper funnel optimization on the basis of soft KPIs.",
   },
   {
-    icon: "Download",
+    icon: SquareMousePointer,
     title: "Retargeting",
     value: "retargeting",
     description:
@@ -62,7 +62,7 @@ const CampaingObjective = ({
               onClick={() => setSelectedGoal(item.value)}
             >
               <CardHeader className="flex flex-row items-center gap-2 space-y-0">
-                <Download className="h-5 w-5" />
+                <item.icon className="h-5 w-5" />
                 <CardTitle className="text-base">{item.title}</CardTitle>
               </CardHeader>
 

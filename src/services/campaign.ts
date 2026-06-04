@@ -1,5 +1,8 @@
 import { apiClient } from "@/api/apiClient";
-import type { AddCampaignFormValues } from "@/utils/schemas/campaign";
+import type {
+  AddCampaignFormValues,
+  EditCampaignFormValues,
+} from "@/utils/schemas/campaign";
 
 export const campaignService = {
   addCampaign: async (payload: AddCampaignFormValues) => {
@@ -8,6 +11,24 @@ export const campaignService = {
   },
   campaignList: async (params?: object) => {
     const response = await apiClient().get("campaignList", params);
+    return response.data;
+  },
+  getCampaign: async (id: string) => {
+    const response = await apiClient().get(
+      "getCampaign",
+      undefined,
+      undefined,
+      { id },
+    );
+    return response.data;
+  },
+  editCampaign: async (id: string, payload: EditCampaignFormValues) => {
+    const response = await apiClient().patch(
+      "editCampaign",
+      payload,
+      {},
+      { id },
+    );
     return response.data;
   },
 };

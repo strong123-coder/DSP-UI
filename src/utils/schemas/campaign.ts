@@ -91,3 +91,7 @@ export const addCampaignSchema = z
       }
     }
   });
+
+export type EditCampaignFormValues = InferSchemaType<typeof editCampaignSchema>;
+export const editCampaignSchema = addCampaignSchema;
+

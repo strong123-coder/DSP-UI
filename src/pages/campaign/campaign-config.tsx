@@ -1,6 +1,6 @@
 import { Navigate } from "react-router";
-import CampaignListConfig from "./campaingList/campaign-list-config";
-import CampaignAddConfig from "./campaingAdd/campaign-add-config";
+import CampaignListConfig from "./campaignList/campaign-list-config";
+import CampaignAddConfig from "./campaignAdd/campaign-add-config";
 
 const CampaignConfig = {
   path: "/campaign",
