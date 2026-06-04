@@ -145,3 +145,11 @@ export const useGetCampaignPrefetch = (
     queryClient,
   ]);
 };
+
+export const useGetCampaignOptions = (enabled = true) => {
+  return useQuery({
+    queryKey: ["campaignOptions"],
+    queryFn: () => campaignService.campaignOptions(),
+    enabled,
+  });
+};

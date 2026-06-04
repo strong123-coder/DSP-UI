@@ -13,6 +13,10 @@ export const campaignService = {
     const response = await apiClient().get("campaignList", params);
     return response.data;
   },
+  campaignOptions: async () => {
+    const response = await apiClient().get("campaignOptions");
+    return response.data;
+  },
   getCampaign: async (id: string) => {
     const response = await apiClient().get(
       "getCampaign",
