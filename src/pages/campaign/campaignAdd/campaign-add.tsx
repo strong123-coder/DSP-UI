@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { ArrowLeft, ArrowRight, Check } from "lucide-react";
 import { toast } from "sonner";
 import { deleteMediaOnUnload } from "@/utils/mediaCleanup";
+import { FormModeContext } from "@/utils/context/FormModeContext";
 
 import { Button } from "@/components/ui/button";
 import { useAddCampaign } from "@/query/useCampaign";
@@ -95,7 +96,7 @@ const CamapaingAdd = () => {
 
     return () => {
       window.removeEventListener("beforeunload", handleBeforeUnload);
-      
+
       if (!isSubmitted.current && newlyUploadedMediaIdsRef.current.length > 0) {
         deleteMediasMutation(newlyUploadedMediaIdsRef.current);
       }
@@ -141,6 +142,9 @@ const CamapaingAdd = () => {
       fieldsToValidate = [
         "goal",
         "title",
+        "appOs",
+        "appIconLink",
+        "appName",
         "bundleId",
         "dailyBudget",
         "budget",
@@ -240,120 +244,122 @@ const CamapaingAdd = () => {
   };
 
   return (
-    <FormProvider {...methods}>
-      <div className="flex flex-col gap-6">
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            if (step === STEPS.length) {
-              handleSubmit(onSubmit, onInvalid)(e);
-            }
-          }}
-          className="space-y-6"
-        >
-          <Accordion
-            type="single"
-            value={`step-${step}`}
-            onValueChange={(val) => {
-              if (val) {
-                const stepNum = parseInt(val.replace("step-", ""), 10);
-                if (stepNum <= maxStepReached) {
-                  setStep(stepNum);
-                }
+    <FormModeContext.Provider value="add">
+      <FormProvider {...methods}>
+        <div className="flex flex-col gap-6">
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (step === STEPS.length) {
+                handleSubmit(onSubmit, onInvalid)(e);
               }
             }}
-            className="w-full space-y-4 border-none"
+            className="space-y-6"
           >
-            {STEPS.filter((s) => s.id <= maxStepReached).map((s) => {
-              const isCompleted = maxStepReached > s.id;
-              const isActive = step === s.id;
+            <Accordion
+              type="single"
+              value={`step-${step}`}
+              onValueChange={(val) => {
+                if (val) {
+                  const stepNum = parseInt(val.replace("step-", ""), 10);
+                  if (stepNum <= maxStepReached) {
+                    setStep(stepNum);
+                  }
+                }
+              }}
+              className="w-full space-y-4 border-none"
+            >
+              {STEPS.filter((s) => s.id <= maxStepReached).map((s) => {
+                const isCompleted = maxStepReached > s.id;
+                const isActive = step === s.id;
 
-              return (
-                <AccordionItem
-                  key={s.id}
-                  value={`step-${s.id}`}
-                  className="border border-border rounded-2xl overflow-hidden bg-card data-open:bg-card shadow-xs transition-all duration-200"
-                >
-                  <AccordionTrigger className="hover:no-underline px-6 py-4 flex items-center justify-between data-[state=open]:bg-muted/10">
-                    <div className="flex items-center gap-4 text-left">
-                      <div
-                        className={`w-8 h-8 rounded-full flex items-center justify-center font-semibold text-sm border-2 transition-all duration-300 ${
-                          isCompleted
-                            ? "bg-primary border-primary text-primary-foreground"
-                            : isActive
-                              ? "bg-background border-primary text-primary shadow-xs ring-4 ring-primary/10"
-                              : "bg-muted border-border text-muted-foreground"
-                        }`}
-                      >
-                        {isCompleted ? <Check className="w-4 h-4" /> : s.id}
-                      </div>
-                      <div>
-                        <p className="text-sm font-semibold text-foreground">
-                          {s.label}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {s.description}
-                        </p>
-                      </div>
-                    </div>
-                  </AccordionTrigger>
-                  <AccordionContent className="px-6 py-6 border-t border-border bg-card">
-                    <Suspense
-                      fallback={
-                        <div className="py-8 text-center text-xs text-muted-foreground animate-pulse">
-                          Loading setup panel...
+                return (
+                  <AccordionItem
+                    key={s.id}
+                    value={`step-${s.id}`}
+                    className="border border-border rounded-2xl overflow-hidden bg-card data-open:bg-card shadow-xs transition-all duration-200"
+                  >
+                    <AccordionTrigger className="hover:no-underline px-6 py-4 flex items-center justify-between data-[state=open]:bg-muted/10">
+                      <div className="flex items-center gap-4 text-left">
+                        <div
+                          className={`w-8 h-8 rounded-full flex items-center justify-center font-semibold text-sm border-2 transition-all duration-300 ${
+                            isCompleted
+                              ? "bg-primary border-primary text-primary-foreground"
+                              : isActive
+                                ? "bg-background border-primary text-primary shadow-xs ring-4 ring-primary/10"
+                                : "bg-muted border-border text-muted-foreground"
+                          }`}
+                        >
+                          {isCompleted ? <Check className="w-4 h-4" /> : s.id}
                         </div>
-                      }
-                    >
-                      {s.id === 1 && <StepObjectiveInfo />}
-                      {s.id === 2 && <StepMmpIntegration />}
-                      {s.id === 3 && <StepTargeting />}
-                      {s.id === 4 && <StepInventoryType />}
-                      {s.id === 5 && (
-                        <StepMediaCreatives
-                          newlyUploadedMediaIds={newlyUploadedMediaIds}
-                          setNewlyUploadedMediaIds={setNewlyUploadedMediaIds}
-                        />
-                      )}
-                    </Suspense>
-                  </AccordionContent>
-                </AccordionItem>
-              );
-            })}
-          </Accordion>
+                        <div>
+                          <p className="text-sm font-semibold text-foreground">
+                            {s.label}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {s.description}
+                          </p>
+                        </div>
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent className="px-6 py-6 border-t border-border bg-card">
+                      <Suspense
+                        fallback={
+                          <div className="py-8 text-center text-xs text-muted-foreground animate-pulse">
+                            Loading setup panel...
+                          </div>
+                        }
+                      >
+                        {s.id === 1 && <StepObjectiveInfo />}
+                        {s.id === 2 && <StepMmpIntegration />}
+                        {s.id === 3 && <StepTargeting />}
+                        {s.id === 4 && <StepInventoryType />}
+                        {s.id === 5 && (
+                          <StepMediaCreatives
+                            newlyUploadedMediaIds={newlyUploadedMediaIds}
+                            setNewlyUploadedMediaIds={setNewlyUploadedMediaIds}
+                          />
+                        )}
+                      </Suspense>
+                    </AccordionContent>
+                  </AccordionItem>
+                );
+              })}
+            </Accordion>
 
-          {/* Form Action Controls */}
-          <div className="flex justify-between items-center pt-4 mb-10 border-t border-border">
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={prevStep}
-              disabled={step === 1 || addCampaignPending}
-              className="flex items-center gap-1.5"
-            >
-              <ArrowLeft className="w-4 h-4" /> Back
-            </Button>
+            {/* Form Action Controls */}
+            <div className="flex justify-between items-center pt-4 mb-10 border-t border-border">
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={prevStep}
+                disabled={step === 1 || addCampaignPending}
+                className="flex items-center gap-1.5"
+              >
+                <ArrowLeft className="w-4 h-4" /> Back
+              </Button>
 
-            <Button
-              type="button"
-              onClick={handleButtonClick}
-              disabled={addCampaignPending}
-              className="flex items-center gap-1.5 w-36 justify-center animate-in fade-in duration-200"
-            >
-              {step < STEPS.length ? (
-                <>
-                  Next <ArrowRight className="w-4 h-4" />
-                </>
-              ) : addCampaignPending ? (
-                "Creating..."
-              ) : (
-                "Create Campaign"
-              )}
-            </Button>
-          </div>
-        </form>
-      </div>
-    </FormProvider>
+              <Button
+                type="button"
+                onClick={handleButtonClick}
+                disabled={addCampaignPending}
+                className="flex items-center gap-1.5 w-36 justify-center animate-in fade-in duration-200"
+              >
+                {step < STEPS.length ? (
+                  <>
+                    Next <ArrowRight className="w-4 h-4" />
+                  </>
+                ) : addCampaignPending ? (
+                  "Creating..."
+                ) : (
+                  "Create Campaign"
+                )}
+              </Button>
+            </div>
+          </form>
+        </div>
+      </FormProvider>
+    </FormModeContext.Provider>
   );
 };
 

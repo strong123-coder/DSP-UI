@@ -207,3 +207,18 @@ export const useGetCampaignOptions = (enabled = true) => {
     enabled,
   });
 };
+
+export const useGetAppDetails = (
+  params: {
+    bundleId: string;
+    platform: "android" | "ios";
+    country?: string;
+  },
+  enabled: boolean = true,
+) => {
+  return useQuery({
+    queryKey: ["appDetails", params.bundleId, params.platform, params.country],
+    queryFn: () => campaignService.getAppDetails(params),
+    enabled: enabled && !!params.bundleId && !!params.platform,
+  });
+};

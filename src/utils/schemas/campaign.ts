@@ -39,12 +39,44 @@ export const addCampaignSchema = z
     bundleId: z.string().trim().min(1, {
       message: "App Bundle ID is required",
     }),
-    budget: z.string().trim().min(1, {
-      message: "Campaign Budget is required",
+    appName: z
+      .string()
+      .trim()
+      .min(1, { message: "Correct OS Name and Bundle ID required" }),
+    appOs: z.enum(["android", "ios"], {
+      message: "App OS is required",
     }),
-    dailyBudget: z.string().trim().min(1, {
-      message: "Daily Budget is required",
-    }),
+    appIconLink: z.string().trim().min(1, { message: "" }),
+    budget: z
+      .string()
+      .trim()
+      .min(1, {
+        message: "Campaign Budget is required",
+      })
+      .refine(
+        (val) => {
+          const num = Number(val);
+          return !isNaN(num) && num > 0;
+        },
+        {
+          message: "Campaign Budget must be greater than 0",
+        },
+      ),
+    dailyBudget: z
+      .string()
+      .trim()
+      .min(1, {
+        message: "Daily Budget is required",
+      })
+      .refine(
+        (val) => {
+          const num = Number(val);
+          return !isNaN(num) && num > 0;
+        },
+        {
+          message: "Daily Budget must be greater than 0",
+        },
+      ),
     kpi: z.string().trim().min(1, { message: "KPI is required" }),
     isScheduling: z.boolean().optional(),
     startDate: z.string().trim().optional(),
@@ -94,4 +126,3 @@ export const addCampaignSchema = z
 
 export type EditCampaignFormValues = InferSchemaType<typeof editCampaignSchema>;
 export const editCampaignSchema = addCampaignSchema;
-

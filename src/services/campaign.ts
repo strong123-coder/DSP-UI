@@ -53,4 +53,12 @@ export const campaignService = {
     );
     return response.data;
   },
+  getAppDetails: async (payload: {
+    bundleId: string;
+    platform: "android" | "ios";
+    country?: string;
+  }) => {
+    const response = await apiClient().get("getAppDetails", payload);
+    return response.data;
+  },
 };

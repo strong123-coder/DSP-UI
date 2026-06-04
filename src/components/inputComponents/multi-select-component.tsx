@@ -47,8 +47,23 @@ const MultiSelectComponent = ({
     <>
       <MultiSelect
         onValuesChange={(value: string[]) => {
-          if (onValuesChange) onValuesChange(value);
-          else console.warn("onValueChange required");
+          if (onValuesChange) {
+            if (value.includes("all")) {
+              const hadAll = values?.includes("all");
+              if (hadAll) {
+                // If "all" was already selected and value changed, they clicked something else, or deselected "all"
+                const filtered = value.filter((v) => v !== "all");
+                onValuesChange(filtered);
+              } else {
+                // "all" was newly selected, clear everything else
+                onValuesChange(["all"]);
+              }
+            } else {
+              onValuesChange(value);
+            }
+          } else {
+            console.warn("onValueChange required");
+          }
         }}
         values={values}
       >
@@ -79,11 +94,20 @@ const MultiSelectComponent = ({
             emptyMessage: "Not found",
           }}
         >
-          {data?.map((d, index) => (
-            <MultiSelectItem key={index} value={d.value}>
-              {d.name}
-            </MultiSelectItem>
-          ))}
+          {data?.map((d, index) => {
+            const isAllSelected = values?.includes("all");
+            const isItemDisabled = isAllSelected && d.value !== "all";
+
+            return (
+              <MultiSelectItem
+                key={index}
+                value={d.value}
+                disabled={isItemDisabled}
+              >
+                {d.name}
+              </MultiSelectItem>
+            );
+          })}
         </MultiSelectContent>
       </MultiSelect>
     </>

@@ -31,6 +31,8 @@ export const apiConfig: ApiEndpoint[] = [
     hasPathParams: true,
   },
 
+  { name: "getAppDetails", path: "/api/v1/campaign/app-details" },
+
   // media
 
   { name: "addMedia", path: "/api/v1/media/add" },

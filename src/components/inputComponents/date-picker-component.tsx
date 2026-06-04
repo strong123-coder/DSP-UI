@@ -27,6 +27,7 @@ interface DatePickerProps {
 
   date?: Date;
   onSelect?: (date: Date | undefined) => void;
+  disabled?: boolean;
 }
 
 export function DatePickerComponent({
@@ -41,6 +42,7 @@ export function DatePickerComponent({
   tooltip,
   date,
   onSelect,
+  disabled,
 }: DatePickerProps) {
   const [open, setOpen] = React.useState(false);
 
@@ -53,8 +55,9 @@ export function DatePickerComponent({
               id={id}
               name={name}
               variant="outline"
+              disabled={disabled}
               className={cn(
-                "cursor-pointer w-full justify-start text-left font-normal",
+                "cursor-pointer w-full justify-start text-left font-normal bg-transparent dark:bg-input/30",
                 !date && "text-muted-foreground",
                 className,
                 ariaInvalid ? "!border-red-600" : "border-input"

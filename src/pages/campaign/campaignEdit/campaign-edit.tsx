@@ -14,6 +14,7 @@ import LoadingFallback from "@/components/ui/loading-fallback";
 import UpdatePopupModal from "@/components/popupModals/update-popup-modal";
 import { useDeleteMedias } from "@/query/useMedia";
 import { deleteMediaOnUnload } from "@/utils/mediaCleanup";
+import { FormModeContext } from "@/utils/context/FormModeContext";
 
 const StepObjectiveInfo = lazy(
   () => import("../components/stepComponents/stepObjectiveInfo"),
@@ -101,7 +102,7 @@ const CamapaingEdit = () => {
 
     return () => {
       window.removeEventListener("beforeunload", handleBeforeUnload);
-      
+
       if (!isSubmitted.current && newlyUploadedMediaIdsRef.current.length > 0) {
         deleteMediasMutation(newlyUploadedMediaIdsRef.current);
       }
@@ -150,6 +151,9 @@ const CamapaingEdit = () => {
         goal: campaignData.goal || "install",
         status: campaignData.status || "paused",
         currency: campaignData.currency || "USD",
+        appOs: campaignData.appOs || "",
+        appIconLink: campaignData.appIconLink || "",
+        appName: campaignData.appName || "",
         bundleId: campaignData.bundleId || "",
         budget: campaignData.budget ? String(campaignData.budget) : "",
         dailyBudget: campaignData.dailyBudget
@@ -225,107 +229,109 @@ const CamapaingEdit = () => {
   }
 
   return (
-    <FormProvider {...methods}>
-      <div className="flex flex-col gap-6">
-        <form
-          onSubmit={handleSubmit(onSubmit, onInvalid)}
-          className="space-y-6"
-        >
-          <div className="w-full space-y-6">
-            {SECTIONS.map(({ id: secId, title, description, Component }) => (
-              <div
-                key={secId}
-                className="border border-border rounded-2xl overflow-hidden bg-card shadow-xs transition-all duration-200"
-              >
-                <div className="px-6 py-4 border-b border-border bg-muted/5">
-                  <h3 className="text-sm font-semibold text-foreground">
-                    {title}
-                  </h3>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    {description}
-                  </p>
+    <FormModeContext.Provider value="edit">
+      <FormProvider {...methods}>
+        <div className="flex flex-col gap-6">
+          <form
+            onSubmit={handleSubmit(onSubmit, onInvalid)}
+            className="space-y-6"
+          >
+            <div className="w-full space-y-6">
+              {SECTIONS.map(({ id: secId, title, description, Component }) => (
+                <div
+                  key={secId}
+                  className="border border-border rounded-2xl overflow-hidden bg-card shadow-xs transition-all duration-200"
+                >
+                  <div className="px-6 py-4 border-b border-border bg-muted/5">
+                    <h3 className="text-sm font-semibold text-foreground">
+                      {title}
+                    </h3>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {description}
+                    </p>
+                  </div>
+                  <div className="px-6 py-6 bg-card">
+                    <Suspense
+                      fallback={
+                        <div className="py-8 text-center text-xs text-muted-foreground animate-pulse">
+                          Loading panel...
+                        </div>
+                      }
+                    >
+                      {secId === "media" ? (
+                        <StepMediaCreatives
+                          setDeletedMediaIds={setDeletedMediaIds}
+                          newlyUploadedMediaIds={newlyUploadedMediaIds}
+                          setNewlyUploadedMediaIds={setNewlyUploadedMediaIds}
+                        />
+                      ) : (
+                        <Component />
+                      )}
+                    </Suspense>
+                  </div>
                 </div>
-                <div className="px-6 py-6 bg-card">
-                  <Suspense
-                    fallback={
-                      <div className="py-8 text-center text-xs text-muted-foreground animate-pulse">
-                        Loading panel...
-                      </div>
-                    }
-                  >
-                    {secId === "media" ? (
-                      <StepMediaCreatives
-                        setDeletedMediaIds={setDeletedMediaIds}
-                        newlyUploadedMediaIds={newlyUploadedMediaIds}
-                        setNewlyUploadedMediaIds={setNewlyUploadedMediaIds}
-                      />
-                    ) : (
-                      <Component />
-                    )}
-                  </Suspense>
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
 
-          {/* Form Action Controls */}
-          <div className="flex justify-end items-center gap-3 pt-4 mb-10 border-t border-border">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => {
-                navigate("/campaign/list");
-              }}
-              disabled={editCampaignPending}
-            >
-              Cancel
-            </Button>
-
-            <Button type="submit" disabled={editCampaignPending}>
-              Update Campaign
-            </Button>
-          </div>
-        </form>
-      </div>
-
-      <UpdatePopupModal
-        isOpen={showUpdateModal}
-        title={<strong>Update Campaign</strong>}
-        description={
-          <span>
-            Are you sure you want to update the campaign{" "}
-            <strong>{campaignData?.title}</strong>? This will apply all changes
-            immediately.
-          </span>
-        }
-        cancelButtonAction={() => {
-          setShowUpdateModal(false);
-          setFormData(null);
-        }}
-        updateButtonAction={() => {
-          if (formData && id) {
-            isSubmitted.current = true;
-            editCampaignMutation(
-              { id, payload: formData },
-              {
-                onSuccess: () => {
-                  if (deletedMediaIds.length > 0) {
-                    deleteMediasMutation(deletedMediaIds);
-                  }
-                  setShowUpdateModal(false);
-                  setFormData(null);
+            {/* Form Action Controls */}
+            <div className="flex justify-end items-center gap-3 pt-4 mb-10 border-t border-border">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
                   navigate("/campaign/list");
-                },
-                onError: () => {
-                  isSubmitted.current = false;
-                },
-              },
-            );
+                }}
+                disabled={editCampaignPending}
+              >
+                Cancel
+              </Button>
+
+              <Button type="submit" disabled={editCampaignPending}>
+                Update Campaign
+              </Button>
+            </div>
+          </form>
+        </div>
+
+        <UpdatePopupModal
+          isOpen={showUpdateModal}
+          title={<strong>Update Campaign</strong>}
+          description={
+            <span>
+              Are you sure you want to update the campaign{" "}
+              <strong>{campaignData?.title}</strong>? This will apply all
+              changes immediately.
+            </span>
           }
-        }}
-        isUpdating={editCampaignPending}
-      />
-    </FormProvider>
+          cancelButtonAction={() => {
+            setShowUpdateModal(false);
+            setFormData(null);
+          }}
+          updateButtonAction={() => {
+            if (formData && id) {
+              isSubmitted.current = true;
+              editCampaignMutation(
+                { id, payload: formData },
+                {
+                  onSuccess: () => {
+                    if (deletedMediaIds.length > 0) {
+                      deleteMediasMutation(deletedMediaIds);
+                    }
+                    setShowUpdateModal(false);
+                    setFormData(null);
+                    navigate("/campaign/list");
+                  },
+                  onError: () => {
+                    isSubmitted.current = false;
+                  },
+                },
+              );
+            }
+          }}
+          isUpdating={editCampaignPending}
+        />
+      </FormProvider>
+    </FormModeContext.Provider>
   );
 };
 

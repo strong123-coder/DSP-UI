@@ -95,7 +95,7 @@ const StepTargeting: React.FC = () => {
               render={({ field }) => (
                 <MultiSelectComponent
                   placeholder="Select regions/countries"
-                  data={geoData}
+                  data={[{ name: "Global (All)", value: "all" }, ...geoData]}
                   values={field.value || []}
                   onValuesChange={field.onChange}
                   className="w-full"
@@ -113,9 +113,11 @@ const StepTargeting: React.FC = () => {
               geoList.map((tag, idx) => (
                 <span
                   key={idx}
-                  className="flex items-center gap-1 bg-primary/10 text-primary border border-primary/20 text-xs px-2.5 py-1 rounded-full font-medium"
+                  className="flex items-center gap-1 bg-primary/20  border border-primary/20 text-xs px-2.5 py-1 rounded-full font-medium"
                 >
-                  {geoData.find((g) => g.value === tag)?.name || tag}
+                  {[{ name: "Global (All)", value: "all" }, ...geoData].find(
+                    (g) => g.value === tag,
+                  )?.name || tag}
                   <button
                     type="button"
                     onClick={() => removeGeoTag(idx)}
