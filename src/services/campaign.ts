@@ -31,6 +31,15 @@ export const campaignService = {
     );
     return response.data;
   },
+  updateCampaignStatus: async (id: string, status: "active" | "paused") => {
+    const response = await apiClient().patch(
+      "updateCampaignStatus",
+      { status },
+      {},
+      { id },
+    );
+    return response.data;
+  },
   deleteCampaign: async (id: string) => {
     const response = await apiClient().del(
       "deletCampaign",

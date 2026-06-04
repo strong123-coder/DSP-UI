@@ -1,7 +1,11 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Search } from "lucide-react";
-import { useGetCampaign, useGetCampaignPrefetch } from "@/query/useCampaign";
+import {
+  useGetCampaign,
+  useGetCampaignPrefetch,
+  useUpdateCampaignStatus,
+} from "@/query/useCampaign";
 import { Table } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import ThreeButtonPagination from "@/components/pagination/three-button-pagination";
@@ -14,6 +18,13 @@ import CampaignTableBody, {
 import CampaignDetailsModal from "./campaign-details-modal";
 import type { Campaign, SortDirection } from "../../types";
 import LoadingFallback from "@/components/ui/loading-fallback";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import UpdatePopupModal from "@/components/popupModals/update-popup-modal";
 
 const sortableKeys = new Set<string>([
   "title",
@@ -43,6 +54,13 @@ const CampaignListTable: React.FC = () => {
     direction: SortDirection;
   } | null>(null);
   const [viewCampaign, setViewCampaign] = useState<Campaign | null>(null);
+  const [statusChangeRequest, setStatusChangeRequest] = useState<{
+    campaign: Campaign;
+    targetStatus: "active" | "paused";
+  } | null>(null);
+
+  const { mutate: updateCampaignStatus, isPending: isUpdatingStatus } =
+    useUpdateCampaignStatus();
 
   // --- Debounced search ---
   useEffect(() => {
@@ -183,7 +201,41 @@ const CampaignListTable: React.FC = () => {
     (campaign: Campaign, key: string): React.ReactNode => {
       const value = campaign[key as keyof Campaign];
 
-      if (key === "status") return <StatusBadge status={String(value || "")} />;
+      if (key === "status") {
+        return (
+          <div onClick={(e) => e.stopPropagation()}>
+            <DropdownMenu>
+              <DropdownMenuTrigger className="focus:outline-none select-none">
+                <StatusBadge status={String(value || "")} />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start">
+                <DropdownMenuItem
+                  disabled={value === "active"}
+                  onClick={() =>
+                    setStatusChangeRequest({
+                      campaign,
+                      targetStatus: "active",
+                    })
+                  }
+                >
+                  Active
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  disabled={value === "paused"}
+                  onClick={() =>
+                    setStatusChangeRequest({
+                      campaign,
+                      targetStatus: "paused",
+                    })
+                  }
+                >
+                  Paused
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        );
+      }
       if (key === "type") return <TypeBadge type={String(value || "")} />;
 
       if (key === "budget" || key === "dailyBudget") {
@@ -250,7 +302,6 @@ const CampaignListTable: React.FC = () => {
           <CampaignTableBody
             campaigns={sortedCampaigns}
             dataMapping={dataMapping}
-            onViewCampaign={setViewCampaign}
             getDisplayValue={getDisplayValue}
           />
         </Table>
@@ -278,6 +329,39 @@ const CampaignListTable: React.FC = () => {
       <CampaignDetailsModal
         campaign={viewCampaign}
         onClose={() => setViewCampaign(null)}
+      />
+
+      {/* Status Confirmation Modal */}
+      <UpdatePopupModal
+        isOpen={!!statusChangeRequest}
+        title={<strong>Change Campaign Status</strong>}
+        description={
+          <span>
+            Are you sure you want to change the status of campaign{" "}
+            <strong>{statusChangeRequest?.campaign?.title}</strong> to{" "}
+            <span className="font-semibold text-foreground capitalize">
+              {statusChangeRequest?.targetStatus}
+            </span>
+            ?
+          </span>
+        }
+        cancelButtonAction={() => setStatusChangeRequest(null)}
+        updateButtonAction={() => {
+          if (statusChangeRequest) {
+            updateCampaignStatus(
+              {
+                id: statusChangeRequest.campaign._id,
+                status: statusChangeRequest.targetStatus,
+              },
+              {
+                onSuccess: () => {
+                  setStatusChangeRequest(null);
+                },
+              }
+            );
+          }
+        }}
+        isUpdating={isUpdatingStatus}
       />
     </div>
   );

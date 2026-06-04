@@ -2,7 +2,6 @@ import { useState, lazy, Suspense, useEffect } from "react";
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate, useParams } from "react-router-dom";
-import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -80,7 +79,9 @@ const CamapaingEdit = () => {
   const [formData, setFormData] = useState<EditCampaignFormValues | null>(null);
 
   const [deletedMediaIds, setDeletedMediaIds] = useState<string[]>([]);
-  const [newlyUploadedMediaIds, setNewlyUploadedMediaIds] = useState<string[]>([]);
+  const [newlyUploadedMediaIds, setNewlyUploadedMediaIds] = useState<string[]>(
+    [],
+  );
 
   const methods = useForm<EditCampaignFormValues>({
     resolver: zodResolver(editCampaignSchema),
@@ -258,10 +259,7 @@ const CamapaingEdit = () => {
               Cancel
             </Button>
 
-            <Button
-              type="submit"
-              disabled={editCampaignPending}
-            >
+            <Button type="submit" disabled={editCampaignPending}>
               Update Campaign
             </Button>
           </div>
@@ -274,7 +272,8 @@ const CamapaingEdit = () => {
         description={
           <span>
             Are you sure you want to update the campaign{" "}
-            <strong>{campaignData?.title}</strong>? This will apply all changes immediately.
+            <strong>{campaignData?.title}</strong>? This will apply all changes
+            immediately.
           </span>
         }
         cancelButtonAction={() => {

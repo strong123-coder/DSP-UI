@@ -17,14 +17,12 @@ import { useDeleteCampaign } from "@/query/useCampaign";
 interface CampaignTableBodyProps {
   campaigns: Campaign[];
   dataMapping: Record<string, string>;
-  onViewCampaign: (campaign: Campaign) => void;
   getDisplayValue: (campaign: Campaign, key: string) => React.ReactNode;
 }
 
 const CampaignTableBody: React.FC<CampaignTableBodyProps> = ({
   campaigns,
   dataMapping,
-  onViewCampaign,
   getDisplayValue,
 }) => {
   const navigate = useNavigate();

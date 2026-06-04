@@ -167,3 +167,27 @@ export const useDeleteCampaign = () => {
     },
   });
 };
+
+export const useUpdateCampaignStatus = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, status }: { id: string; status: "active" | "paused" }) =>
+      campaignService.updateCampaignStatus(id, status),
+    onSuccess: (response: any, variables) => {
+      const message =
+        response?.message ||
+        response?.data?.message ||
+        "Campaign status updated successfully";
+      toast.success(message);
+      queryClient.invalidateQueries({ queryKey: ["campaign", variables.id] });
+      queryClient.invalidateQueries({ queryKey: ["campaigns"] });
+    },
+    onError: (
+      error: AxiosError<{ message?: string; data?: { message?: string } }>,
+    ) => {
+      const errorMsg = extractApiErrors(error.response?.data);
+      errorMsg.forEach((msg) => toast.error(msg));
+    },
+  });
+};

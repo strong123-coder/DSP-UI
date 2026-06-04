@@ -20,6 +20,11 @@ export const apiConfig: ApiEndpoint[] = [
     hasPathParams: true,
   },
   {
+    name: "updateCampaignStatus",
+    path: "/api/v1/campaign/status/{id}",
+    hasPathParams: true,
+  },
+  {
     name: "deletCampaign",
     path: "/api/v1/campaign/delete/{id}",
     hasPathParams: true,
