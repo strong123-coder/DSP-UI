@@ -1,19 +1,20 @@
-import React, { Suspense } from "react";
-import LoadingFallback from "@/components/ui/loading-fallback";
-
-const Users = React.lazy(() => import("./users"));
-
-const UsersContainer: React.FC = () => {
-  return (
-    <Suspense fallback={<LoadingFallback />}>
-      <Users />
-    </Suspense>
-  );
-};
+import { Navigate } from "react-router";
+import UsersListConfig from "./usersList/users-list-config";
+import UsersAddConfig from "./usersAdd/users-add-config";
+import UsersEditConfig from "./usersEdit/users-edit-config";
 
 const UsersConfig = {
   path: "/management/users",
-  element: <UsersContainer />,
+  title: "Users",
+  children: [
+    {
+      index: true,
+      element: <Navigate to="/management/users/list" replace />,
+    },
+    UsersListConfig,
+    UsersAddConfig,
+    UsersEditConfig,
+  ],
 };
 
 export default UsersConfig;
