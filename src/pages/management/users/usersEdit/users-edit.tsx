@@ -59,6 +59,22 @@ const UsersEdit = () => {
   const userData = userResponse?.data?.data;
 
   useEffect(() => {
+    try {
+      const orgConfigStr = sessionStorage.getItem("orgConfig");
+      if (orgConfigStr) {
+        const orgConfig = JSON.parse(orgConfigStr);
+        const adminIdFromSession = orgConfig?.data?.orgData?.adminId;
+        if (id && adminIdFromSession && id === adminIdFromSession) {
+          toast.error("You cannot edit this administrator user");
+          navigate("/management/users/list", { replace: true });
+        }
+      }
+    } catch (err) {
+      console.error("Failed to parse orgConfig from sessionStorage:", err);
+    }
+  }, [id, navigate]);
+
+  useEffect(() => {
     if (userData) {
       reset({
         name: userData.name || "",
