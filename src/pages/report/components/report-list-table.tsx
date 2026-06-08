@@ -266,9 +266,9 @@ const ReportListTable: React.FC = () => {
   return (
     <div className="space-y-6 ">
       {/* Search and Columns Selector Toolbar */}
-      <div >
-        <div className="flex items-center gap-3 flex-1">
-          {/* Columns Selector Dropdown (Checkbox behavior) */}
+      <div className="relative w-full flex justify-center items-center">
+        {/* Columns Selector Dropdown (Checkbox behavior) on the left */}
+        <div className="absolute left-0">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
@@ -323,20 +323,20 @@ const ReportListTable: React.FC = () => {
               </DropdownMenuCheckboxItem>
             </DropdownMenuContent>
           </DropdownMenu>
+        </div>
 
-          {/* Search box */}
-          <div className="relative w-full max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              id="report-search"
-              autoComplete="off"
-              type="text"
-              placeholder="Search reports..."
-              className="pl-9 pr-4"
-              value={searchState}
-              onChange={(e) => setSearchState(e.target.value)}
-            />
-          </div>
+        {/* Centered Search box */}
+        <div className="relative w-full max-w-md">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            id="report-search"
+            autoComplete="off"
+            type="text"
+            placeholder="Search reports..."
+            className="pl-9 pr-4"
+            value={searchState}
+            onChange={(e) => setSearchState(e.target.value)}
+          />
         </div>
       </div>
 
