@@ -8,7 +8,7 @@ import {
 } from "react-router-dom";
 import { Menu, LogOut, Circle, UserCircle } from "lucide-react";
 import { useAppStore } from "@/store";
-import { ThemeToggle } from "@/components/theme-toggle";
+import logo from "@/assets/strongmetrics-logo.webp";
 import {
   Accordion,
   AccordionItem,
@@ -63,20 +63,12 @@ export default function MainLayout() {
         {/* Sidebar Upper Brand and Nav */}
         <div className="flex-1 flex flex-col min-h-0 overflow-y-auto">
           {/* Brand Header */}
-          <div className="p-6 flex items-center gap-3 border-b border-border">
-            <div className="w-9 h-9 bg-linear-to-br from-primary to-primary/60 rounded-lg flex items-center justify-center shadow-lg shadow-primary/25 transform transition-all hover:scale-105">
-              <span className="text-primary-foreground text-lg font-bold">
-                D
-              </span>
-            </div>
-            <div>
-              <h2 className="text-base font-bold tracking-tight text-foreground leading-tight">
-                DSP-UI Console
-              </h2>
-              <span className="text-[10px] uppercase tracking-wider text-primary dark:text-blue-400 font-semibold">
-                {user?.type || "Console Administrator"}
-              </span>
-            </div>
+          <div className="p-6 flex items-center border-b border-border">
+            <img
+              src={logo}
+              alt="strong metrics"
+              className="w-40 h-auto"
+            />
           </div>
 
           {/* Navigation Directory */}
@@ -102,15 +94,15 @@ export default function MainLayout() {
                       flex items-center gap-3.5 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-250 relative group
                       ${
                         isSelected || isActive
-                          ? "text-primary dark:text-white bg-primary/10 border-l-3 border-primary"
-                          : "text-muted-foreground hover:text-foreground hover:bg-white/5"
+                          ? "text-primary-foreground bg-primary shadow-md shadow-primary/30"
+                          : "text-muted-foreground hover:text-foreground hover:bg-primary/5"
                       }
                     `}
                   >
                     <IconComponent className="w-5 h-5 transition-transform duration-200 group-hover:scale-110" />
                     <span>{item.title}</span>
                     {isSelected && (
-                      <div className="absolute right-3 w-1.5 h-1.5 bg-primary rounded-full animate-pulse"></div>
+                      <div className="absolute right-3 w-1.5 h-1.5 bg-primary-foreground rounded-full animate-pulse"></div>
                     )}
                   </NavLink>
                 );
@@ -208,9 +200,6 @@ export default function MainLayout() {
             <h1 className="text-xl font-bold tracking-tight text-foreground mt-0.5">
               {getPageTitle()}
             </h1>
-          </div>
-          <div className="flex items-center gap-4">
-            <ThemeToggle />
           </div>
         </header>
 
