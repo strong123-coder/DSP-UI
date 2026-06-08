@@ -37,7 +37,7 @@ export default function MainLayout() {
     if (matches) {
       // Find the last matched route that has a title
       for (let i = matches.length - 1; i >= 0; i--) {
-        const route = matches[i].route as any;
+        const route = matches[i].route as { title?: string };
         if (route.title) {
           return route.title;
         }

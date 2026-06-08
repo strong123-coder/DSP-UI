@@ -224,7 +224,7 @@ const CamapaingEdit = () => {
     setShowUpdateModal(true);
   };
 
-  if (isLoading) {
+  if (isLoading || !campaignData) {
     return <LoadingFallback />;
   }
 
