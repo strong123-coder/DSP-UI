@@ -1,8 +1,8 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate } from "react-router-dom";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { RefreshCw, Lock, Mail } from "lucide-react";
+import logo from "@/assets/strongmetrics-logo.webp";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -37,25 +37,16 @@ export default function Login() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4 font-sans relative">
-      {/* Theme Toggle */}
-      <div className="absolute top-4 right-4 z-50">
-        <ThemeToggle />
-      </div>
-
       <div className="w-full max-w-[420px] relative z-10">
         {/* Header */}
         <div className="flex flex-col items-center mb-8">
-          <div className="w-14 h-14 bg-linear-to-br from-primary to-primary/60 rounded-2xl flex items-center justify-center shadow-lg shadow-primary/25 mb-6">
-            <span className="text-primary-foreground text-2xl font-bold">
-              D
-            </span>
-          </div>
+          <img
+            src={logo}
+            alt="strong metrics"
+            className="w-56 h-auto mb-6"
+          />
 
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">
-            DSP-UI Portal
-          </h1>
-
-          <p className="text-sm text-muted-foreground mt-2">
+          <p className="text-sm text-muted-foreground">
             Console Management Administration
           </p>
         </div>

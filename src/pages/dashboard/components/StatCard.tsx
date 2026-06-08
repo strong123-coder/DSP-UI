@@ -18,7 +18,7 @@ export const StatCard: React.FC<StatCardProps> = ({
   icon,
 }) => {
   return (
-    <Card className="shadow-xs hover:shadow-md transition-shadow duration-300">
+    <Card className="shadow-md hover:shadow-lg transition-shadow duration-300">
       <CardContent className="flex flex-col justify-between h-full">
         <div className="flex items-center justify-between space-y-0 w-full pb-2">
           <span className="text-xs font-semibold cursor-pointer text-muted-foreground uppercase tracking-wider">

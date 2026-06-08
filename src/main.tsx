@@ -21,7 +21,9 @@ createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <ThemeProvider
       attribute="class"
-      defaultTheme="system"
+      defaultTheme="light"
+      forcedTheme="light"
+      enableSystem={false}
       storageKey="vite-ui-theme"
     >
       <QueryClientProvider client={queryClient}>

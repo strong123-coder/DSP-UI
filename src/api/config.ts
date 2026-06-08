@@ -6,6 +6,25 @@ export interface ApiEndpoint {
 
 export const apiConfig: ApiEndpoint[] = [
   { name: "login", path: "/api/v1/user/login" },
+  // user managment
+  { name: "getOrgConfig", path: "/api/v1/org/config-by-id" },
+  { name: "userList", path: "/api/v1/user/list" },
+  { name: "addUser", path: "/api/v1/user/create" },
+  {
+    name: "getUser",
+    path: "/api/v1/user/get/{id}",
+    hasPathParams: true,
+  },
+  {
+    name: "editUser",
+    path: "/api/v1/user/update/{id}",
+    hasPathParams: true,
+  },
+  {
+    name: "deleteUser",
+    path: "/api/v1/user/delete/{id}",
+    hasPathParams: true,
+  },
 
   { name: "addCampaign", path: "/api/v1/campaign/add" },
   { name: "campaignList", path: "/api/v1/campaign/list" },
