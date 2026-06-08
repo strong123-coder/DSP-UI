@@ -4,6 +4,7 @@ import {
   FolderLock,
   Settings,
   Compass,
+  BarChart3,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -41,6 +42,11 @@ export const SidebarConf: SidebarConfiguration = {
       title: "Campaign",
       url: "/campaign/list",
       icon: Compass,
+    },
+    {
+      title: "Report",
+      url: "/report",
+      icon: BarChart3,
     },
     {
       title: "My Profile",
