@@ -9,6 +9,7 @@ import ThemeConfig from "@/pages/settings/theme/theme-config";
 import AccountConfig from "@/pages/settings/account/account-config";
 import LoginConfig from "@/pages/auth/login-config";
 import CampaignConfig from "@/pages/campaign/campaign-config";
+import ReportConfig from "@/pages/report/report-config";
 
 export const routes = [
   {
@@ -21,6 +22,7 @@ export const routes = [
     children: [
       DashboardConfig,
       CampaignConfig,
+      ReportConfig,
       ProfileConfig,
       UsersConfig,
       LogsConfig,

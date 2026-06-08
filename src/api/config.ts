@@ -65,4 +65,5 @@ export const apiConfig: ApiEndpoint[] = [
   { name: "dashboardPerformance", path: "/api/v1/dashboard/performance" },
   { name: "dashboardGoalReport", path: "/api/v1/dashboard/goal-report" },
   { name: "dashboardTopCampaigns", path: "/api/v1/dashboard/top-campaigns" },
+  { name: "reportData", path: "/api/v1/report/data" },
 ];
