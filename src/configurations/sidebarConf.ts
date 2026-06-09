@@ -2,7 +2,6 @@ import {
   LayoutDashboard,
   User,
   FolderLock,
-  Settings,
   Compass,
   BarChart3,
 } from "lucide-react";
@@ -64,27 +63,27 @@ export const SidebarConf: SidebarConfiguration = {
           title: "User Management",
           url: "/management/users",
         },
-        {
-          title: "System Logs",
-          url: "/management/logs",
-        },
+        // {
+        //   title: "System Logs",
+        //   url: "/management/logs",
+        // },
       ],
     },
-    {
-      title: "System Settings",
-      icon: Settings,
-      value: "settings",
-      items: [
-        {
-          title: "Theme Options",
-          url: "/settings/theme",
-        },
-        {
-          title: "Account Settings",
-          url: "/settings/account",
-        },
-      ],
-    },
+    // {
+    //   title: "System Settings",
+    //   icon: Settings,
+    //   value: "settings",
+    //   items: [
+    //     {
+    //       title: "Theme Options",
+    //       url: "/settings/theme",
+    //     },
+    //     {
+    //       title: "Account Settings",
+    //       url: "/settings/account",
+    //     },
+    //   ],
+    // },
   ],
 };
 
