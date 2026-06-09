@@ -30,20 +30,14 @@ export default function Login() {
     },
   });
 
-  // Normalize the org list response into { name, value } options for the dropdown
+  // Normalize the org list response into { name, value } options for the dropdown.
+  // API shape: { status, data: { details: [{ key, value }] } }
   const orgOptions = useMemo(() => {
-    const root: any = orgListResponse;
-    const list: any[] = Array.isArray(root)
-      ? root
-      : Array.isArray(root?.data)
-        ? root.data
-        : Array.isArray(root?.data?.data)
-          ? root.data.data
-          : [];
+    const details: any[] = orgListResponse?.data?.details ?? [];
 
-    return list.map((org) => ({
-      name: org.name ?? org.orgName ?? org.title ?? org.displayName ?? org._id,
-      value: org._id ?? org.id,
+    return details.map((org) => ({
+      name: org.value,
+      value: org.key,
     }));
   }, [orgListResponse]);
 
