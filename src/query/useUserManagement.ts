@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { authService } from "@/services/auth";
 import { userService } from "@/services/user";
+import { orgService } from "@/services/org";
 import { useAppStore } from "@/store";
 import { toast } from "sonner";
 import { AxiosError } from "axios";
@@ -47,6 +48,14 @@ export const useLogin = () => {
       const errorMsg = extractApiErrors(error.response?.data);
       errorMsg.forEach((msg) => toast.error(msg));
     },
+  });
+};
+
+export const useGetOrgList = () => {
+  return useQuery({
+    queryKey: ["orgList"],
+    queryFn: () => orgService.orgList(),
+    staleTime: 5 * 60 * 1000,
   });
 };
 

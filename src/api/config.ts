@@ -10,6 +10,7 @@ export const apiConfig: ApiEndpoint[] = [
   { name: "userProfile", path: "/api/v1/user/profile" },
   { name: "updateProfilePic", path: "/api/v1/user/update-profile-pic" },
   { name: "getOrgConfig", path: "/api/v1/org/config-by-id" },
+  { name: "orgList", path: "/api/v1/org/list" },
   { name: "userList", path: "/api/v1/user/list" },
   { name: "addUser", path: "/api/v1/user/create" },
   {
