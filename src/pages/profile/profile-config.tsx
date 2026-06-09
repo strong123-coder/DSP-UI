@@ -1,19 +1,17 @@
-import React, { Suspense } from "react";
-import LoadingFallback from "@/components/ui/loading-fallback";
-
-const Profile = React.lazy(() => import("./profile"));
-
-const ProfileContainer: React.FC = () => {
-  return (
-    <Suspense fallback={<LoadingFallback />}>
-      <Profile />
-    </Suspense>
-  );
-};
+import { Navigate } from "react-router-dom";
+import MyProfileConfig from "./myProfile/my-profile-config";
 
 const ProfileConfig = {
   path: "/profile",
-  element: <ProfileContainer />,
+  title: "Profile",
+  children: [
+    {
+      index: true,
+      element: <Navigate to="/profile/view" replace />,
+    },
+    MyProfileConfig,
+  ],
 };
 
 export default ProfileConfig;
+

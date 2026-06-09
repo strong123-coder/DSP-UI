@@ -213,3 +213,34 @@ export const useEditUser = () => {
     },
   });
 };
+
+export const useGetUserProfile = () => {
+  return useQuery({
+    queryKey: ["userProfile"],
+    queryFn: () => userService.userProfile(),
+  });
+};
+
+export const useUpdateUserProfilePic = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: FormData) => userService.updateProfilePic(payload),
+    onSuccess: (response: any) => {
+      const message =
+        response?.message ||
+        response?.data?.message ||
+        "Profile picture updated successfully";
+      toast.success(message);
+      queryClient.invalidateQueries({ queryKey: ["userProfile"] });
+    },
+    onError: (
+      error: AxiosError<{ message?: string; data?: { message?: string } }>,
+    ) => {
+      const errorMsg = extractApiErrors(error.response?.data);
+      errorMsg.forEach((msg) => toast.error(msg));
+    },
+  });
+};
+
+

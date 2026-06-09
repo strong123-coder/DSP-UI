@@ -7,6 +7,8 @@ export interface ApiEndpoint {
 export const apiConfig: ApiEndpoint[] = [
   { name: "login", path: "/api/v1/user/login" },
   // user managment
+  { name: "userProfile", path: "/api/v1/user/profile" },
+  { name: "updateProfilePic", path: "/api/v1/user/update-profile-pic" },
   { name: "getOrgConfig", path: "/api/v1/org/config-by-id" },
   { name: "userList", path: "/api/v1/user/list" },
   { name: "addUser", path: "/api/v1/user/create" },

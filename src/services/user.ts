@@ -2,6 +2,18 @@ import { apiClient } from "@/api/apiClient";
 import type { AddUserFormValues, EditUserFormValues } from "@/utils/schemas/user";
 
 export const userService = {
+  userProfile: async () => {
+    const response = await apiClient().get("userProfile");
+    return response.data;
+  },
+  updateProfilePic: async (payload: FormData) => {
+    const response = await apiClient().patch("updateProfilePic", payload, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+    return response.data;
+  },
   userList: async (params?: object) => {
     const response = await apiClient().get("userList", params);
     return response.data;

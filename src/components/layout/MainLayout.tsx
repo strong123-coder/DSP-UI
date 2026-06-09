@@ -79,11 +79,14 @@ export default function MainLayout() {
                 const IconComponent = item.icon;
                 const isDashboard = item.url === "/dashboard";
                 const isCampaign = item.url === "/campaign/list";
+                const isProfile = item.url === "/profile";
                 const isSelected = isDashboard
                   ? pathname === "/dashboard" || pathname === "/"
                   : isCampaign
                     ? pathname.startsWith("/campaign")
-                    : pathname === item.url;
+                    : isProfile
+                      ? pathname.startsWith("/profile")
+                      : pathname === item.url;
 
                 return (
                   <NavLink
