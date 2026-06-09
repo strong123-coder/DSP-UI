@@ -22,6 +22,8 @@ const mediaObjectSchema = z.object({
   id: z.string().trim().optional(),
   link: z.string().trim().optional(),
   type: z.string().trim().optional(),
+  w: z.number().optional(),
+  h: z.number().optional(),
 });
 
 // Root Add Campaign schema

@@ -14,6 +14,38 @@ import type { AddCampaignFormValues } from "@/utils/schemas/campaign";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 
+// Helper to read the natural width/height of an image or video file (client-side)
+const getMediaDimensions = (file: File): Promise<{ w: number; h: number }> => {
+  return new Promise((resolve) => {
+    const url = URL.createObjectURL(file);
+
+    if (file.type.startsWith("video")) {
+      const video = document.createElement("video");
+      video.preload = "metadata";
+      video.onloadedmetadata = () => {
+        URL.revokeObjectURL(url);
+        resolve({ w: video.videoWidth, h: video.videoHeight });
+      };
+      video.onerror = () => {
+        URL.revokeObjectURL(url);
+        resolve({ w: 0, h: 0 });
+      };
+      video.src = url;
+    } else {
+      const img = new Image();
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+        resolve({ w: img.naturalWidth, h: img.naturalHeight });
+      };
+      img.onerror = () => {
+        URL.revokeObjectURL(url);
+        resolve({ w: 0, h: 0 });
+      };
+      img.src = url;
+    }
+  });
+};
+
 // Helper to extract clean filename from URL
 const getFilenameFromUrl = (url: string) => {
   if (!url) return "Creative Asset";
@@ -38,6 +70,8 @@ interface MediaCreativeCardProps {
   link: string;
   type: string;
   filename: string;
+  w?: number;
+  h?: number;
   newlyUploadedMediaIds: string[];
   setNewlyUploadedMediaIds: React.Dispatch<React.SetStateAction<string[]>>;
   setDeletedMediaIds?: React.Dispatch<React.SetStateAction<string[]>>;
@@ -51,6 +85,8 @@ const MediaCreativeCard: React.FC<MediaCreativeCardProps> = ({
   link,
   type,
   filename,
+  w,
+  h,
   newlyUploadedMediaIds,
   setNewlyUploadedMediaIds,
   setDeletedMediaIds,
@@ -123,6 +159,11 @@ const MediaCreativeCard: React.FC<MediaCreativeCardProps> = ({
           >
             {filename}
           </p>
+          {w && h ? (
+            <p className="text-[10px] text-muted-foreground mt-0.5">
+              {w} × {h} px
+            </p>
+          ) : null}
         </div>
         <div className="flex items-center gap-1 shrink-0">
           {link && (
@@ -192,7 +233,7 @@ const StepMediaCreatives: React.FC<StepMediaCreativesProps> = ({
   const { mutate: addMediaMutation, isPending: addMediaPending } =
     useAddMedia();
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -215,6 +256,9 @@ const StepMediaCreatives: React.FC<StepMediaCreativesProps> = ({
       return;
     }
 
+    // Read the natural dimensions from the file before uploading
+    const { w, h } = await getMediaDimensions(file);
+
     const formData = new FormData();
     formData.append("name", file.name);
     formData.append("type", "campaign");
@@ -233,6 +277,8 @@ const StepMediaCreatives: React.FC<StepMediaCreativesProps> = ({
             id: mediaId,
             link: mediaData.link1 || mediaData.link,
             type: mediaData.fileType?.includes("video") ? "video" : "image",
+            w,
+            h,
           });
         }
       },
@@ -311,6 +357,8 @@ const StepMediaCreatives: React.FC<StepMediaCreativesProps> = ({
                       link={link}
                       type={type}
                       filename={filename}
+                      w={val.w}
+                      h={val.h}
                       newlyUploadedMediaIds={newlyUploadedMediaIds}
                       setNewlyUploadedMediaIds={setNewlyUploadedMediaIds}
                       setDeletedMediaIds={setDeletedMediaIds}

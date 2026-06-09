@@ -25,7 +25,7 @@ export interface Campaign {
   customAudienceIds?: string[];
   inventoryType?: string;
   oemPremiumPartners?: string[];
-  media?: Array<{ id?: string; link?: string; type?: string }>;
+  media?: Array<{ id?: string; link?: string; type?: string; w?: number; h?: number }>;
   createdAt: string;
   updatedAt: string;
 }
