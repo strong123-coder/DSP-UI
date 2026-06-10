@@ -20,6 +20,7 @@ import {
   AccordionTrigger,
   AccordionContent,
 } from "@/components/ui/accordion";
+import { CurrencyType } from "@/utils/data/data";
 const StepObjectiveInfo = lazy(
   () => import("../components/stepComponents/stepObjectiveInfo"),
 );
@@ -110,7 +111,7 @@ const CamapaingAdd = () => {
       type: "mobile",
       goal: "install",
       status: "paused",
-      currency: "USD",
+      currency: CurrencyType.USD,
       bundleId: "",
       budget: "",
       dailyBudget: "",
@@ -121,7 +122,13 @@ const CamapaingAdd = () => {
       mmpPlatform: "appsflyer",
       ctaUrl: "",
       vtaUrl: "",
-      eventDetails: [],
+      eventDetails: [
+        {
+          name: "Install",
+          bidPrice: "",
+          currency: CurrencyType.USD,
+        },
+      ],
       geo: [],
       isCustomTargating: false,
       customTargating: [],
@@ -177,7 +184,33 @@ const CamapaingAdd = () => {
         setMaxStepReached(nextStepVal);
       }
     } else {
-      onInvalid(methods.formState.errors);
+      const stepErrors: any = {};
+      fieldsToValidate.forEach((field) => {
+        if (methods.formState.errors[field]) {
+          stepErrors[field] = methods.formState.errors[field];
+        }
+      });
+      onInvalid(stepErrors);
+
+      // Extract the exact dot-notation path of the first error for setFocus
+      const getFirstErrorPath = (obj: any, currentPath = ""): string | null => {
+        if (!obj) return null;
+        if (obj.message && typeof obj.message === "string") return currentPath;
+        for (const key of Object.keys(obj)) {
+          const val = obj[key];
+          if (val && typeof val === "object") {
+            const newPath = currentPath ? `${currentPath}.${key}` : key;
+            const result = getFirstErrorPath(val, newPath);
+            if (result) return result;
+          }
+        }
+        return null;
+      };
+
+      const firstPath = getFirstErrorPath(stepErrors);
+      if (firstPath) {
+        methods.setFocus(firstPath as any);
+      }
     }
   };
 

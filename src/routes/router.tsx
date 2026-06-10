@@ -20,6 +20,10 @@ export const routes = [
       </AuthGuard>
     ),
     children: [
+      {
+        index: true,
+        element: <Navigate to="/dashboard" replace />,
+      },
       DashboardConfig,
       CampaignConfig,
       ReportConfig,
@@ -32,7 +36,7 @@ export const routes = [
   },
   {
     path: "*",
-    element: <Navigate to="/" replace />,
+    element: <Navigate to="/dashboard" replace />,
   },
   LoginConfig,
 ];
@@ -40,4 +44,3 @@ export const routes = [
 const router = createBrowserRouter(routes);
 
 export default router;
-

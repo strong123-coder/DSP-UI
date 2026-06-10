@@ -92,13 +92,16 @@ const StepTargeting: React.FC = () => {
             <Controller
               name="geo"
               control={control}
-              render={({ field }) => (
+              render={({ field, fieldState }) => (
                 <MultiSelectComponent
+                  ref={field.ref}
                   placeholder="Select regions/countries"
                   data={[{ name: "Global (All)", value: "all" }, ...geoData]}
                   values={field.value || []}
                   onValuesChange={field.onChange}
                   className="w-full"
+                  ariaInvalid={!!fieldState.error}
+                  errorTooltip={fieldState.error?.message}
                 />
               )}
             />
@@ -255,13 +258,16 @@ const StepTargeting: React.FC = () => {
               <Controller
                 name="audienceTarget"
                 control={control}
-                render={({ field }) => (
+                render={({ field, fieldState }) => (
                   <SelectComponent
+                    ref={field.ref}
                     onValueChange={field.onChange}
                     value={field.value || "all"}
                     placeholder="Select Target Type"
                     title="Audience Target Type"
                     data={AudienceTargetData}
+                    ariaInvalid={!!fieldState.error}
+                    errorTooltip={fieldState.error?.message}
                   />
                 )}
               />

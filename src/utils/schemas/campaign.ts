@@ -6,8 +6,20 @@ export type AddCampaignFormValues = InferSchemaType<typeof addCampaignSchema>;
 // Nested Event schema
 const eventDetailSchema = z.object({
   name: z.string().trim().min(1, { message: "Event name is required" }),
-  bidPrice: z.string().trim().optional(),
-  currency: z.string().trim().optional(),
+  bidPrice: z
+    .string()
+    .trim()
+    .min(1, { message: "Bid price is required" })
+    .refine(
+      (val) => {
+        const num = Number(val);
+        return !isNaN(num) && num > 0;
+      },
+      {
+        message: "Bid price must be greater than 0",
+      },
+    ),
+  currency: z.string().trim().min(1, { message: "Currency is required" }),
 });
 
 // Nested Targeting schema
@@ -98,7 +110,7 @@ export const addCampaignSchema = z
     ctaUrl: z.string().trim().min(1, { message: "CTA URL is required" }),
     vtaUrl: z.string().trim().min(1, { message: "VTA URL is required" }),
     eventDetails: z.array(eventDetailSchema).optional(),
-    geo: z.array(z.string().trim()).optional(),
+    geo: z.array(z.string().trim()).min(1, { message: "Geo is required" }),
     isCustomTargating: z.boolean().optional(),
     customTargating: z.array(customTargatingSchema).optional(),
     audienceTarget: z.enum(["all", "custom"]).optional(),
@@ -121,6 +133,19 @@ export const addCampaignSchema = z
           code: "custom",
           message: "End date is required when scheduling is enabled",
           path: ["endDate"],
+        });
+      }
+    }
+
+    if (data.dailyBudget && data.budget) {
+      const daily = Number(data.dailyBudget);
+      const total = Number(data.budget);
+
+      if (!isNaN(daily) && !isNaN(total) && daily > total) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Daily budget cannot exceed total budget",
+          path: ["dailyBudget"],
         });
       }
     }

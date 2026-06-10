@@ -198,6 +198,26 @@ const CamapaingEdit = () => {
     if (firstErrorMessage) {
       toast.error(firstErrorMessage);
     }
+
+    // Extract the exact dot-notation path of the first error for setFocus
+    const getFirstErrorPath = (obj: any, currentPath = ""): string | null => {
+      if (!obj) return null;
+      if (obj.message && typeof obj.message === "string") return currentPath;
+      for (const key of Object.keys(obj)) {
+        const val = obj[key];
+        if (val && typeof val === "object") {
+          const newPath = currentPath ? `${currentPath}.${key}` : key;
+          const result = getFirstErrorPath(val, newPath);
+          if (result) return result;
+        }
+      }
+      return null;
+    };
+
+    const firstPath = getFirstErrorPath(errors);
+    if (firstPath) {
+      methods.setFocus(firstPath as any);
+    }
   };
 
   const onSubmit = (data: EditCampaignFormValues) => {

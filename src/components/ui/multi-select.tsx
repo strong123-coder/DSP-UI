@@ -92,22 +92,26 @@ export function MultiSelect({
   );
 }
 
-export function MultiSelectTrigger({
-  className,
-  children,
-  ariaInvalid,
-  ...props
-}: {
-  className?: string;
-  children?: ReactNode;
-  ariaInvalid?: boolean;
-} & ComponentPropsWithoutRef<typeof Button>) {
+import React from "react";
+
+export const MultiSelectTrigger = React.forwardRef<
+  HTMLButtonElement,
+  {
+    className?: string;
+    children?: ReactNode;
+    ariaInvalid?: boolean;
+    variant?: any;
+    role?: any;
+    "aria-expanded"?: any;
+  } & React.ButtonHTMLAttributes<HTMLButtonElement>
+>(({ className, children, ariaInvalid, ...props }, ref) => {
   const { open } = useMultiSelectContext();
 
   return (
     <PopoverTrigger asChild>
       <Button
         {...props}
+        ref={ref}
         variant={props.variant ?? "outline"}
         role={props.role ?? "combobox"}
         aria-expanded={props["aria-expanded"] ?? open}
@@ -122,7 +126,7 @@ export function MultiSelectTrigger({
       </Button>
     </PopoverTrigger>
   );
-}
+});
 
 export function MultiSelectValue({
   placeholder,

@@ -19,6 +19,7 @@ import { Loader2 } from "lucide-react";
 import { extractApiErrors } from "@/utils/getErrorMessage";
 import { useFormMode } from "@/utils/context/FormModeContext";
 import { toast } from "sonner";
+import { currencyData } from "@/utils/data/data";
 
 function useDebounce<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
@@ -52,6 +53,7 @@ const StepCampaignDetails = () => {
   const watchBundleId = watch("bundleId");
   const watchAppOs = watch("appOs");
   const watchAppIconLink = watch("appIconLink");
+  const watchCurrency = watch("currency");
 
   const debouncedBundleId = useDebounce(watchBundleId, 500);
 
@@ -128,6 +130,7 @@ const StepCampaignDetails = () => {
               control={control}
               render={({ field }) => (
                 <SelectComponent
+                  ref={field.ref}
                   disabled={isEdit}
                   id="appOs"
                   placeholder="Please select app OS"
@@ -150,7 +153,12 @@ const StepCampaignDetails = () => {
             <div className="relative flex items-center">
               <Input
                 id="bundleId"
-                disabled={isEdit}
+                placeholder={
+                  !Boolean(watchAppOs)
+                    ? "Please select app OS first"
+                    : "Provide Bundle ID ex.(com.package.name)"
+                }
+                disabled={isEdit || !Boolean(watchAppOs)}
                 {...register("bundleId")}
                 aria-invalid={!!errors.bundleId || appDetailsIsError}
                 errorTooltip={
@@ -182,7 +190,10 @@ const StepCampaignDetails = () => {
             <Label htmlFor="dailyBudget">Daily Budget</Label>
             <div className="relative flex items-center">
               <span className="absolute left-3 text-muted-foreground text-sm font-medium select-none">
-                $
+                {
+                  currencyData?.find((item) => item.value === watchCurrency)
+                    ?.symbol
+                }
               </span>
               <Input
                 id="dailyBudget"
@@ -210,7 +221,10 @@ const StepCampaignDetails = () => {
             <Label htmlFor="budget">Total Budget</Label>
             <div className="relative flex items-center">
               <span className="absolute left-3 text-muted-foreground text-sm font-medium select-none">
-                $
+                {
+                  currencyData?.find((item) => item.value === watchCurrency)
+                    ?.symbol
+                }
               </span>
               <Input
                 id="budget"
