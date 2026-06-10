@@ -66,7 +66,7 @@ export default function MainLayout() {
           <div className="p-6 flex items-center border-b border-border">
             <img
               src={logo}
-              alt="strong metrics"
+              alt="Strongmetrics"
               className="w-40 h-auto"
             />
           </div>

@@ -65,7 +65,7 @@ export default function Login() {
         <div className="flex flex-col items-center mb-8">
           <img
             src={logo}
-            alt="strong metrics"
+            alt="Strongmetrics"
             className="w-56 h-auto mb-6"
           />
 
