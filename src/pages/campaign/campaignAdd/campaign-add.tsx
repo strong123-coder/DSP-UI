@@ -191,26 +191,6 @@ const CamapaingAdd = () => {
         }
       });
       onInvalid(stepErrors);
-
-      // Extract the exact dot-notation path of the first error for setFocus
-      const getFirstErrorPath = (obj: any, currentPath = ""): string | null => {
-        if (!obj) return null;
-        if (obj.message && typeof obj.message === "string") return currentPath;
-        for (const key of Object.keys(obj)) {
-          const val = obj[key];
-          if (val && typeof val === "object") {
-            const newPath = currentPath ? `${currentPath}.${key}` : key;
-            const result = getFirstErrorPath(val, newPath);
-            if (result) return result;
-          }
-        }
-        return null;
-      };
-
-      const firstPath = getFirstErrorPath(stepErrors);
-      if (firstPath) {
-        methods.setFocus(firstPath as any);
-      }
     }
   };
 
@@ -218,25 +198,73 @@ const CamapaingAdd = () => {
     setStep((prev) => Math.max(1, prev - 1));
   };
 
-  const onInvalid = (errors: any) => {
-    console.log(errors);
-    // Helper to find the first error message in the validation error tree
-    const findFirstError = (obj: any): string | null => {
-      if (!obj) return null;
-      if (typeof obj === "object" && obj.message) return obj.message;
-      for (const key of Object.keys(obj)) {
-        const val = obj[key];
-        if (val && typeof val === "object") {
-          const result = findFirstError(val);
-          if (result) return result;
+  const ORDERED_FIELDS = [
+    "title",
+    "goal",
+    "appOs",
+    "bundleId",
+    "appName",
+    "appIconLink",
+    "budget",
+    "dailyBudget",
+    "kpi",
+    "isScheduling",
+    "startDate",
+    "endDate",
+    "mmpPlatform",
+    "ctaUrl",
+    "vtaUrl",
+    "eventDetails",
+    "geo",
+    "isCustomTargating",
+    "customTargating",
+    "audienceTarget",
+    "customAudienceIds",
+    "inventoryType",
+    "oemPremiumPartners",
+    "media",
+  ];
+
+  const getFirstVisualError = (errorsObj: any) => {
+    for (const field of ORDERED_FIELDS) {
+      if (errorsObj[field]) {
+        if (Array.isArray(errorsObj[field])) {
+          const firstErrIndex = errorsObj[field].findIndex(
+            (err: any) => err !== undefined && err !== null
+          );
+          if (firstErrIndex !== -1) {
+            const errObj = errorsObj[field][firstErrIndex];
+            for (const key of Object.keys(errObj)) {
+              if (errObj[key]?.message) {
+                return {
+                  message: errObj[key].message,
+                  path: `${field}.${firstErrIndex}.${key}`,
+                };
+              }
+            }
+          }
+        }
+        if (errorsObj[field].message) {
+          return {
+            message: errorsObj[field].message,
+            path: field,
+          };
         }
       }
-      return null;
-    };
+    }
+    return null;
+  };
 
-    const firstErrorMessage = findFirstError(errors);
-    if (firstErrorMessage) {
-      toast.error(firstErrorMessage);
+  const onInvalid = (errors: any) => {
+    console.log("Validation Errors:", errors);
+    const firstError = getFirstVisualError(errors);
+    
+    if (firstError) {
+      toast.error(firstError.message);
+      // Wait for React Hook Form's native focus to fire (if using handleSubmit), then override it
+      setTimeout(() => {
+        methods.setFocus(firstError.path as any);
+      }, 0);
     }
   };
 
