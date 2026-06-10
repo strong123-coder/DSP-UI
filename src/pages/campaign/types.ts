@@ -7,6 +7,10 @@ export interface Campaign {
   type: string;
   status: string;
   currency?: string;
+  orgId?: string;
+  appOs?: string;
+  appName?: string;
+  appIconLink?: string;
   bundleId: string;
   budget: string;
   dailyBudget: string;
@@ -25,7 +29,13 @@ export interface Campaign {
   customAudienceIds?: string[];
   inventoryType?: string;
   oemPremiumPartners?: string[];
-  media?: Array<{ id?: string; link?: string; type?: string; w?: number; h?: number }>;
+  media?: Array<{
+    id?: string;
+    link?: string;
+    type?: string;
+    w?: number;
+    h?: number;
+  }>;
   createdAt: string;
   updatedAt: string;
 }

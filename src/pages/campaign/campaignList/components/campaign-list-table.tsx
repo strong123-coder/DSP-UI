@@ -201,6 +201,27 @@ const CampaignListTable: React.FC = () => {
     (campaign: Campaign, key: string): React.ReactNode => {
       const value = campaign[key as keyof Campaign];
 
+      if (key === "title") {
+        return (
+          <div className="flex items-center gap-3">
+            {campaign?.appIconLink ? (
+              <img
+                src={campaign?.appIconLink}
+                alt={campaign?.appName || String(value)}
+                className="w-8 h-8 rounded-md object-cover border border-border"
+              />
+            ) : (
+              <div className="w-8 h-8 rounded-md bg-muted flex items-center justify-center border border-border">
+                <span className="text-xs font-semibold text-muted-foreground">
+                  {String(value).charAt(0).toUpperCase()}
+                </span>
+              </div>
+            )}
+            <span className="font-medium text-foreground">{String(value)}</span>
+          </div>
+        );
+      }
+
       if (key === "status") {
         return (
           <div onClick={(e) => e.stopPropagation()}>
@@ -357,7 +378,7 @@ const CampaignListTable: React.FC = () => {
                 onSuccess: () => {
                   setStatusChangeRequest(null);
                 },
-              }
+              },
             );
           }
         }}
