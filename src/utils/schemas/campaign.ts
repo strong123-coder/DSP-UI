@@ -108,7 +108,7 @@ export const addCampaignSchema = z
       ])
       .optional(),
     ctaUrl: z.string().trim().min(1, { message: "CTA URL is required" }),
-    vtaUrl: z.string().trim().min(1, { message: "VTA URL is required" }),
+    vtaUrl: z.string().trim().optional(),
     eventDetails: z.array(eventDetailSchema).optional(),
     geo: z.array(z.string().trim()).min(1, { message: "Geo is required" }),
     isCustomTargating: z.boolean().optional(),

@@ -86,7 +86,12 @@ const StepMmpIntegration: React.FC = () => {
 
           {/* VTA URL */}
           <div className="space-y-2 md:col-span-3">
-            <Label htmlFor="vtaUrl">View Through Attribution Link (VTA)</Label>
+            <Label htmlFor="vtaUrl">
+              View Through Attribution Link (VTA){" "}
+              <span className="text-muted-foreground font-normal">
+                (Optional)
+              </span>
+            </Label>
             <Textarea
               id="vtaUrl"
               {...register("vtaUrl")}
