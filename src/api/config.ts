@@ -6,6 +6,16 @@ export interface ApiEndpoint {
 
 export const apiConfig: ApiEndpoint[] = [
   { name: "login", path: "/api/v1/user/login" },
+  // super admin
+  { name: "superAdminLogin", path: "/api/v1/user/super-admin/login" },
+  { name: "superAdminDashboardSummary", path: "/api/v1/super-admin/dashboard/summary" },
+  { name: "superAdminOrgs", path: "/api/v1/super-admin/orgs" },
+  { name: "superAdminCampaigns", path: "/api/v1/super-admin/campaigns" },
+  // bid configuration (super admin only)
+  { name: "bidConfigGet", path: "/api/v1/bid-config/get" },
+  { name: "bidConfigUpsert", path: "/api/v1/bid-config/upsert" },
+  { name: "bidConfigCampaignUpsert", path: "/api/v1/bid-config/campaign/upsert" },
+  { name: "bidConfigCampaignRemove", path: "/api/v1/bid-config/campaign/remove" },
   // user managment
   { name: "userProfile", path: "/api/v1/user/profile" },
   { name: "updateProfilePic", path: "/api/v1/user/update-profile-pic" },

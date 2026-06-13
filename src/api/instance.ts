@@ -10,9 +10,15 @@ const instance: AxiosInstance = axios.create({
 
 instance.interceptors.request.use(
   (config) => {
-    const token = useAppStore.getState().token;
+    const { token, user, selectedOrg } = useAppStore.getState();
     if (token) {
       config.headers["Authorization"] = `Bearer ${token}`;
+    }
+    // Super-admin "impersonation": when a super admin has entered an org, send
+    // its id as x-org-id so every org-scoped endpoint resolves to that org
+    // (backend auth.js honours this header only for super_admin tokens).
+    if (user?.type === "super_admin" && selectedOrg?.id) {
+      config.headers["x-org-id"] = selectedOrg.id;
     }
     return config;
   },

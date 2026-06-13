@@ -21,6 +21,7 @@ export const useAppStore = create<AppState>()(
       partialize: (state) => ({
         token: state.token,
         user: state.user,
+        selectedOrg: state.selectedOrg,
       }),
       onRehydrateStorage: () => (state) => {
         state?.setHasHydrated(true);

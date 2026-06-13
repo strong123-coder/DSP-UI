@@ -5,4 +5,8 @@ export const authService = {
     const response = await apiClient().post("login", payload);
     return response.data;
   },
+  superAdminLogin: async (payload: any) => {
+    const response = await apiClient().post("superAdminLogin", payload);
+    return response.data;
+  },
 };

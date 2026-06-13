@@ -23,12 +23,21 @@ export default function MainLayout() {
   const { pathname } = useLocation();
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, logout } = useAppStore();
+  const { user, logout, selectedOrg, exitOrg } = useAppStore();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  const isImpersonating = user?.type === "super_admin" && !!selectedOrg;
 
   const handleLogout = () => {
     logout();
     navigate("/login");
+  };
+
+  // Super admin leaving the entered org → back to the all-orgs area.
+  const handleExitOrg = () => {
+    sessionStorage.removeItem("orgConfig");
+    exitOrg();
+    navigate("/super-admin/dashboard");
   };
 
   // Find page title dynamically based on route configuration
@@ -189,6 +198,23 @@ export default function MainLayout() {
 
       {/* Main Workspace Frame */}
       <div className="flex-1 flex flex-col min-w-0 h-screen overflow-y-scroll px-4 md:px-6 py-4 w-full">
+        {/* Super-admin impersonation banner */}
+        {isImpersonating && (
+          <div className="mb-3 flex items-center justify-between gap-3 rounded-lg border border-amber-300 bg-amber-50 dark:border-amber-700 dark:bg-amber-950/40 px-4 py-2.5">
+            <span className="text-sm text-amber-800 dark:text-amber-200">
+              Viewing <strong>{selectedOrg?.name}</strong> as super admin
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              className="cursor-pointer border-amber-400 text-amber-800 hover:bg-amber-100 dark:text-amber-200 dark:hover:bg-amber-900/40"
+              onClick={handleExitOrg}
+            >
+              <LogOut className="w-4 h-4 mr-2" /> Exit org
+            </Button>
+          </div>
+        )}
+
         {/* Workspace Top Header */}
         <header className="h-14 shrink-0 flex items-center justify-between border-b border-border bg-transparent mb-6">
           <div className="flex items-center gap-3">
