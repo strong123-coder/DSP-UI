@@ -27,6 +27,7 @@ interface CampaignsTableProps {
     installs: number;
     events: number;
     spent: number;
+    cpi: number | null;
   }>;
   formatNumber: (val: number) => string;
   formatCurrency: (val: number) => string;
@@ -76,6 +77,7 @@ export const CampaignsTable: React.FC<CampaignsTableProps> = ({
                 <SelectItem value="click">Click</SelectItem>
                 <SelectItem value="install">Install</SelectItem>
                 <SelectItem value="events">Events</SelectItem>
+                <SelectItem value="cpi">CPI</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -101,15 +103,18 @@ export const CampaignsTable: React.FC<CampaignsTableProps> = ({
                 <TableHead className="text-xs font-bold uppercase tracking-wider py-4 text-right">
                   Events
                 </TableHead>
-                <TableHead className="text-xs font-bold uppercase tracking-wider pr-6 py-4 text-right">
+                <TableHead className="text-xs font-bold uppercase tracking-wider py-4 text-right">
                   Spent
+                </TableHead>
+                <TableHead className="text-xs font-bold uppercase tracking-wider pr-6 py-4 text-right">
+                  CPI
                 </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {enrichedCampaigns.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground text-sm font-medium">
+                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground text-sm font-medium">
                     No campaigns data available
                   </TableCell>
                 </TableRow>
@@ -147,8 +152,15 @@ export const CampaignsTable: React.FC<CampaignsTableProps> = ({
                     <TableCell className="py-4 text-right font-medium">
                       {formatNumber(camp.events)}
                     </TableCell>
-                    <TableCell className="pr-6 py-4 text-right font-bold text-foreground">
+                    <TableCell className="py-4 text-right font-bold text-foreground">
                       {formatCurrency(camp.spent)}
+                    </TableCell>
+                    <TableCell className="pr-6 py-4 text-right font-medium">
+                      {camp.cpi == null ? (
+                        <span className="text-muted-foreground">—</span>
+                      ) : (
+                        formatCurrency(camp.cpi)
+                      )}
                     </TableCell>
                   </TableRow>
                 ))

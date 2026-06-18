@@ -13,6 +13,7 @@ import {
   Layers,
   Magnet,
   Send,
+  Target,
 } from "lucide-react";
 import { useGetDashboardSummary, useGetDashboardPerformance, useGetDashboardGoalReport, useGetDashboardTopCampaigns } from "@/query/useDashboard";
 import { useGetCampaignOptions } from "@/query/useCampaign";
@@ -223,6 +224,10 @@ export default function Dashboard() {
   const eventsVal = summary?.events?.value ?? 0;
   const eventsChange = summary?.events?.changePct ?? 0;
 
+  // CPI (Cost Per Install) is null until install data exists → render "—".
+  const cpiVal: number | null = summary?.cpi?.value ?? null;
+  const cpiChange = summary?.cpi?.changePct ?? 0;
+
   const reEngagementsActive = summary?.reEngagements?.active ?? 0;
   const reEngagementsTotal = summary?.reEngagements?.total ?? 0;
 
@@ -233,6 +238,7 @@ export default function Dashboard() {
   const trendSpent = `${spentChange >= 0 ? "+" : ""}${spentChange.toFixed(2)}%`;
   const trendInstall = `${installChange >= 0 ? "+" : ""}${installChange.toFixed(2)}%`;
   const trendEvents = `${eventsChange >= 0 ? "+" : ""}${eventsChange.toFixed(2)}%`;
+  const trendCpi = `${cpiChange >= 0 ? "+" : ""}${cpiChange.toFixed(2)}%`;
 
   // Performance chart data builder
   const chartData = useMemo(() => {
@@ -295,6 +301,7 @@ export default function Dashboard() {
       install: number;
       events: number;
       spent: number;
+      cpi: number | null;
     }>) ?? [];
 
     return apiData.map((item) => ({
@@ -305,6 +312,7 @@ export default function Dashboard() {
       installs: item.install,
       events: item.events,
       spent: item.spent,
+      cpi: item.cpi ?? null,
     }));
   }, [topCampaignsResponse]);
 
@@ -363,8 +371,8 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* 5 Stats Cards Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+      {/* Stats Cards Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
         <StatCard
           title="Spent"
           value={formatCurrency(spentVal)}
@@ -378,6 +386,13 @@ export default function Dashboard() {
           subtext={`${trendInstall} from last 7 days`}
           trendType="up"
           icon={<Download className="w-5 h-5" />}
+        />
+        <StatCard
+          title="CPI"
+          value={cpiVal == null ? "—" : formatCurrency(cpiVal)}
+          subtext={cpiVal == null ? "No installs yet" : `${trendCpi} from last 7 days`}
+          trendType={cpiVal == null ? "muted" : "up"}
+          icon={<Target className="w-5 h-5" />}
         />
         <StatCard
           title="Events"
