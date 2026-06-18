@@ -36,6 +36,8 @@ export interface Campaign {
     w?: number;
     h?: number;
   }>;
+  // Managed by super admin via bid config (read-only elsewhere).
+  enableBidding?: boolean;
   createdAt: string;
   updatedAt: string;
 }

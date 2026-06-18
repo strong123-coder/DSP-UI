@@ -58,3 +58,18 @@ export const useRemoveCampaignBid = () => {
     onError,
   });
 };
+
+export const useSetCampaignEnableBidding = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: { campaignId: string; enableBidding: boolean }) =>
+      bidConfigService.setEnableBidding(payload),
+    onSuccess: (_data, variables) => {
+      toast.success(
+        variables.enableBidding ? "Bidding enabled" : "Bidding disabled"
+      );
+      qc.invalidateQueries({ queryKey: ["superAdminCampaigns"] });
+    },
+    onError,
+  });
+};

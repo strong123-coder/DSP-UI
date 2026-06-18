@@ -33,6 +33,10 @@ export const bidConfigService = {
     const response = await apiClient().post("bidConfigCampaignRemove", { campaignId });
     return response.data;
   },
+  setEnableBidding: async (payload: { campaignId: string; enableBidding: boolean }) => {
+    const response = await apiClient().post("bidConfigCampaignEnableBidding", payload);
+    return response.data;
+  },
   // All campaigns across orgs (for the picker).
   campaigns: async () => {
     const response = await apiClient().get("superAdminCampaigns");

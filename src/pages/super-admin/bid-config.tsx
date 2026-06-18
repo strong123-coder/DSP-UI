@@ -10,6 +10,7 @@ import {
   useUpsertBidConfig,
   useUpsertCampaignBid,
   useRemoveCampaignBid,
+  useSetCampaignEnableBidding,
 } from "@/query/useBidConfig";
 
 export default function BidConfig() {
@@ -18,6 +19,7 @@ export default function BidConfig() {
   const upsertConfig = useUpsertBidConfig();
   const upsertCampaign = useUpsertCampaignBid();
   const removeCampaign = useRemoveCampaignBid();
+  const setEnableBidding = useSetCampaignEnableBidding();
 
   const config = cfgResp?.data?.config;
   const campaignBids: any[] = config?.campaignBids ?? [];
@@ -249,6 +251,75 @@ export default function BidConfig() {
                     </td>
                   </tr>
                 ))}
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Per-campaign bidding eligibility (enableBidding flag on the campaign) */}
+      <Card>
+        <CardContent className="p-0">
+          <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+            <div>
+              <h2 className="font-semibold">Campaign Bidding</h2>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Enable or disable whether each campaign is eligible to bid in the
+                engine.
+              </p>
+            </div>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left text-muted-foreground border-b border-border">
+                  <th className="px-5 py-3 font-medium">Campaign</th>
+                  <th className="px-5 py-3 font-medium">Organization</th>
+                  <th className="px-5 py-3 font-medium">Status</th>
+                  <th className="px-5 py-3 font-medium text-right">Bidding</th>
+                </tr>
+              </thead>
+              <tbody>
+                {allCampaigns.length === 0 && (
+                  <tr>
+                    <td colSpan={4} className="px-5 py-8 text-center text-muted-foreground">
+                      No campaigns found.
+                    </td>
+                  </tr>
+                )}
+                {allCampaigns.map((c) => {
+                  const enabled = c.enableBidding === true;
+                  return (
+                    <tr key={c.campaignId} className="border-b border-border/60 hover:bg-muted/40">
+                      <td className="px-5 py-3">{c.title}</td>
+                      <td className="px-5 py-3 text-muted-foreground">{c.orgName || "—"}</td>
+                      <td className="px-5 py-3 capitalize text-muted-foreground">{c.status}</td>
+                      <td className="px-5 py-3">
+                        <div className="flex items-center justify-end gap-3">
+                          <span
+                            className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold ${enabled ? "bg-emerald-500/10 text-emerald-600" : "bg-muted text-muted-foreground"}`}
+                          >
+                            {enabled ? "ENABLED" : "DISABLED"}
+                          </span>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="cursor-pointer"
+                            disabled={setEnableBidding.isPending}
+                            onClick={() =>
+                              setEnableBidding.mutate({
+                                campaignId: c.campaignId,
+                                enableBidding: !enabled,
+                              })
+                            }
+                          >
+                            {enabled ? "Disable" : "Enable"}
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

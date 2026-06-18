@@ -16,6 +16,7 @@ export const apiConfig: ApiEndpoint[] = [
   { name: "bidConfigUpsert", path: "/api/v1/bid-config/upsert" },
   { name: "bidConfigCampaignUpsert", path: "/api/v1/bid-config/campaign/upsert" },
   { name: "bidConfigCampaignRemove", path: "/api/v1/bid-config/campaign/remove" },
+  { name: "bidConfigCampaignEnableBidding", path: "/api/v1/bid-config/campaign/enable-bidding" },
   // user managment
   { name: "userProfile", path: "/api/v1/user/profile" },
   { name: "updateProfilePic", path: "/api/v1/user/update-profile-pic" },
