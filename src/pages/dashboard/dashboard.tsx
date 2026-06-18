@@ -210,7 +210,7 @@ export default function Dashboard() {
     return (campaignsResponse?.data as Array<{ id: string; value: string }>) ?? [];
   }, [campaignsResponse]);
 
-  const summary = summaryResponse?.data;
+  const summary = summaryResponse?.data?.data;
 
   // Extract variables with API data (and defaults for empty states)
   const spentVal = summary?.spent?.value ?? 0;
