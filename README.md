@@ -1,5 +1,6 @@
 # React + TypeScript + Vite (DSP-UI)
 
+
 > [!IMPORTANT]
 > **DSP-UI Project Architecture & Guidelines**: 
 > Please read the strict design, routing, state, and styling guidelines in [.skills/dsp-ui-guidelines/SKILL.md](file:///d:/project/DSP-UI/.skills/dsp-ui-guidelines/SKILL.md) before building or modifying code in this repository. Ensure you adhere to the **Service-Query-View** structure, custom **Shadcn Radix-Maia Theme (`--radius: 0`)**, and **Flex Stability / Gutter scrollbar rules**.
