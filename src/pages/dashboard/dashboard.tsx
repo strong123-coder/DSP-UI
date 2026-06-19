@@ -383,35 +383,35 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-4">
         <StatCard
           title="Spent"
-          value={formatCurrency(spentVal)}
+          value={<MetricValue value={spentVal} currency decimals={2} />}
           subtext={`${trendSpent} from last 7 days`}
           trendType="up"
           icon={<Wallet className="w-5 h-5" />}
         />
         <StatCard
           title="Install"
-          value={formatNumber(installVal)}
+          value={<MetricValue value={installVal} />}
           subtext={`${trendInstall} from last 7 days`}
           trendType="up"
           icon={<Download className="w-5 h-5" />}
         />
         <StatCard
           title="CPI"
-          value={cpiVal == null ? "—" : formatCurrency(cpiVal)}
+          value={<MetricValue value={cpiVal} currency decimals={2} />}
           subtext={cpiVal == null ? "No installs yet" : `${trendCpi} from last 7 days`}
           trendType={cpiVal == null ? "muted" : "up"}
           icon={<Target className="w-5 h-5" />}
         />
         <StatCard
           title="CPC"
-          value={cpcVal == null ? "—" : formatCurrency(cpcVal)}
+          value={<MetricValue value={cpcVal} currency decimals={2} />}
           subtext={cpcVal == null ? "No clicks yet" : `${trendCpc} from last 7 days`}
           trendType={cpcVal == null ? "muted" : "up"}
           icon={<MousePointerClick className="w-5 h-5" />}
         />
         <StatCard
           title="Events"
-          value={formatNumber(eventsVal)}
+          value={<MetricValue value={eventsVal} />}
           subtext={`${trendEvents} from last 7 days`}
           trendType="up"
           icon={<Layers className="w-5 h-5" />}
