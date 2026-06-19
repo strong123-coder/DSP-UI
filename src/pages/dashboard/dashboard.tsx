@@ -14,6 +14,7 @@ import {
   Magnet,
   Send,
   Target,
+  MousePointerClick,
 } from "lucide-react";
 import { useGetDashboardSummary, useGetDashboardPerformance, useGetDashboardGoalReport, useGetDashboardTopCampaigns } from "@/query/useDashboard";
 import { useGetCampaignOptions } from "@/query/useCampaign";
@@ -228,6 +229,10 @@ export default function Dashboard() {
   const cpiVal: number | null = summary?.cpi?.value ?? null;
   const cpiChange = summary?.cpi?.changePct ?? 0;
 
+  // CPC (Cost Per Click) is null until clicks exist → render "—".
+  const cpcVal: number | null = summary?.cpc?.value ?? null;
+  const cpcChange = summary?.cpc?.changePct ?? 0;
+
   const reEngagementsActive = summary?.reEngagements?.active ?? 0;
   const reEngagementsTotal = summary?.reEngagements?.total ?? 0;
 
@@ -239,6 +244,7 @@ export default function Dashboard() {
   const trendInstall = `${installChange >= 0 ? "+" : ""}${installChange.toFixed(2)}%`;
   const trendEvents = `${eventsChange >= 0 ? "+" : ""}${eventsChange.toFixed(2)}%`;
   const trendCpi = `${cpiChange >= 0 ? "+" : ""}${cpiChange.toFixed(2)}%`;
+  const trendCpc = `${cpcChange >= 0 ? "+" : ""}${cpcChange.toFixed(2)}%`;
 
   // Performance chart data builder
   const chartData = useMemo(() => {
@@ -302,6 +308,7 @@ export default function Dashboard() {
       events: number;
       spent: number;
       cpi: number | null;
+      cpc: number | null;
     }>) ?? [];
 
     return apiData.map((item) => ({
@@ -313,6 +320,7 @@ export default function Dashboard() {
       events: item.events,
       spent: item.spent,
       cpi: item.cpi ?? null,
+      cpc: item.cpc ?? null,
     }));
   }, [topCampaignsResponse]);
 
@@ -372,7 +380,7 @@ export default function Dashboard() {
       </div>
 
       {/* Stats Cards Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-4">
         <StatCard
           title="Spent"
           value={formatCurrency(spentVal)}
@@ -393,6 +401,13 @@ export default function Dashboard() {
           subtext={cpiVal == null ? "No installs yet" : `${trendCpi} from last 7 days`}
           trendType={cpiVal == null ? "muted" : "up"}
           icon={<Target className="w-5 h-5" />}
+        />
+        <StatCard
+          title="CPC"
+          value={cpcVal == null ? "—" : formatCurrency(cpcVal)}
+          subtext={cpcVal == null ? "No clicks yet" : `${trendCpc} from last 7 days`}
+          trendType={cpcVal == null ? "muted" : "up"}
+          icon={<MousePointerClick className="w-5 h-5" />}
         />
         <StatCard
           title="Events"
