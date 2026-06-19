@@ -10,9 +10,11 @@ interface StatCardProps {
   icon: React.ReactNode;
 }
 
-// Shrink the value font as the string gets longer so big numbers stay inside the card.
-const valueSizeClass = (value: string) => {
-  const len = value?.length ?? 0;
+// Shrink the value font as the string gets longer so big numbers stay inside the
+// card. `value` may be a ReactNode (e.g. <MetricValue/>) — only string values can
+// be measured; non-strings (already-compact components) use the largest size.
+const valueSizeClass = (value: React.ReactNode) => {
+  const len = typeof value === "string" ? value.length : 0;
   if (len <= 8) return "text-2xl";
   if (len <= 11) return "text-xl";
   if (len <= 15) return "text-lg";
@@ -40,7 +42,7 @@ export const StatCard: React.FC<StatCardProps> = ({
         <div className="mt-2 space-y-2 min-w-0">
           <div
             className={`${valueSizeClass(value)} font-bold text-foreground leading-none tabular-nums truncate`}
-            title={value}
+            title={typeof value === "string" ? value : undefined}
           >
             {value}
           </div>
