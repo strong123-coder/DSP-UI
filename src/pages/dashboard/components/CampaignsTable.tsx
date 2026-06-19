@@ -15,6 +15,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { MetricValue } from "@/components/ui/metric-value";
 
 
 
@@ -30,8 +31,6 @@ interface CampaignsTableProps {
     cpi: number | null;
     cpc: number | null;
   }>;
-  formatNumber: (val: number) => string;
-  formatCurrency: (val: number) => string;
   sortBy: string;
   onSortByChange: (val: string) => void;
   limit: number;
@@ -40,8 +39,6 @@ interface CampaignsTableProps {
 
 export const CampaignsTable: React.FC<CampaignsTableProps> = ({
   enrichedCampaigns,
-  formatNumber,
-  formatCurrency,
   sortBy,
   onSortByChange,
   limit,
@@ -149,30 +146,22 @@ export const CampaignsTable: React.FC<CampaignsTableProps> = ({
                       </div>
                     </TableCell>
                     <TableCell className="py-4 text-right font-medium">
-                      {formatNumber(camp.clicks)}
+                      <MetricValue value={camp.clicks} />
                     </TableCell>
                     <TableCell className="py-4 text-right font-medium">
-                      {formatNumber(camp.installs)}
+                      <MetricValue value={camp.installs} />
                     </TableCell>
                     <TableCell className="py-4 text-right font-medium">
-                      {formatNumber(camp.events)}
+                      <MetricValue value={camp.events} />
                     </TableCell>
                     <TableCell className="py-4 text-right font-bold text-foreground">
-                      {formatCurrency(camp.spent)}
+                      <MetricValue value={camp.spent} currency decimals={2} />
                     </TableCell>
                     <TableCell className="py-4 text-right font-medium">
-                      {camp.cpi == null ? (
-                        <span className="text-muted-foreground">—</span>
-                      ) : (
-                        formatCurrency(camp.cpi)
-                      )}
+                      <MetricValue value={camp.cpi} currency decimals={2} />
                     </TableCell>
                     <TableCell className="pr-6 py-4 text-right font-medium">
-                      {camp.cpc == null ? (
-                        <span className="text-muted-foreground">—</span>
-                      ) : (
-                        formatCurrency(camp.cpc)
-                      )}
+                      <MetricValue value={camp.cpc} currency decimals={2} />
                     </TableCell>
                   </TableRow>
                 ))

@@ -25,20 +25,7 @@ import { StatCard } from "./components/StatCard";
 import { PerformanceChart } from "./components/PerformanceChart";
 import { GoalReportChart } from "./components/GoalReportChart";
 import { CampaignsTable } from "./components/CampaignsTable";
-
-// Helper to format currency/numbers
-const formatCurrency = (val: number) => {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(val);
-};
-
-const formatNumber = (val: number) => {
-  return new Intl.NumberFormat("en-US").format(val);
-};
+import { MetricValue } from "@/components/ui/metric-value";
 
 // Helper to calculate start/end dates based on preset selection
 const getDatesForPreset = (preset: string) => {
@@ -448,8 +435,6 @@ export default function Dashboard() {
       {/* Top Campaigns Table Section */}
       <CampaignsTable
         enrichedCampaigns={topCampaignsList}
-        formatNumber={formatNumber}
-        formatCurrency={formatCurrency}
         sortBy={topCampaignsSortBy}
         onSortByChange={setTopCampaignsSortBy}
         limit={topCampaignsLimit}

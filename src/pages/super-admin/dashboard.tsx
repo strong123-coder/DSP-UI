@@ -13,6 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { StatCard } from "@/pages/dashboard/components/StatCard";
+import { MetricValue } from "@/components/ui/metric-value";
 import { useAppStore } from "@/store";
 import { useSuperAdminSummary, useSuperAdminOrgs } from "@/query/useSuperAdmin";
 
@@ -23,9 +24,6 @@ const PRESETS = [
   { label: "Last 90 days", value: "last_90_days" },
 ];
 
-const fmtMoney = (n: number) =>
-  `$${(n || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-const fmtNum = (n: number) => (n || 0).toLocaleString();
 const pct = (n: number) => `${n > 0 ? "+" : ""}${n ?? 0}%`;
 
 export default function SuperAdminDashboard() {
@@ -64,17 +62,17 @@ export default function SuperAdminDashboard() {
 
       {/* Stat cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
-        <StatCard title="Total Spent" value={loadingSummary ? "…" : fmtMoney(s?.spent?.value)}
+        <StatCard title="Total Spent" value={loadingSummary ? "…" : <MetricValue value={s?.spent?.value} currency decimals={2} />}
           subtext={pct(s?.spent?.changePct)} trendType="up" icon={<DollarSign className="w-4 h-4" />} />
-        <StatCard title="Installs" value={loadingSummary ? "…" : fmtNum(s?.install?.value)}
+        <StatCard title="Installs" value={loadingSummary ? "…" : <MetricValue value={s?.install?.value} />}
           subtext={pct(s?.install?.changePct)} trendType="up" icon={<Download className="w-4 h-4" />} />
-        <StatCard title="Clicks" value={loadingSummary ? "…" : fmtNum(s?.click?.value)}
+        <StatCard title="Clicks" value={loadingSummary ? "…" : <MetricValue value={s?.click?.value} />}
           subtext={pct(s?.click?.changePct)} trendType="up" icon={<MousePointerClick className="w-4 h-4" />} />
-        <StatCard title="Events" value={loadingSummary ? "…" : fmtNum(s?.events?.value)}
+        <StatCard title="Events" value={loadingSummary ? "…" : <MetricValue value={s?.events?.value} />}
           subtext={pct(s?.events?.changePct)} trendType="up" icon={<Activity className="w-4 h-4" />} />
-        <StatCard title="Organizations" value={loadingSummary ? "…" : fmtNum(s?.orgs?.total)}
+        <StatCard title="Organizations" value={loadingSummary ? "…" : <MetricValue value={s?.orgs?.total} />}
           subtext="total" trendType="muted" icon={<Building2 className="w-4 h-4" />} />
-        <StatCard title="Campaigns" value={loadingSummary ? "…" : fmtNum(s?.campaigns?.total)}
+        <StatCard title="Campaigns" value={loadingSummary ? "…" : <MetricValue value={s?.campaigns?.total} />}
           subtext={`${s?.campaigns?.active ?? 0} active`} trendType="muted" icon={<Megaphone className="w-4 h-4" />} />
       </div>
 
@@ -113,10 +111,10 @@ export default function SuperAdminDashboard() {
                       <div className="text-xs text-muted-foreground">{o.subdomain}</div>
                     </td>
                     <td className="px-5 py-3 text-muted-foreground">{o.adminEmail || "—"}</td>
-                    <td className="px-5 py-3 text-right">{fmtNum(o.activeCampaigns)}</td>
-                    <td className="px-5 py-3 text-right">{fmtMoney(o.spent)}</td>
-                    <td className="px-5 py-3 text-right">{fmtNum(o.install)}</td>
-                    <td className="px-5 py-3 text-right">{fmtNum(o.click)}</td>
+                    <td className="px-5 py-3 text-right"><MetricValue value={o.activeCampaigns} /></td>
+                    <td className="px-5 py-3 text-right"><MetricValue value={o.spent} currency decimals={2} /></td>
+                    <td className="px-5 py-3 text-right"><MetricValue value={o.install} /></td>
+                    <td className="px-5 py-3 text-right"><MetricValue value={o.click} /></td>
                     <td className="px-5 py-3 text-right">
                       <Button size="sm" className="cursor-pointer" onClick={() => handleEnter(o)}>
                         Enter <ArrowRight className="w-4 h-4 ml-1" />
