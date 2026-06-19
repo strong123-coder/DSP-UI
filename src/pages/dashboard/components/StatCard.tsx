@@ -4,7 +4,7 @@ import { TrendingUp } from "lucide-react";
 
 interface StatCardProps {
   title: string;
-  value: string;
+  value: React.ReactNode;
   subtext: string;
   trendType: "up" | "muted";
   icon: React.ReactNode;

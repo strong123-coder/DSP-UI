@@ -2,15 +2,23 @@ import React from "react";
 import { TableBody, TableCell, TableRow } from "@/components/ui/table";
 import type { ReportDataRow, ReportTotals } from "../types";
 
+// Metric columns (everything else is a dimension / label column).
+const METRIC_KEYS = new Set([
+  "impressions",
+  "clicks",
+  "installs",
+  "events",
+  "ctr",
+  "spent",
+  "cpi",
+  "cpc",
+]);
+
 interface ReportTableBodyProps {
   reportData: ReportDataRow[];
   activeHeaders: Array<{ key: string; label: string; sortable: boolean }>;
   totals: ReportTotals | null;
   renderCell: (row: ReportDataRow, key: string) => React.ReactNode;
-  formatClicks: (val: number) => string;
-  formatInstalls: (val: number) => string;
-  formatCtr: (val: number) => string;
-  formatSpent: (val: number) => string;
 }
 
 const ReportTableBody: React.FC<ReportTableBodyProps> = ({
@@ -18,10 +26,6 @@ const ReportTableBody: React.FC<ReportTableBodyProps> = ({
   activeHeaders,
   totals,
   renderCell,
-  formatClicks,
-  formatInstalls,
-  formatCtr,
-  formatSpent,
 }) => {
   return (
     <TableBody>
@@ -43,7 +47,7 @@ const ReportTableBody: React.FC<ReportTableBodyProps> = ({
         ))
       )}
 
-      {/* Total Row */}
+      {/* Total Row — reuse renderCell for metric columns; first col shows TOTAL. */}
       {totals && reportData.length > 0 && (
         <TableRow className="bg-muted/10 font-bold border-t-2 border-border/60 hover:bg-muted/10">
           {activeHeaders.map((col, idx) => {
@@ -54,46 +58,11 @@ const ReportTableBody: React.FC<ReportTableBodyProps> = ({
                 </TableCell>
               );
             }
-
-            const val = totals[col.key as keyof typeof totals];
-            if (col.key === "advertiser") {
-              return (
-                <TableCell key={col.key} className="py-3.5 px-4 text-sm text-foreground font-bold">
-                  -
-                </TableCell>
-              );
-            }
-            if (col.key === "clicks") {
-              return (
-                <TableCell key={col.key} className="py-3.5 px-4 text-sm text-foreground font-bold">
-                  {formatClicks(val as number)}
-                </TableCell>
-              );
-            }
-            if (col.key === "installs") {
-              return (
-                <TableCell key={col.key} className="py-3.5 px-4 text-sm text-foreground font-bold">
-                  {formatInstalls(val as number)}
-                </TableCell>
-              );
-            }
-            if (col.key === "ctr") {
-              return (
-                <TableCell key={col.key} className="py-3.5 px-4 text-sm text-foreground font-bold">
-                  {formatCtr(val as number)}
-                </TableCell>
-              );
-            }
-            if (col.key === "spent") {
-              return (
-                <TableCell key={col.key} className="py-3.5 px-4 text-sm text-foreground font-bold">
-                  {formatSpent(val as number)}
-                </TableCell>
-              );
-            }
             return (
               <TableCell key={col.key} className="py-3.5 px-4 text-sm text-foreground font-bold">
-                -
+                {METRIC_KEYS.has(col.key)
+                  ? renderCell(totals as unknown as ReportDataRow, col.key)
+                  : "-"}
               </TableCell>
             );
           })}

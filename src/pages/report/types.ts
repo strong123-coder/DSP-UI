@@ -4,20 +4,26 @@ export interface ReportDataRow {
   campaign?: string;
   campaignTitle?: string;
   campaignStatus?: string;
+  impressions?: number;
   clicks: number;
   installs: number;
-  impressions?: number;
+  events?: number;
   spent: number;
   ctr: number;
+  cpi?: number | null;
+  cpc?: number | null;
   [key: string]: any;
 }
 
 export interface ReportTotals {
+  impressions?: number;
   clicks: number;
   installs: number;
-  impressions?: number;
+  events?: number;
   spent: number;
   ctr: number;
+  cpi?: number | null;
+  cpc?: number | null;
 }
 
 export interface ReportResponseData {

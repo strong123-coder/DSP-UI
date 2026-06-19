@@ -16,6 +16,7 @@ import LoadingFallback from "@/components/ui/loading-fallback";
 import ReportFilter from "./report-filter";
 import ReportTableHeader from "./report-table-header";
 import ReportTableBody from "./report-table-body";
+import { MetricValue } from "@/components/ui/metric-value";
 import type { ReportDataRow, SortDirection } from "../types";
 
 import { allColHeaders } from "../constants";
@@ -29,11 +30,13 @@ const ReportListTable: React.FC = () => {
 
   // Active columns selected via Checkbox Group
   const [selectedColumns, setSelectedColumns] = useState<string[]>([
-    "advertiser",
+    "impressions",
     "clicks",
     "installs",
     "ctr",
     "spent",
+    "cpi",
+    "cpc",
   ]);
 
   const toggleColumn = (key: string) => {
@@ -93,7 +96,7 @@ const ReportListTable: React.FC = () => {
   // Assemble full payload for the API
   const apiPayload = useMemo(() => {
     // Keep standard metric columns request structure while showing only selected radio item visually
-    const columns = ["clicks", "installs", "ctr", "spent"];
+    const columns = ["impressions", "clicks", "installs", "events", "ctr", "spent", "cpi", "cpc"];
 
     return {
       groupBy: filters.groupBy || ["campaign"],
@@ -224,12 +227,6 @@ const ReportListTable: React.FC = () => {
     setPage(1);
   };
 
-  // Helper row value formatters
-  const formatClicks = (val: number) => Number(val || 0).toLocaleString();
-  const formatInstalls = (val: number) => Number(val || 0).toLocaleString();
-  const formatCtr = (val: number) => `${Number(val || 0).toFixed(2)} %`;
-  const formatSpent = (val: number) => `$ ${Number(val || 0).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
-
   const renderCell = (row: ReportDataRow, key: string) => {
     const val = row[key];
     if (key === "campaignTitle") {
@@ -244,10 +241,15 @@ const ReportListTable: React.FC = () => {
     if (key === "advertiser") {
       return row.advertiser || row.advertiserName || row.advertiserTitle || "-";
     }
-    if (key === "clicks") return formatClicks(val);
-    if (key === "installs") return formatInstalls(val);
-    if (key === "ctr") return formatCtr(val);
-    if (key === "spent") return formatSpent(val);
+    // Counts: abbreviated (1.2M / 3.4K) with the exact figure on hover.
+    if (key === "impressions" || key === "clicks" || key === "installs" || key === "events") {
+      return <MetricValue value={val} />;
+    }
+    if (key === "ctr") return <MetricValue value={val} percent />;
+    // Money: spent always present; cpi/cpc may be null -> rendered as "—".
+    if (key === "spent" || key === "cpi" || key === "cpc") {
+      return <MetricValue value={val} currency decimals={2} />;
+    }
     return val !== undefined && val !== null ? String(val) : "-";
   };
 
@@ -281,46 +283,27 @@ const ReportListTable: React.FC = () => {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="w-48 bg-card border border-border">
-              <DropdownMenuCheckboxItem
-                checked={selectedColumns.includes("advertiser")}
-                onCheckedChange={() => toggleColumn("advertiser")}
-                onSelect={(e) => e.preventDefault()}
-                className="cursor-pointer"
-              >
-                Advertiser
-              </DropdownMenuCheckboxItem>
-              <DropdownMenuCheckboxItem
-                checked={selectedColumns.includes("clicks")}
-                onCheckedChange={() => toggleColumn("clicks")}
-                onSelect={(e) => e.preventDefault()}
-                className="cursor-pointer"
-              >
-                Clicks
-              </DropdownMenuCheckboxItem>
-              <DropdownMenuCheckboxItem
-                checked={selectedColumns.includes("installs")}
-                onCheckedChange={() => toggleColumn("installs")}
-                onSelect={(e) => e.preventDefault()}
-                className="cursor-pointer"
-              >
-                Install
-              </DropdownMenuCheckboxItem>
-              <DropdownMenuCheckboxItem
-                checked={selectedColumns.includes("ctr")}
-                onCheckedChange={() => toggleColumn("ctr")}
-                onSelect={(e) => e.preventDefault()}
-                className="cursor-pointer"
-              >
-                CTR
-              </DropdownMenuCheckboxItem>
-              <DropdownMenuCheckboxItem
-                checked={selectedColumns.includes("spent")}
-                onCheckedChange={() => toggleColumn("spent")}
-                onSelect={(e) => e.preventDefault()}
-                className="cursor-pointer"
-              >
-                Spent
-              </DropdownMenuCheckboxItem>
+              {[
+                { key: "advertiser", label: "Advertiser" },
+                { key: "impressions", label: "Impressions" },
+                { key: "clicks", label: "Clicks" },
+                { key: "installs", label: "Install" },
+                { key: "events", label: "Events" },
+                { key: "ctr", label: "CTR" },
+                { key: "spent", label: "Spent" },
+                { key: "cpi", label: "CPI" },
+                { key: "cpc", label: "CPC" },
+              ].map((c) => (
+                <DropdownMenuCheckboxItem
+                  key={c.key}
+                  checked={selectedColumns.includes(c.key)}
+                  onCheckedChange={() => toggleColumn(c.key)}
+                  onSelect={(e) => e.preventDefault()}
+                  className="cursor-pointer"
+                >
+                  {c.label}
+                </DropdownMenuCheckboxItem>
+              ))}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -353,10 +336,6 @@ const ReportListTable: React.FC = () => {
             activeHeaders={activeHeaders}
             totals={totals}
             renderCell={renderCell}
-            formatClicks={formatClicks}
-            formatInstalls={formatInstalls}
-            formatCtr={formatCtr}
-            formatSpent={formatSpent}
           />
         </Table>
       </div>
