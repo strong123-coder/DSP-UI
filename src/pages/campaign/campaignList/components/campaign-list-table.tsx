@@ -25,6 +25,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import UpdatePopupModal from "@/components/popupModals/update-popup-modal";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { geoData } from "@/utils/data/data";
 
 const sortableKeys = new Set<string>([
   "title",
@@ -258,7 +264,6 @@ const CampaignListTable: React.FC = () => {
         );
       }
       if (key === "type") return <TypeBadge type={String(value || "")} />;
-
       if (key === "budget" || key === "dailyBudget") {
         return `$${Number(value || 0).toLocaleString()} ${campaign.currency || "USD"}`;
       }
@@ -273,6 +278,36 @@ const CampaignListTable: React.FC = () => {
         } catch {
           return String(value || "");
         }
+      }
+
+      if (key === "geo") {
+        if (!value) return "-";
+
+        const getGeoName = (code: string) => {
+          const matched = geoData.find(
+            (g) => g.value.toUpperCase() === code.trim().toUpperCase()
+          );
+          return matched ? matched.name : code;
+        };
+
+        const geoArray = value as string[];
+        const displayCodes = geoArray.join(", ");
+        const fullNames = geoArray.map(getGeoName).join(", ");
+
+        return (
+          <div onClick={(e) => e.stopPropagation()}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span>
+                  {displayCodes}
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{fullNames}</p>
+              </TooltipContent>
+            </Tooltip>
+          </div>
+        );
       }
 
       return value === undefined || value === null ? "-" : String(value);
