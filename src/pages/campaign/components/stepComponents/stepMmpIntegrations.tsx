@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Plus, Trash2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { currencyData } from "@/utils/data/data";
+import MacroHelp from "../macro-help";
 
 const StepMmpIntegration: React.FC = () => {
   const {
@@ -72,8 +73,9 @@ const StepMmpIntegration: React.FC = () => {
 
             {/* CTA URL */}
             <div className="space-y-2 md:col-span-3">
-              <Label htmlFor="ctaUrl">
+              <Label htmlFor="ctaUrl" className="flex items-center gap-1.5">
                 Click Through Attribution Link (CTA)
+                <MacroHelp />
               </Label>
               <Textarea
                 id="ctaUrl"
@@ -86,11 +88,12 @@ const StepMmpIntegration: React.FC = () => {
 
           {/* VTA URL */}
           <div className="space-y-2 md:col-span-3">
-            <Label htmlFor="vtaUrl">
+            <Label htmlFor="vtaUrl" className="flex items-center gap-1.5">
               View Through Attribution Link (VTA){" "}
               <span className="text-muted-foreground font-normal">
                 (Optional)
               </span>
+              <MacroHelp />
             </Label>
             <Textarea
               id="vtaUrl"
