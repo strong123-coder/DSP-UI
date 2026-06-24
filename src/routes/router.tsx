@@ -11,10 +11,10 @@ import ThemeConfig from "@/pages/settings/theme/theme-config";
 import AccountConfig from "@/pages/settings/account/account-config";
 import LoginConfig from "@/pages/auth/login-config";
 import SuperAdminLoginConfig from "@/pages/auth/super-admin-login-config";
-import SuperAdminDashboardContainer from "@/pages/super-admin/dashboard-config";
-import BidConfigContainer from "@/pages/super-admin/bid-config-config";
 import CampaignConfig from "@/pages/campaign/campaign-config";
 import ReportConfig from "@/pages/report/report-config";
+import SuperAdminDashboardConfig from "@/pages/super-admin/dashboard/dashboard-config";
+import SuperAdminBidConfigConfig from "@/pages/super-admin/bid-config/bid-config-config";
 
 export const routes = [
   {
@@ -49,9 +49,12 @@ export const routes = [
       </SuperAdminGuard>
     ),
     children: [
-      { index: true, element: <Navigate to="/super-admin/dashboard" replace /> },
-      { path: "dashboard", element: <SuperAdminDashboardContainer /> },
-      { path: "bid-config", element: <BidConfigContainer /> },
+      {
+        index: true,
+        element: <Navigate to="/super-admin/dashboard" replace />,
+      },
+      SuperAdminDashboardConfig,
+      SuperAdminBidConfigConfig,
     ],
   },
   {

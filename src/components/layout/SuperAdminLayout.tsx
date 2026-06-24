@@ -1,28 +1,38 @@
 import { useState } from "react";
-import { Outlet, NavLink, useNavigate } from "react-router-dom";
 import {
-  LayoutDashboard,
-  SlidersHorizontal,
-  LogOut,
-  Menu,
-  UserCircle,
-  ShieldCheck,
-} from "lucide-react";
-import type { LucideIcon } from "lucide-react";
+  Outlet,
+  NavLink,
+  useNavigate,
+  useLocation,
+  matchRoutes,
+} from "react-router-dom";
+import { LogOut, Menu, UserCircle, ShieldCheck } from "lucide-react";
 import { useAppStore } from "@/store";
 import logo from "@/assets/strongmetrics-logo.webp";
 import { Button } from "@/components/ui/button";
-
-// Super-admin-only navigation. Add new super-admin sections here.
-const NAV: { title: string; url: string; icon: LucideIcon }[] = [
-  { title: "Dashboard", url: "/super-admin/dashboard", icon: LayoutDashboard },
-  { title: "Bid Configuration", url: "/super-admin/bid-config", icon: SlidersHorizontal },
-];
+import { superAdminNavMain } from "@/configurations/superAdminSidebarConf";
+import { routes } from "@/routes/router";
 
 export default function SuperAdminLayout() {
+  const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAppStore();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  // Find page title dynamically based on route configuration
+  const getPageTitle = () => {
+    const matches = matchRoutes(routes, location);
+    if (matches) {
+      // Find the last matched route that has a title
+      for (let i = matches.length - 1; i >= 0; i--) {
+        const route = matches[i].route as { title?: string };
+        if (route.title) {
+          return route.title;
+        }
+      }
+    }
+    return "Super Admin Console";
+  };
 
   const handleLogout = () => {
     logout();
@@ -51,7 +61,7 @@ export default function SuperAdminLayout() {
           </div>
 
           <nav className="p-4 space-y-1">
-            {NAV.map((item) => {
+            {superAdminNavMain.map((item) => {
               const Icon = item.icon;
               return (
                 <NavLink
@@ -100,14 +110,26 @@ export default function SuperAdminLayout() {
         </div>
       </aside>
 
-      {/* Main */}
+      {/* Main Workspace Frame */}
       <div className="flex-1 flex flex-col min-w-0 h-screen overflow-y-scroll px-4 md:px-6 py-4 w-full">
-        <header className="h-12 shrink-0 flex items-center gap-3 md:hidden mb-2">
-          <Button variant="ghost" size="icon" onClick={() => setIsSidebarOpen(true)}>
-            <Menu className="w-5 h-5" />
-          </Button>
-          <img src={logo} alt="Strongmetrics" className="w-32 h-auto" />
+        {/* Workspace Top Header */}
+        <header className="h-14 shrink-0 flex items-center justify-between border-b border-border bg-transparent mb-6">
+          <div className="flex items-center gap-3">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="md:hidden"
+              onClick={() => setIsSidebarOpen(true)}
+            >
+              <Menu className="w-5 h-5" />
+            </Button>
+            <h1 className="text-xl font-bold tracking-tight text-foreground mt-0.5">
+              {getPageTitle()}
+            </h1>
+          </div>
         </header>
+
+        {/* Content View Outlet */}
         <main className="flex-1 w-full h-full min-w-0 relative">
           <Outlet />
         </main>
