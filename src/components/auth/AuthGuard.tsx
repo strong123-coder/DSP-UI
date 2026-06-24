@@ -13,16 +13,14 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
   const user = useAppStore((state) => state.user);
   const selectedOrg = useAppStore((state) => state.selectedOrg);
   const hasHydrated = useAppStore((state) => state.hasHydrated);
-  const [loadingConfig, setLoadingConfig] = useState(true);
 
   const isSuperAdmin = user?.type === "super_admin";
   // A super admin only has org context once they've "entered" an org.
-  const superAdminWithoutOrg = isSuperAdmin && !selectedOrg;
+  const superAdminWithoutSelectedOrg = isSuperAdmin && !selectedOrg;
 
   useEffect(() => {
     // No token, or a super admin who hasn't entered an org yet → nothing to fetch.
-    if (!hasHydrated || !token || superAdminWithoutOrg) {
-      setLoadingConfig(false);
+    if (!hasHydrated) {
       return;
     }
 
@@ -31,20 +29,21 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
         const orgConfigStr = sessionStorage.getItem("orgConfig");
         if (!orgConfigStr) {
           const configResponse = await apiClient().get("getOrgConfig");
-          sessionStorage.setItem("orgConfig", JSON.stringify(configResponse.data));
+          sessionStorage.setItem(
+            "orgConfig",
+            JSON.stringify(configResponse.data),
+          );
         }
       } catch (error) {
         console.error("Failed to fetch organization config:", error);
-      } finally {
-        setLoadingConfig(false);
       }
     };
 
     fetchConfig();
-  }, [hasHydrated, token, superAdminWithoutOrg]);
+  }, [hasHydrated, token]);
 
   // Prevent redirect flicker during hydration / config fetch.
-  if (!hasHydrated || (token && !superAdminWithoutOrg && loadingConfig)) {
+  if (!hasHydrated) {
     return <LoadingFallback />;
   }
 
@@ -56,7 +55,7 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
 
   // A super admin in the org app without an entered org belongs in the
   // all-orgs super-admin area.
-  if (superAdminWithoutOrg) {
+  if (superAdminWithoutSelectedOrg) {
     return <Navigate to="/super-admin/dashboard" replace />;
   }
 

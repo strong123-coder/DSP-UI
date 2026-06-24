@@ -31,7 +31,7 @@ export default function BidConfig() {
 
   const statusValue = status ?? config?.status ?? "active";
   const defaultBidValue =
-    defaultBidPrice !== "" ? defaultBidPrice : config?.defaultBidPrice ?? "";
+    defaultBidPrice !== "" ? defaultBidPrice : (config?.defaultBidPrice ?? "");
 
   // New / edit entry form.
   const [campaignId, setCampaignId] = useState("");
@@ -70,7 +70,7 @@ export default function BidConfig() {
           setCurrency("USD");
           setEnabled(true);
         },
-      }
+      },
     );
   };
 
@@ -83,7 +83,6 @@ export default function BidConfig() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-xl font-bold">Bid Configuration</h1>
       <p className="text-sm text-muted-foreground -mt-3">
         Per-campaign bid overrides used by the bid engine. Precedence: campaign
         entry below → default bid → campaign&apos;s own price → engine default.
@@ -117,7 +116,11 @@ export default function BidConfig() {
                 className="h-10"
               />
             </div>
-            <Button onClick={saveSettings} disabled={upsertConfig.isPending} className="cursor-pointer">
+            <Button
+              onClick={saveSettings}
+              disabled={upsertConfig.isPending}
+              className="cursor-pointer"
+            >
               {upsertConfig.isPending ? (
                 <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
               ) : (
@@ -177,12 +180,16 @@ export default function BidConfig() {
                 onChange={(e) => setEnabled(e.target.checked)}
                 className="h-4 w-4"
               />
-              <Label htmlFor="enabled" className="cursor-pointer">Enabled</Label>
+              <Label htmlFor="enabled" className="cursor-pointer">
+                Enabled
+              </Label>
             </div>
           </div>
           <Button
             onClick={addEntry}
-            disabled={!campaignId || bidPrice === "" || upsertCampaign.isPending}
+            disabled={
+              !campaignId || bidPrice === "" || upsertCampaign.isPending
+            }
             className="cursor-pointer"
           >
             {upsertCampaign.isPending ? (
@@ -200,7 +207,9 @@ export default function BidConfig() {
         <CardContent className="p-0">
           <div className="flex items-center justify-between px-5 py-4 border-b border-border">
             <h2 className="font-semibold">Configured Campaign Bids</h2>
-            {isLoading && <RefreshCw className="w-4 h-4 animate-spin text-muted-foreground" />}
+            {isLoading && (
+              <RefreshCw className="w-4 h-4 animate-spin text-muted-foreground" />
+            )}
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -217,26 +226,45 @@ export default function BidConfig() {
               <tbody>
                 {campaignBids.length === 0 && !isLoading && (
                   <tr>
-                    <td colSpan={6} className="px-5 py-8 text-center text-muted-foreground">
+                    <td
+                      colSpan={6}
+                      className="px-5 py-8 text-center text-muted-foreground"
+                    >
                       No campaign bids configured yet.
                     </td>
                   </tr>
                 )}
                 {campaignBids.map((r) => (
-                  <tr key={r.campaignId} className="border-b border-border/60 hover:bg-muted/40">
+                  <tr
+                    key={r.campaignId}
+                    className="border-b border-border/60 hover:bg-muted/40"
+                  >
                     <td className="px-5 py-3">
-                      {r.campaignTitle || campaignsById[r.campaignId]?.title || "—"}
+                      {r.campaignTitle ||
+                        campaignsById[r.campaignId]?.title ||
+                        "—"}
                     </td>
-                    <td className="px-5 py-3 font-mono text-xs text-muted-foreground">{r.campaignId}</td>
-                    <td className="px-5 py-3 text-right">{r.bidPrice} {r.currency || "USD"}</td>
+                    <td className="px-5 py-3 font-mono text-xs text-muted-foreground">
+                      {r.campaignId}
+                    </td>
+                    <td className="px-5 py-3 text-right">
+                      {r.bidPrice} {r.currency || "USD"}
+                    </td>
                     <td className="px-5 py-3">{r.currency || "USD"}</td>
                     <td className="px-5 py-3">
-                      <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold ${r.enabled !== false ? "bg-emerald-500/10 text-emerald-600" : "bg-muted text-muted-foreground"}`}>
+                      <span
+                        className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold ${r.enabled !== false ? "bg-emerald-500/10 text-emerald-600" : "bg-muted text-muted-foreground"}`}
+                      >
                         {r.enabled !== false ? "ENABLED" : "DISABLED"}
                       </span>
                     </td>
                     <td className="px-5 py-3 text-right space-x-2 whitespace-nowrap">
-                      <Button size="sm" variant="outline" className="cursor-pointer" onClick={() => editEntry(r)}>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="cursor-pointer"
+                        onClick={() => editEntry(r)}
+                      >
                         Edit
                       </Button>
                       <Button
@@ -264,8 +292,8 @@ export default function BidConfig() {
             <div>
               <h2 className="font-semibold">Campaign Bidding</h2>
               <p className="text-xs text-muted-foreground mt-0.5">
-                Enable or disable whether each campaign is eligible to bid in the
-                engine.
+                Enable or disable whether each campaign is eligible to bid in
+                the engine.
               </p>
             </div>
           </div>
@@ -282,7 +310,10 @@ export default function BidConfig() {
               <tbody>
                 {allCampaigns.length === 0 && (
                   <tr>
-                    <td colSpan={4} className="px-5 py-8 text-center text-muted-foreground">
+                    <td
+                      colSpan={4}
+                      className="px-5 py-8 text-center text-muted-foreground"
+                    >
                       No campaigns found.
                     </td>
                   </tr>
@@ -290,10 +321,17 @@ export default function BidConfig() {
                 {allCampaigns.map((c) => {
                   const enabled = c.enableBidding === true;
                   return (
-                    <tr key={c.campaignId} className="border-b border-border/60 hover:bg-muted/40">
+                    <tr
+                      key={c.campaignId}
+                      className="border-b border-border/60 hover:bg-muted/40"
+                    >
                       <td className="px-5 py-3">{c.title}</td>
-                      <td className="px-5 py-3 text-muted-foreground">{c.orgName || "—"}</td>
-                      <td className="px-5 py-3 capitalize text-muted-foreground">{c.status}</td>
+                      <td className="px-5 py-3 text-muted-foreground">
+                        {c.orgName || "—"}
+                      </td>
+                      <td className="px-5 py-3 capitalize text-muted-foreground">
+                        {c.status}
+                      </td>
                       <td className="px-5 py-3">
                         <div className="flex items-center justify-end gap-3">
                           <span
