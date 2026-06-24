@@ -5,4 +5,8 @@ export const orgService = {
     const response = await apiClient().get("orgList");
     return response.data;
   },
+  getOrgConfig: async () => {
+    const response = await apiClient().get("getOrgConfig");
+    return response.data;
+  },
 };

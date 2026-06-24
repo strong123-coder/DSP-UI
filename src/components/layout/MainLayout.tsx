@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   Outlet,
   NavLink,
@@ -29,13 +30,17 @@ export default function MainLayout() {
   const isImpersonating = user?.type === "super_admin" && !!selectedOrg;
 
   const handleLogout = () => {
+    queryClient.removeQueries({ queryKey: ["orgConfig"] });
+    exitOrg();
     logout();
     navigate("/login");
   };
 
+  const queryClient = useQueryClient();
+
   // Super admin leaving the entered org → back to the all-orgs area.
   const handleExitOrg = () => {
-    sessionStorage.removeItem("orgConfig");
+    queryClient.removeQueries({ queryKey: ["orgConfig"] });
     exitOrg();
     navigate("/super-admin/dashboard");
   };
@@ -73,11 +78,7 @@ export default function MainLayout() {
         <div className="flex-1 flex flex-col min-h-0 overflow-y-auto">
           {/* Brand Header */}
           <div className="p-6 flex items-center border-b border-border">
-            <img
-              src={logo}
-              alt="Strongmetrics"
-              className="w-40 h-auto"
-            />
+            <img src={logo} alt="Strongmetrics" className="w-40 h-auto" />
           </div>
 
           {/* Navigation Directory */}

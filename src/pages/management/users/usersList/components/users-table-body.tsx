@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { MoreVertical } from "lucide-react";
 import { TableBody, TableCell, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -13,6 +13,7 @@ import type { User } from "../../types";
 import { useNavigate } from "react-router-dom";
 import DeletePopupModal from "@/components/popupModals/delete-popup-modal";
 import { useDeleteUser } from "@/query/useUserManagement";
+import { useAppStore } from "@/store";
 
 interface UserTableBodyProps {
   users: User[];
@@ -33,20 +34,8 @@ const UserTableBody: React.FC<UserTableBodyProps> = ({
   const { mutate: deleteUserMutation, isPending: deleteUserPending } =
     useDeleteUser();
 
-  const [adminId, setAdminId] = useState<string | null>(null);
-
-  useEffect(() => {
-    try {
-      const orgConfigStr = sessionStorage.getItem("orgConfig");
-      if (orgConfigStr) {
-        const orgConfig = JSON.parse(orgConfigStr);
-        const id = orgConfig?.data?.orgData?.adminId || null;
-        setAdminId(id);
-      }
-    } catch (err) {
-      console.error("Failed to parse orgConfig from sessionStorage:", err);
-    }
-  }, []);
+  const orgConfig = useAppStore((state) => state.orgConfig);
+  const adminId = orgConfig?.adminId || null;
 
   if (users.length === 0) {
     return (
@@ -149,8 +138,8 @@ export const UserStatusBadge: React.FC<{ status: string }> = ({ status }) => (
       status === "active"
         ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20 hover:bg-emerald-500/10"
         : status === "inactive"
-        ? "bg-amber-500/10 text-amber-500 border-amber-500/20 hover:bg-amber-500/10"
-        : "bg-destructive/10 text-destructive border-destructive/20 hover:bg-destructive/10"
+          ? "bg-amber-500/10 text-amber-500 border-amber-500/20 hover:bg-amber-500/10"
+          : "bg-destructive/10 text-destructive border-destructive/20 hover:bg-destructive/10"
     }
     variant="outline"
   >

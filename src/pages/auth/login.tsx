@@ -12,7 +12,8 @@ import { Label } from "@/components/ui/label";
 import SelectComponent from "@/components/inputComponents/select-component";
 
 import { loginSchema, type LoginFormValues } from "@/utils/schemas/auth";
-import { useLogin, useGetOrgList } from "@/query/useUserManagement";
+import { useLogin } from "@/query/useUserManagement";
+import { useGetOrgList } from "@/query/useOrgConfig";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -63,11 +64,7 @@ export default function Login() {
       <div className="w-full max-w-[420px] relative z-10">
         {/* Header */}
         <div className="flex flex-col items-center mb-8">
-          <img
-            src={logo}
-            alt="Strongmetrics"
-            className="w-56 h-auto mb-6"
-          />
+          <img src={logo} alt="Strongmetrics" className="w-56 h-auto mb-6" />
 
           <p className="text-sm text-muted-foreground">
             Console Management Administration

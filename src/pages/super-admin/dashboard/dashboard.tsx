@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import {
   DollarSign,
@@ -41,8 +42,10 @@ export default function SuperAdminDashboard() {
   const s = summaryResp?.data?.data;
   const orgs: any[] = orgsResp?.data?.data ?? [];
 
+  const queryClient = useQueryClient();
+
   const handleEnter = (org: { orgId: string; name: string }) => {
-    sessionStorage.removeItem("orgConfig"); // force AuthGuard to refetch for entered org
+    queryClient.removeQueries({ queryKey: ["orgConfig"] }); // force AuthGuard to refetch for entered org
     enterOrg({ id: org.orgId, name: org.name });
     navigate("/dashboard");
   };

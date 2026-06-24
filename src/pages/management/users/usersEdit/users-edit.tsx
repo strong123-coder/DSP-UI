@@ -20,17 +20,18 @@ import SelectComponent from "@/components/inputComponents/select-component";
 import LoadingFallback from "@/components/ui/loading-fallback";
 import UpdatePopupModal from "@/components/popupModals/update-popup-modal";
 import { useGetSingleUser, useEditUser } from "@/query/useUserManagement";
-import {
-  editUserSchema,
-  type EditUserFormValues,
-} from "@/utils/schemas/user";
+import { useAppStore } from "@/store";
+import { editUserSchema, type EditUserFormValues } from "@/utils/schemas/user";
 
 const UsersEdit = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
 
   const { data: userResponse, isLoading } = useGetSingleUser(id || "");
-  const { mutate: editUserMutation, isPending: editUserPending } = useEditUser();
+  const { mutate: editUserMutation, isPending: editUserPending } =
+    useEditUser();
+  const orgConfig = useAppStore((state) => state.orgConfig);
+  const adminIdFromSession = orgConfig?.adminId;
 
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [formData, setFormData] = useState<EditUserFormValues | null>(null);
@@ -59,20 +60,11 @@ const UsersEdit = () => {
   const userData = userResponse?.data?.data;
 
   useEffect(() => {
-    try {
-      const orgConfigStr = sessionStorage.getItem("orgConfig");
-      if (orgConfigStr) {
-        const orgConfig = JSON.parse(orgConfigStr);
-        const adminIdFromSession = orgConfig?.data?.orgData?.adminId;
-        if (id && adminIdFromSession && id === adminIdFromSession) {
-          toast.error("You cannot edit this administrator user");
-          navigate("/management/users/list", { replace: true });
-        }
-      }
-    } catch (err) {
-      console.error("Failed to parse orgConfig from sessionStorage:", err);
+    if (id && adminIdFromSession && id === adminIdFromSession) {
+      toast.error("You cannot edit this administrator user");
+      navigate("/management/users/list", { replace: true });
     }
-  }, [id, navigate]);
+  }, [id, adminIdFromSession, navigate]);
 
   useEffect(() => {
     if (userData) {
@@ -81,7 +73,10 @@ const UsersEdit = () => {
         mobile: userData.mobile || "",
         type: userData.type || "team",
         gender: userData.gender || "",
-        age: userData.age !== undefined && userData.age !== null ? String(userData.age) : "",
+        age:
+          userData.age !== undefined && userData.age !== null
+            ? String(userData.age)
+            : "",
         address: userData.address || "",
         status: userData.status || "active",
       });
@@ -142,7 +137,8 @@ const UsersEdit = () => {
           <CardHeader>
             <CardTitle className="text-lg">User Profile Details</CardTitle>
             <CardDescription>
-              Modify user settings, update access permissions, or change account status.
+              Modify user settings, update access permissions, or change account
+              status.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -190,7 +186,8 @@ const UsersEdit = () => {
               {/* Role Type */}
               <div className="space-y-2">
                 <Label htmlFor="type">
-                  Role / Access Level <span className="text-destructive">*</span>
+                  Role / Access Level{" "}
+                  <span className="text-destructive">*</span>
                 </Label>
                 <Controller
                   name="type"
@@ -295,7 +292,9 @@ const UsersEdit = () => {
           <Button
             type="button"
             variant="outline"
-            onClick={() => navigate("/management/users/list", { replace: true })}
+            onClick={() =>
+              navigate("/management/users/list", { replace: true })
+            }
             disabled={editUserPending}
           >
             Cancel
@@ -313,7 +312,8 @@ const UsersEdit = () => {
         description={
           <span>
             Are you sure you want to update the user details for{" "}
-            <strong>{userData?.name}</strong>? This will apply all changes immediately.
+            <strong>{userData?.name}</strong>? This will apply all changes
+            immediately.
           </span>
         }
         cancelButtonAction={() => {
@@ -330,7 +330,7 @@ const UsersEdit = () => {
                   setFormData(null);
                   navigate("/management/users/list", { replace: true });
                 },
-              }
+              },
             );
           }
         }}
