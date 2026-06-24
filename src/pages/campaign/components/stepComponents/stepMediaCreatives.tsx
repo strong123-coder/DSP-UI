@@ -9,7 +9,11 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Upload, Trash2, Loader2, FileImage, ExternalLink } from "lucide-react";
-import { useAddMedia, useDeleteMedia } from "@/query/useMedia";
+import { useDeleteMedia } from "@/query/useMedia";
+import { mediaService } from "@/services/media";
+
+// Max number of files a user can upload in a single selection.
+const MAX_FILES_PER_UPLOAD = 5;
 import type { AddCampaignFormValues } from "@/utils/schemas/campaign";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
@@ -230,59 +234,84 @@ const StepMediaCreatives: React.FC<StepMediaCreativesProps> = ({
       name: "media",
     }) || [];
 
-  const { mutate: addMediaMutation, isPending: addMediaPending } =
-    useAddMedia();
+  const [isUploading, setIsUploading] = useState(false);
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    // Validate file size (Max 10MB)
-    const MAX_FILE_SIZE = 10 * 1024 * 1024;
-    if (file.size > MAX_FILE_SIZE) {
-      toast.error("File size exceeds the 10MB limit.");
-      e.target.value = "";
-      return;
-    }
-
-    // Validate file extension
-    const ALLOWED_EXTENSIONS = ["png", "jpg", "jpeg", "gif", "svg", "mp4"];
-    const extension = file.name.split(".").pop()?.toLowerCase();
-    if (!extension || !ALLOWED_EXTENSIONS.includes(extension)) {
-      toast.error(
-        "Unsupported format. Please upload PNG, JPG, JPEG, GIF, SVG, or MP4."
-      );
-      e.target.value = "";
-      return;
-    }
-
-    // Read the natural dimensions from the file before uploading
+  // Upload a single file and return the data needed to append it to the form.
+  const uploadOne = async (file: File) => {
     const { w, h } = await getMediaDimensions(file);
-
     const formData = new FormData();
     formData.append("name", file.name);
     formData.append("type", "campaign");
     formData.append("image", file);
 
-    // Reset the input value so selecting the same file again triggers change event
-    e.target.value = "";
+    const response: any = await mediaService.addMedia(formData);
+    const mediaData = response?.data?.data || response?.data || response;
+    if (!mediaData) throw new Error("Empty upload response");
 
-    addMediaMutation(formData, {
-      onSuccess: (response: any) => {
-        const mediaData = response?.data?.data || response?.data || response;
-        if (mediaData) {
-          const mediaId = mediaData._id || mediaData.id || `creative_${Date.now()}`;
-          setNewlyUploadedMediaIds((prev) => [...prev, mediaId]);
-          appendMedia({
-            id: mediaId,
-            link: mediaData.link1 || mediaData.link,
-            type: mediaData.fileType?.includes("video") ? "video" : "image",
-            w,
-            h,
-          });
-        }
-      },
+    return {
+      id: mediaData._id || mediaData.id || `creative_${Date.now()}_${Math.random().toString(36).slice(2)}`,
+      link: mediaData.link1 || mediaData.link,
+      type: mediaData.fileType?.includes("video") ? "video" : "image",
+      w,
+      h,
+    };
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selected = Array.from(e.target.files ?? []);
+    // Reset early so re-selecting the same file(s) still fires onChange.
+    e.target.value = "";
+    if (selected.length === 0) return;
+
+    // Cap the number of files per upload.
+    let files = selected;
+    if (files.length > MAX_FILES_PER_UPLOAD) {
+      toast.error(
+        `You can upload up to ${MAX_FILES_PER_UPLOAD} files at once. Using the first ${MAX_FILES_PER_UPLOAD}.`
+      );
+      files = files.slice(0, MAX_FILES_PER_UPLOAD);
+    }
+
+    // Validate each file (size + extension); collect the valid ones.
+    const MAX_FILE_SIZE = 10 * 1024 * 1024;
+    const ALLOWED_EXTENSIONS = ["png", "jpg", "jpeg", "gif", "svg", "mp4"];
+    const valid: File[] = [];
+    for (const file of files) {
+      const extension = file.name.split(".").pop()?.toLowerCase();
+      if (file.size > MAX_FILE_SIZE) {
+        toast.error(`${file.name}: exceeds the 10MB limit.`);
+        continue;
+      }
+      if (!extension || !ALLOWED_EXTENSIONS.includes(extension)) {
+        toast.error(`${file.name}: unsupported format.`);
+        continue;
+      }
+      valid.push(file);
+    }
+    if (valid.length === 0) return;
+
+    // Upload all valid files in parallel.
+    setIsUploading(true);
+    const results = await Promise.allSettled(valid.map((f) => uploadOne(f)));
+    setIsUploading(false);
+
+    let uploaded = 0;
+    results.forEach((res) => {
+      if (res.status === "fulfilled") {
+        const m = res.value;
+        setNewlyUploadedMediaIds((prev) => [...prev, m.id]);
+        appendMedia(m);
+        uploaded += 1;
+      }
     });
+
+    if (uploaded > 0) {
+      toast.success(`${uploaded} creative${uploaded > 1 ? "s" : ""} uploaded`);
+    }
+    const failed = valid.length - uploaded;
+    if (failed > 0) {
+      toast.error(`${failed} upload${failed > 1 ? "s" : ""} failed`);
+    }
   };
 
   return (
@@ -305,26 +334,28 @@ const StepMediaCreatives: React.FC<StepMediaCreativesProps> = ({
               type="file"
               id="campaign-asset-upload"
               accept="image/*,video/*"
+              multiple
               className="hidden"
               onChange={handleFileUpload}
-              disabled={addMediaPending}
+              disabled={isUploading}
             />
             <label
               htmlFor="campaign-asset-upload"
               className="flex flex-col items-center cursor-pointer space-y-2 group w-full py-4 text-center"
             >
-              {addMediaPending ? (
+              {isUploading ? (
                 <Loader2 className="w-10 h-10 text-primary animate-spin" />
               ) : (
                 <Upload className="w-10 h-10 text-muted-foreground group-hover:text-primary transition-colors" />
               )}
               <span className="text-sm font-semibold text-foreground">
-                {addMediaPending
-                  ? "Uploading Asset..."
+                {isUploading
+                  ? "Uploading Assets..."
                   : "Click to select or drag creative files here"}
               </span>
               <span className="text-xs text-muted-foreground">
-                Supports PNG, JPG, JPEG, GIF, SVG, MP4 (Max 10MB)
+                Supports PNG, JPG, JPEG, GIF, SVG, MP4 (Max 10MB) ·
+                up to {MAX_FILES_PER_UPLOAD} files at once
               </span>
             </label>
           </div>
