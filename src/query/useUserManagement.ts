@@ -1,16 +1,17 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { authService } from "@/services/auth";
 import { userService } from "@/services/user";
-import { orgService } from "@/services/org";
 import { useAppStore } from "@/store";
 import { toast } from "sonner";
 import { AxiosError } from "axios";
 import { extractApiErrors } from "@/utils/getErrorMessage";
 import type { LoginFormValues } from "@/utils/schemas/auth";
-import { apiClient } from "@/api/apiClient";
 import { useEffect } from "react";
 import { keepPreviousData } from "@tanstack/react-query";
-import type { AddUserFormValues, EditUserFormValues } from "@/utils/schemas/user";
+import type {
+  AddUserFormValues,
+  EditUserFormValues,
+} from "@/utils/schemas/user";
 
 export const useLogin = () => {
   const loginAction = useAppStore((state) => state.login);
@@ -32,13 +33,6 @@ export const useLogin = () => {
         };
         loginAction(token, storeUser);
 
-        try {
-          const configResponse = await apiClient().get("getOrgConfig");
-          sessionStorage.setItem("orgConfig", JSON.stringify(configResponse.data));
-        } catch (error) {
-          console.error("Failed to fetch org config:", error);
-        }
-
         toast.success(message);
       } else {
         toast.error("Invalid response format from server");
@@ -48,14 +42,6 @@ export const useLogin = () => {
       const errorMsg = extractApiErrors(error.response?.data);
       errorMsg.forEach((msg) => toast.error(msg));
     },
-  });
-};
-
-export const useGetOrgList = () => {
-  return useQuery({
-    queryKey: ["orgList"],
-    queryFn: () => orgService.orgList(),
-    staleTime: 5 * 60 * 1000,
   });
 };
 
@@ -251,5 +237,3 @@ export const useUpdateUserProfilePic = () => {
     },
   });
 };
-
-

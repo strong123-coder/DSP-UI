@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   Outlet,
   NavLink,
@@ -16,8 +17,9 @@ import { routes } from "@/routes/router";
 export default function SuperAdminLayout() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, logout } = useAppStore();
+  const { user, logout, exitOrg } = useAppStore();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const queryClient = useQueryClient();
 
   // Find page title dynamically based on route configuration
   const getPageTitle = () => {
@@ -35,6 +37,8 @@ export default function SuperAdminLayout() {
   };
 
   const handleLogout = () => {
+    queryClient.removeQueries({ queryKey: ["orgConfig"] });
+    exitOrg();
     logout();
     navigate("/super-admin/login");
   };
