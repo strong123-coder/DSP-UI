@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Search, BookOpen } from "lucide-react";
+import { format } from "date-fns";
 import { useGetReportData, useGetReportPrefetch } from "@/query/useReport";
 import { Table } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
@@ -17,6 +18,7 @@ import ReportFilter from "./report-filter";
 import ReportTableHeader from "./report-table-header";
 import ReportTableBody from "./report-table-body";
 import { MetricValue } from "@/components/ui/metric-value";
+import { DateRangePicker } from "src/components/ui/date-range-picker";
 import type { ReportDataRow, SortDirection } from "../types";
 
 import { allColHeaders } from "../constants";
@@ -53,13 +55,32 @@ const ReportListTable: React.FC = () => {
     order: SortDirection;
   }>({ by: "spent", order: "desc" });
 
-  // Filters state (Campaign, Group By)
+  // Filters state (Campaign, Group By, Date Range)
   const [filters, setFilters] = useState<{
     campaignIds?: string[];
     groupBy?: string[];
+    startDate?: string;
+    endDate?: string;
   }>({
     groupBy: ["campaign"],
   });
+
+  const dateRangeValue = useMemo(() => {
+    if (!filters.startDate) return undefined;
+    return {
+      from: new Date(filters.startDate + "T00:00:00"),
+      to: filters.endDate ? new Date(filters.endDate + "T00:00:00") : undefined,
+    };
+  }, [filters.startDate, filters.endDate]);
+
+  const handleDateRangeChange = (range: any) => {
+    setFilters((prev) => ({
+      ...prev,
+      startDate: range?.from ? format(range.from, "yyyy-MM-dd") : undefined,
+      endDate: range?.to ? format(range.to, "yyyy-MM-dd") : undefined,
+    }));
+    setPage(1);
+  };
 
 
   // Debounced search query
@@ -102,6 +123,8 @@ const ReportListTable: React.FC = () => {
       groupBy: filters.groupBy || ["campaign"],
       columns,
       campaignIds: filters.campaignIds,
+      startDate: filters.startDate,
+      endDate: filters.endDate,
       search: debouncedSearch || undefined,
       timezone,
       sortBy: sortConfig.by,
@@ -122,6 +145,8 @@ const ReportListTable: React.FC = () => {
       const searchParam = params.get("search");
       const campaignIdsParam = params.get("campaignIds");
       const groupByParam = params.get("groupBy");
+      const startDateParam = params.get("startDate");
+      const endDateParam = params.get("endDate");
 
       const pageLocal = Math.max(1, parseInt(pageParam || "1", 10));
       const limitLocal = Math.min(
@@ -148,6 +173,14 @@ const ReportListTable: React.FC = () => {
         nextFilters.groupBy = groupByParam.split(",").filter(Boolean);
       }
 
+      if (startDateParam?.trim()) {
+        nextFilters.startDate = startDateParam.trim();
+      }
+
+      if (endDateParam?.trim()) {
+        nextFilters.endDate = endDateParam.trim();
+      }
+
       setFilters(nextFilters);
       setInitialized(true);
     }
@@ -171,6 +204,14 @@ const ReportListTable: React.FC = () => {
 
     if (filters.groupBy && filters.groupBy.length > 0) {
       params.set("groupBy", filters.groupBy.join(","));
+    }
+
+    if (filters.startDate) {
+      params.set("startDate", filters.startDate);
+    }
+
+    if (filters.endDate) {
+      params.set("endDate", filters.endDate);
     }
 
     const newQuery = params.toString();
@@ -267,10 +308,10 @@ const ReportListTable: React.FC = () => {
 
   return (
     <div className="space-y-6 ">
-      {/* Search and Columns Selector Toolbar */}
-      <div className="relative w-full flex justify-center items-center">
-        {/* Columns Selector Dropdown (Checkbox behavior) on the left */}
-        <div className="absolute left-0">
+      {/* Search, Columns, and Date Picker Toolbar */}
+      <div className="relative w-full flex justify-between items-center gap-4">
+        {/* Left Side: Columns Selector Dropdown (Checkbox behavior) */}
+        <div className="flex items-center gap-2">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
@@ -308,17 +349,25 @@ const ReportListTable: React.FC = () => {
           </DropdownMenu>
         </div>
 
-        {/* Centered Search box */}
-        <div className="relative w-full max-w-md">
+        {/* Center: Search box */}
+        <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             id="report-search"
             autoComplete="off"
             type="text"
             placeholder="Search reports..."
-            className="pl-9 pr-4"
+            className="pl-9 pr-4 w-full"
             value={searchState}
             onChange={(e) => setSearchState(e.target.value)}
+          />
+        </div>
+
+        {/* Right Side: Date Picker Range */}
+        <div className="flex items-center gap-2">
+          <DateRangePicker
+            value={dateRangeValue}
+            onChange={handleDateRangeChange}
           />
         </div>
       </div>
