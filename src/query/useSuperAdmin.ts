@@ -56,3 +56,15 @@ export const useSuperAdminOrgs = (payload: SuperAdminRangeParams) => {
     placeholderData: keepPreviousData,
   });
 };
+
+// Live bid-engine counters. Polls on an interval so the dashboard updates in
+// near real time; polling pauses while the browser tab is hidden.
+export const useSuperAdminEngineCounts = (intervalMs = 5000) => {
+  return useQuery({
+    queryKey: ["superAdminEngineCounts"],
+    queryFn: () => superAdminService.engineCounts(),
+    refetchInterval: intervalMs,
+    refetchIntervalInBackground: false,
+    placeholderData: keepPreviousData,
+  });
+};
