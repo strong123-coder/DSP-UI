@@ -17,4 +17,9 @@ export const superAdminService = {
     const response = await apiClient().get("superAdminOrgs", params);
     return response.data;
   },
+  // Live bid-engine counters (total + today), proxied through the backend.
+  engineCounts: async () => {
+    const response = await apiClient().get("superAdminEngineCounts");
+    return response.data;
+  },
 };

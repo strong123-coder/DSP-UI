@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { StatCard } from "@/pages/dashboard/components/StatCard";
 import { MetricValue } from "@/components/ui/metric-value";
+import { LiveCounters } from "@/pages/super-admin/components/live-counters";
 import { useAppStore } from "@/store";
 import { useSuperAdminSummary, useSuperAdminOrgs } from "@/query/useSuperAdmin";
 
@@ -66,6 +67,9 @@ export default function SuperAdminDashboard() {
           ))}
         </select>
       </div>
+
+      {/* Live engine counters (polled from the bid engine via the backend) */}
+      <LiveCounters intervalMs={5000} />
 
       {/* Stat cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">

@@ -11,6 +11,7 @@ export const apiConfig: ApiEndpoint[] = [
   { name: "superAdminDashboardSummary", path: "/api/v1/super-admin/dashboard/summary" },
   { name: "superAdminOrgs", path: "/api/v1/super-admin/orgs" },
   { name: "superAdminCampaigns", path: "/api/v1/super-admin/campaigns" },
+  { name: "superAdminEngineCounts", path: "/api/v1/super-admin/engine-counts" },
   // bid configuration (super admin only)
   { name: "bidConfigGet", path: "/api/v1/bid-config/get" },
   { name: "bidConfigUpsert", path: "/api/v1/bid-config/upsert" },
