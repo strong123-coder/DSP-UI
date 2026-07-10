@@ -15,6 +15,7 @@ import CampaignConfig from "@/pages/campaign/campaign-config";
 import ReportConfig from "@/pages/report/report-config";
 import SuperAdminDashboardConfig from "@/pages/super-admin/dashboard/dashboard-config";
 import SuperAdminBidConfigConfig from "@/pages/super-admin/bid-config/bid-config-config";
+import SuperAdminReportConfig from "@/pages/super-admin/report/report-config";
 
 export const routes = [
   {
@@ -54,6 +55,7 @@ export const routes = [
         element: <Navigate to="/super-admin/dashboard" replace />,
       },
       SuperAdminDashboardConfig,
+      SuperAdminReportConfig,
       SuperAdminBidConfigConfig,
     ],
   },

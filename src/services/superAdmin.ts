@@ -22,4 +22,9 @@ export const superAdminService = {
     const response = await apiClient().get("superAdminEngineCounts");
     return response.data;
   },
+  // Cross-org aggregate report (group by org / campaign / bundle / country / …).
+  report: async (payload?: object) => {
+    const response = await apiClient().post("superAdminReport", payload);
+    return response.data;
+  },
 };

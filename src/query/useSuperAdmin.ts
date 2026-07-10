@@ -68,3 +68,14 @@ export const useSuperAdminEngineCounts = (intervalMs = 5000) => {
     placeholderData: keepPreviousData,
   });
 };
+
+// Cross-org aggregate report. `enabled` gates the initial fetch until the page
+// has resolved its filters.
+export const useSuperAdminReport = (enabled: boolean, payload: object) => {
+  return useQuery({
+    queryKey: ["superAdminReport", payload],
+    queryFn: () => superAdminService.report(payload),
+    placeholderData: keepPreviousData,
+    enabled,
+  });
+};
