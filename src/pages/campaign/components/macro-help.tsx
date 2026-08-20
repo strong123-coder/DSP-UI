@@ -122,6 +122,7 @@ const MACRO_GROUPS: MacroGroup[] = [
       { token: "{timestamp}", desc: "Bid-time unix timestamp" },
       { token: "{cachebuster}", desc: "Random cache-buster" },
       { token: "{rand}", desc: "Random number" },
+      { token: "{x_ua}", desc: "Random string from the engine's rotation pool (same in CTA & VTA)" },
     ],
   },
 ];

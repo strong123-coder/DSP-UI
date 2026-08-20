@@ -8,9 +8,12 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Upload, Trash2, Loader2, FileImage, ExternalLink } from "lucide-react";
+import { Upload, Trash2, Loader2, FileImage, ExternalLink, Tv, Plus, Link2 } from "lucide-react";
 import { useDeleteMedia } from "@/query/useMedia";
 import { mediaService } from "@/services/media";
+import { Switch } from "@/components/ui/switch";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 // Max number of files a user can upload in a single selection.
 const MAX_FILES_PER_UPLOAD = 5;
@@ -18,8 +21,11 @@ import type { AddCampaignFormValues } from "@/utils/schemas/campaign";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 
-// Helper to read the natural width/height of an image or video file (client-side)
-const getMediaDimensions = (file: File): Promise<{ w: number; h: number }> => {
+// Helper to read the natural width/height (and, for video, the duration in
+// seconds) of an image or video file (client-side).
+const getMediaDimensions = (
+  file: File,
+): Promise<{ w: number; h: number; duration: number }> => {
   return new Promise((resolve) => {
     const url = URL.createObjectURL(file);
 
@@ -28,22 +34,26 @@ const getMediaDimensions = (file: File): Promise<{ w: number; h: number }> => {
       video.preload = "metadata";
       video.onloadedmetadata = () => {
         URL.revokeObjectURL(url);
-        resolve({ w: video.videoWidth, h: video.videoHeight });
+        resolve({
+          w: video.videoWidth,
+          h: video.videoHeight,
+          duration: Math.round(video.duration) || 0,
+        });
       };
       video.onerror = () => {
         URL.revokeObjectURL(url);
-        resolve({ w: 0, h: 0 });
+        resolve({ w: 0, h: 0, duration: 0 });
       };
       video.src = url;
     } else {
       const img = new Image();
       img.onload = () => {
         URL.revokeObjectURL(url);
-        resolve({ w: img.naturalWidth, h: img.naturalHeight });
+        resolve({ w: img.naturalWidth, h: img.naturalHeight, duration: 0 });
       };
       img.onerror = () => {
         URL.revokeObjectURL(url);
-        resolve({ w: 0, h: 0 });
+        resolve({ w: 0, h: 0, duration: 0 });
       };
       img.src = url;
     }
@@ -76,6 +86,8 @@ interface MediaCreativeCardProps {
   filename: string;
   w?: number;
   h?: number;
+  duration?: number;
+  vastTag?: string;
   newlyUploadedMediaIds: string[];
   setNewlyUploadedMediaIds: React.Dispatch<React.SetStateAction<string[]>>;
   setDeletedMediaIds?: React.Dispatch<React.SetStateAction<string[]>>;
@@ -91,6 +103,8 @@ const MediaCreativeCard: React.FC<MediaCreativeCardProps> = ({
   filename,
   w,
   h,
+  duration,
+  vastTag,
   newlyUploadedMediaIds,
   setNewlyUploadedMediaIds,
   setDeletedMediaIds,
@@ -132,7 +146,13 @@ const MediaCreativeCard: React.FC<MediaCreativeCardProps> = ({
     <div className="flex flex-col border border-border bg-muted/10 rounded-xl group relative overflow-hidden transition-all hover:border-primary/30">
       {/* Media Preview container */}
       <div className="aspect-video w-full bg-background border-b border-border relative flex items-center justify-center overflow-hidden">
-        {type === "video" ? (
+        {vastTag ? (
+          // 3rd-party VAST tag — no local media to preview.
+          <div className="flex flex-col items-center gap-1 text-muted-foreground px-3 text-center">
+            <Tv className="w-8 h-8" />
+            <span className="text-[10px] font-semibold uppercase tracking-wider">VAST Tag</span>
+          </div>
+        ) : type === "video" ? (
           <video
             src={link || undefined}
             className="w-full h-full object-cover"
@@ -159,15 +179,14 @@ const MediaCreativeCard: React.FC<MediaCreativeCardProps> = ({
         <div className="flex-1 min-w-0">
           <p
             className="text-xs font-semibold text-foreground truncate"
-            title={filename}
+            title={vastTag || filename}
           >
-            {filename}
+            {vastTag || filename}
           </p>
-          {w && h ? (
-            <p className="text-[10px] text-muted-foreground mt-0.5">
-              {w} × {h} px
-            </p>
-          ) : null}
+          <p className="text-[10px] text-muted-foreground mt-0.5">
+            {w && h ? `${w} × ${h} px` : ""}
+            {duration ? `${w && h ? " · " : ""}${duration}s` : ""}
+          </p>
         </div>
         <div className="flex items-center gap-1 shrink-0">
           {link && (
@@ -212,7 +231,14 @@ const StepMediaCreatives: React.FC<StepMediaCreativesProps> = ({
   newlyUploadedMediaIds: newlyUploadedMediaIdsProp,
   setNewlyUploadedMediaIds: setNewlyUploadedMediaIdsProp,
 }) => {
-  const { control, getValues } = useFormContext<AddCampaignFormValues>();
+  const { control, getValues, setValue } = useFormContext<AddCampaignFormValues>();
+
+  // CTV toggle: enables the video-creative flow (upload video / add VAST tag).
+  const ctvEnabled = (useWatch({ control, name: "ctvEnabled" }) as boolean) || false;
+
+  // Local inputs for adding a 3rd-party VAST tag creative.
+  const [vastTag, setVastTag] = useState("");
+  const [vastDuration, setVastDuration] = useState("");
 
   const [localNewlyUploadedMediaIds, setLocalNewlyUploadedMediaIds] = useState<string[]>([]);
   const newlyUploadedMediaIds = newlyUploadedMediaIdsProp ?? localNewlyUploadedMediaIds;
@@ -238,7 +264,7 @@ const StepMediaCreatives: React.FC<StepMediaCreativesProps> = ({
 
   // Upload a single file and return the data needed to append it to the form.
   const uploadOne = async (file: File) => {
-    const { w, h } = await getMediaDimensions(file);
+    const { w, h, duration } = await getMediaDimensions(file);
     const formData = new FormData();
     formData.append("name", file.name);
     formData.append("type", "campaign");
@@ -248,12 +274,14 @@ const StepMediaCreatives: React.FC<StepMediaCreativesProps> = ({
     const mediaData = response?.data?.data || response?.data || response;
     if (!mediaData) throw new Error("Empty upload response");
 
+    const isVideo = mediaData.fileType?.includes("video") || file.type.startsWith("video");
     return {
       id: mediaData._id || mediaData.id || `creative_${Date.now()}_${Math.random().toString(36).slice(2)}`,
       link: mediaData.link1 || mediaData.link,
-      type: mediaData.fileType?.includes("video") ? "video" : "image",
+      type: isVideo ? "video" : "image",
       w,
       h,
+      ...(isVideo ? { duration, mime: mediaData.fileType || file.type } : {}),
     };
   };
 
@@ -274,15 +302,24 @@ const StepMediaCreatives: React.FC<StepMediaCreativesProps> = ({
 
     // Validate each file (size + extension); collect the valid ones.
     const MAX_FILE_SIZE = 10 * 1024 * 1024;
-    const ALLOWED_EXTENSIONS = ["png", "jpg", "jpeg", "gif", "svg", "mp4"];
+    const IMAGE_EXTENSIONS = ["png", "jpg", "jpeg", "gif", "svg"];
+    const VIDEO_EXTENSIONS = ["mp4"];
     const valid: File[] = [];
     for (const file of files) {
       const extension = file.name.split(".").pop()?.toLowerCase();
+      const isVideoFile =
+        file.type.startsWith("video") || (!!extension && VIDEO_EXTENSIONS.includes(extension));
       if (file.size > MAX_FILE_SIZE) {
         toast.error(`${file.name}: exceeds the 10MB limit.`);
         continue;
       }
-      if (!extension || !ALLOWED_EXTENSIONS.includes(extension)) {
+      // Videos are only allowed when CTV is enabled.
+      if (isVideoFile && !ctvEnabled) {
+        toast.error(`${file.name}: enable "CTV / Video" to upload video creatives.`);
+        continue;
+      }
+      const allowed = [...IMAGE_EXTENSIONS, ...(ctvEnabled ? VIDEO_EXTENSIONS : [])];
+      if (!extension || !allowed.includes(extension)) {
         toast.error(`${file.name}: unsupported format.`);
         continue;
       }
@@ -314,6 +351,31 @@ const StepMediaCreatives: React.FC<StepMediaCreativesProps> = ({
     }
   };
 
+  // Add a 3rd-party VAST tag as a video creative (no upload).
+  const addVastTag = () => {
+    const tag = vastTag.trim();
+    if (!tag) {
+      toast.error("Enter a VAST tag URL.");
+      return;
+    }
+    if (!/^https?:\/\//i.test(tag)) {
+      toast.error("VAST tag must be a valid http(s) URL.");
+      return;
+    }
+    appendMedia({
+      id: `vast_${Date.now()}_${Math.random().toString(36).slice(2)}`,
+      type: "video",
+      vastTag: tag,
+      duration: Number(vastDuration) || undefined,
+      // CTV default frame; the player uses the VAST response's actual dimensions.
+      w: 1920,
+      h: 1080,
+    } as any);
+    setVastTag("");
+    setVastDuration("");
+    toast.success("VAST tag creative added");
+  };
+
   return (
     <div className="space-y-6 animate-in fade-in-50 duration-200">
       <Card className="border border-border/50 rounded-xl bg-card shadow-none">
@@ -328,12 +390,32 @@ const StepMediaCreatives: React.FC<StepMediaCreativesProps> = ({
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
+          {/* CTV / Video toggle */}
+          <div className="flex items-start justify-between gap-4 rounded-xl border border-border/60 bg-muted/20 p-4">
+            <div className="flex items-start gap-3">
+              <span className="mt-0.5 p-2 rounded-lg bg-primary/10 text-primary">
+                <Tv className="w-4 h-4" />
+              </span>
+              <div>
+                <p className="text-sm font-semibold">CTV / Video creatives</p>
+                <p className="text-xs text-muted-foreground mt-0.5 max-w-md">
+                  Enable to add video creatives (upload an MP4 or paste a VAST tag). The
+                  campaign can then bid on connected-TV & in-app video. Off = display only.
+                </p>
+              </div>
+            </div>
+            <Switch
+              checked={ctvEnabled}
+              onCheckedChange={(v) => setValue("ctvEnabled", v, { shouldDirty: true })}
+              aria-label="Enable CTV / Video"
+            />
+          </div>
           {/* File Selection Box (Upload Area) */}
           <div className="flex flex-col items-center justify-center border-2 border-dashed border-border rounded-xl p-8 hover:bg-muted/10 transition-colors relative">
             <input
               type="file"
               id="campaign-asset-upload"
-              accept="image/*,video/*"
+              accept={ctvEnabled ? "image/*,video/mp4" : "image/*"}
               multiple
               className="hidden"
               onChange={handleFileUpload}
@@ -354,11 +436,50 @@ const StepMediaCreatives: React.FC<StepMediaCreativesProps> = ({
                   : "Click to select or drag creative files here"}
               </span>
               <span className="text-xs text-muted-foreground">
-                Supports PNG, JPG, JPEG, GIF, SVG, MP4 (Max 10MB) ·
+                Supports PNG, JPG, JPEG, GIF, SVG{ctvEnabled ? ", MP4" : ""} (Max 10MB) ·
                 up to {MAX_FILES_PER_UPLOAD} files at once
               </span>
             </label>
           </div>
+
+          {/* VAST tag adder — only when CTV is enabled */}
+          {ctvEnabled && (
+            <div className="rounded-xl border border-border/60 p-4 space-y-3">
+              <div className="flex items-center gap-2">
+                <Link2 className="w-4 h-4 text-primary" />
+                <p className="text-sm font-semibold">Add a VAST tag (3rd-party video)</p>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Paste a VAST ad-tag URL if the advertiser's ad server serves the video. The
+                engine wraps it and injects our impression / click / complete tracking.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3 sm:items-end">
+                <div className="flex-1 space-y-1">
+                  <Label htmlFor="vast-tag" className="text-xs">VAST tag URL</Label>
+                  <Input
+                    id="vast-tag"
+                    placeholder="https://ad-server.example/vast?..."
+                    value={vastTag}
+                    onChange={(e) => setVastTag(e.target.value)}
+                  />
+                </div>
+                <div className="w-full sm:w-32 space-y-1">
+                  <Label htmlFor="vast-duration" className="text-xs">Duration (s)</Label>
+                  <Input
+                    id="vast-duration"
+                    type="number"
+                    min={1}
+                    placeholder="15"
+                    value={vastDuration}
+                    onChange={(e) => setVastDuration(e.target.value)}
+                  />
+                </div>
+                <Button type="button" onClick={addVastTag} className="gap-1.5 shrink-0">
+                  <Plus className="w-4 h-4" /> Add tag
+                </Button>
+              </div>
+            </div>
+          )}
 
           {/* List of Selected/Uploaded Medias */}
           <div className="space-y-3">
@@ -390,6 +511,8 @@ const StepMediaCreatives: React.FC<StepMediaCreativesProps> = ({
                       filename={filename}
                       w={val.w}
                       h={val.h}
+                      duration={(val as any).duration}
+                      vastTag={(val as any).vastTag}
                       newlyUploadedMediaIds={newlyUploadedMediaIds}
                       setNewlyUploadedMediaIds={setNewlyUploadedMediaIds}
                       setDeletedMediaIds={setDeletedMediaIds}

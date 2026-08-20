@@ -36,6 +36,10 @@ const mediaObjectSchema = z.object({
   type: z.string().trim().optional(),
   w: z.number().optional(),
   h: z.number().optional(),
+  // Video / CTV creative fields.
+  duration: z.number().optional(),
+  vastTag: z.string().trim().optional(),
+  mime: z.string().trim().optional(),
 });
 
 // Root Add Campaign schema
@@ -117,6 +121,8 @@ export const addCampaignSchema = z
     customAudienceIds: z.array(z.string().trim()).optional(),
     inventoryType: z.enum(["programmatic", "oem_premium_partners"]).optional(),
     oemPremiumPartners: z.array(z.string().trim()).optional(),
+    // CTV toggle — enables the video-creative flow.
+    ctvEnabled: z.boolean().optional(),
     media: z.array(mediaObjectSchema).optional(),
   })
   .superRefine((data, ctx) => {
