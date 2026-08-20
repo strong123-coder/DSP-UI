@@ -121,8 +121,6 @@ export const addCampaignSchema = z
     customAudienceIds: z.array(z.string().trim()).optional(),
     inventoryType: z.enum(["programmatic", "oem_premium_partners"]).optional(),
     oemPremiumPartners: z.array(z.string().trim()).optional(),
-    // CTV toggle — enables the video-creative flow.
-    ctvEnabled: z.boolean().optional(),
     media: z.array(mediaObjectSchema).optional(),
   })
   .superRefine((data, ctx) => {

@@ -11,7 +11,6 @@ import { Button } from "@/components/ui/button";
 import { Upload, Trash2, Loader2, FileImage, ExternalLink, Tv, Plus, Link2 } from "lucide-react";
 import { useDeleteMedia } from "@/query/useMedia";
 import { mediaService } from "@/services/media";
-import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
@@ -231,10 +230,13 @@ const StepMediaCreatives: React.FC<StepMediaCreativesProps> = ({
   newlyUploadedMediaIds: newlyUploadedMediaIdsProp,
   setNewlyUploadedMediaIds: setNewlyUploadedMediaIdsProp,
 }) => {
-  const { control, getValues, setValue } = useFormContext<AddCampaignFormValues>();
+  const { control, getValues } = useFormContext<AddCampaignFormValues>();
 
-  // CTV toggle: enables the video-creative flow (upload video / add VAST tag).
-  const ctvEnabled = (useWatch({ control, name: "ctvEnabled" }) as boolean) || false;
+  // CTV is a distinct campaign TYPE (chosen on the platform-type step). A CTV
+  // campaign takes video creatives only (upload MP4 / VAST tag); a display
+  // campaign (mobile/web) takes images only. They never mix.
+  const campaignType = useWatch({ control, name: "type" }) as string | undefined;
+  const isCtv = campaignType === "ctv";
 
   // Local inputs for adding a 3rd-party VAST tag creative.
   const [vastTag, setVastTag] = useState("");
@@ -300,7 +302,8 @@ const StepMediaCreatives: React.FC<StepMediaCreativesProps> = ({
       files = files.slice(0, MAX_FILES_PER_UPLOAD);
     }
 
-    // Validate each file (size + extension); collect the valid ones.
+    // Validate each file (size + extension); collect the valid ones. A CTV
+    // campaign accepts video only; a display campaign accepts images only.
     const MAX_FILE_SIZE = 10 * 1024 * 1024;
     const IMAGE_EXTENSIONS = ["png", "jpg", "jpeg", "gif", "svg"];
     const VIDEO_EXTENSIONS = ["mp4"];
@@ -313,12 +316,15 @@ const StepMediaCreatives: React.FC<StepMediaCreativesProps> = ({
         toast.error(`${file.name}: exceeds the 10MB limit.`);
         continue;
       }
-      // Videos are only allowed when CTV is enabled.
-      if (isVideoFile && !ctvEnabled) {
-        toast.error(`${file.name}: enable "CTV / Video" to upload video creatives.`);
+      if (isCtv && !isVideoFile) {
+        toast.error(`${file.name}: a CTV campaign takes video creatives only.`);
         continue;
       }
-      const allowed = [...IMAGE_EXTENSIONS, ...(ctvEnabled ? VIDEO_EXTENSIONS : [])];
+      if (!isCtv && isVideoFile) {
+        toast.error(`${file.name}: set the campaign type to CTV to upload videos.`);
+        continue;
+      }
+      const allowed = isCtv ? VIDEO_EXTENSIONS : IMAGE_EXTENSIONS;
       if (!extension || !allowed.includes(extension)) {
         toast.error(`${file.name}: unsupported format.`);
         continue;
@@ -390,32 +396,29 @@ const StepMediaCreatives: React.FC<StepMediaCreativesProps> = ({
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          {/* CTV / Video toggle */}
-          <div className="flex items-start justify-between gap-4 rounded-xl border border-border/60 bg-muted/20 p-4">
-            <div className="flex items-start gap-3">
-              <span className="mt-0.5 p-2 rounded-lg bg-primary/10 text-primary">
-                <Tv className="w-4 h-4" />
-              </span>
-              <div>
-                <p className="text-sm font-semibold">CTV / Video creatives</p>
-                <p className="text-xs text-muted-foreground mt-0.5 max-w-md">
-                  Enable to add video creatives (upload an MP4 or paste a VAST tag). The
-                  campaign can then bid on connected-TV & in-app video. Off = display only.
-                </p>
-              </div>
+          {/* Mode banner — driven by the campaign TYPE (chosen earlier). CTV ⇒
+              video creatives only; display ⇒ image creatives only. */}
+          <div className="flex items-start gap-3 rounded-xl border border-border/60 bg-muted/20 p-4">
+            <span className="mt-0.5 p-2 rounded-lg bg-primary/10 text-primary">
+              {isCtv ? <Tv className="w-4 h-4" /> : <FileImage className="w-4 h-4" />}
+            </span>
+            <div>
+              <p className="text-sm font-semibold">
+                {isCtv ? "CTV / Video campaign" : "Display campaign"}
+              </p>
+              <p className="text-xs text-muted-foreground mt-0.5 max-w-md">
+                {isCtv
+                  ? "This is a CTV campaign — add video creatives only (upload an MP4 or paste a VAST tag). To run display instead, change the platform type."
+                  : "Add image creatives (banner). To run connected-TV / in-app video, set the platform type to CTV."}
+              </p>
             </div>
-            <Switch
-              checked={ctvEnabled}
-              onCheckedChange={(v) => setValue("ctvEnabled", v, { shouldDirty: true })}
-              aria-label="Enable CTV / Video"
-            />
           </div>
           {/* File Selection Box (Upload Area) */}
           <div className="flex flex-col items-center justify-center border-2 border-dashed border-border rounded-xl p-8 hover:bg-muted/10 transition-colors relative">
             <input
               type="file"
               id="campaign-asset-upload"
-              accept={ctvEnabled ? "image/*,video/mp4" : "image/*"}
+              accept={isCtv ? "video/mp4" : "image/*"}
               multiple
               className="hidden"
               onChange={handleFileUpload}
@@ -436,14 +439,14 @@ const StepMediaCreatives: React.FC<StepMediaCreativesProps> = ({
                   : "Click to select or drag creative files here"}
               </span>
               <span className="text-xs text-muted-foreground">
-                Supports PNG, JPG, JPEG, GIF, SVG{ctvEnabled ? ", MP4" : ""} (Max 10MB) ·
+                {isCtv ? "Supports MP4 video (Max 10MB)" : "Supports PNG, JPG, JPEG, GIF, SVG (Max 10MB)"} ·
                 up to {MAX_FILES_PER_UPLOAD} files at once
               </span>
             </label>
           </div>
 
           {/* VAST tag adder — only when CTV is enabled */}
-          {ctvEnabled && (
+          {isCtv && (
             <div className="rounded-xl border border-border/60 p-4 space-y-3">
               <div className="flex items-center gap-2">
                 <Link2 className="w-4 h-4 text-primary" />
