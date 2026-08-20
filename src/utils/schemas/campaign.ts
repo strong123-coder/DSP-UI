@@ -54,17 +54,12 @@ export const addCampaignSchema = z
     }),
     status: z.enum(["active", "paused"]).default("paused").optional(),
     currency: z.string().trim().optional(),
-    bundleId: z.string().trim().min(1, {
-      message: "App Bundle ID is required",
-    }),
-    appName: z
-      .string()
-      .trim()
-      .min(1, { message: "Correct OS Name and Bundle ID required" }),
-    appOs: z.enum(["android", "ios"], {
-      message: "App OS is required",
-    }),
-    appIconLink: z.string().trim().min(1, { message: "" }),
+    // App-install fields are required for Mobile campaigns only (enforced in
+    // superRefine); CTV / Web campaigns don't have an app OS / bundle.
+    bundleId: z.string().trim().optional(),
+    appName: z.string().trim().optional(),
+    appOs: z.enum(["android", "ios"]).optional(),
+    appIconLink: z.string().trim().optional(),
     budget: z
       .string()
       .trim()
@@ -124,6 +119,19 @@ export const addCampaignSchema = z
     media: z.array(mediaObjectSchema).optional(),
   })
   .superRefine((data, ctx) => {
+    // Mobile campaigns must specify the app OS + bundle (app-install targeting).
+    if (data.type === "mobile") {
+      if (!data.appOs) {
+        ctx.addIssue({ code: "custom", message: "App OS is required", path: ["appOs"] });
+      }
+      if (!data.bundleId || data.bundleId.trim() === "") {
+        ctx.addIssue({ code: "custom", message: "App Bundle ID is required", path: ["bundleId"] });
+      }
+      if (!data.appName || data.appName.trim() === "") {
+        ctx.addIssue({ code: "custom", message: "Correct OS Name and Bundle ID required", path: ["appName"] });
+      }
+    }
+
     if (data.isScheduling) {
       if (!data.startDate || data.startDate.trim() === "") {
         ctx.addIssue({

@@ -49,6 +49,8 @@ const StepCampaignDetails = () => {
     formState: { errors },
   } = useFormContext<AddCampaignFormValues>();
 
+  const watchType = watch("type");
+  const isMobile = watchType === "mobile";
   const watchIsScheduling = watch("isScheduling");
   const watchBundleId = watch("bundleId");
   const watchAppOs = watch("appOs");
@@ -64,10 +66,10 @@ const StepCampaignDetails = () => {
     error: appDetailsError,
   } = useGetAppDetails(
     {
-      bundleId: debouncedBundleId,
-      platform: watchAppOs,
+      bundleId: debouncedBundleId ?? "",
+      platform: (watchAppOs ?? "android") as "android" | "ios",
     },
-    !isEdit,
+    !isEdit && isMobile, // app-store lookup only applies to Mobile campaigns
   );
 
   useEffect(() => {
@@ -122,69 +124,105 @@ const StepCampaignDetails = () => {
             />
           </div>
 
-          {/* App OS */}
-          <div className="space-y-2">
-            <Label htmlFor="appOs">Selelect App OS</Label>
+          {/* Campaign Type / Platform */}
+          <div className="space-y-2 md:col-span-2">
+            <Label htmlFor="type">
+              Campaign Type <span className="text-destructive">*</span>
+            </Label>
             <Controller
-              name="appOs"
+              name="type"
               control={control}
               render={({ field }) => (
                 <SelectComponent
                   ref={field.ref}
                   disabled={isEdit}
-                  id="appOs"
-                  placeholder="Please select app OS"
+                  id="type"
+                  placeholder="Select campaign type"
                   onValueChange={field.onChange}
                   value={field.value}
-                  ariaInvalid={!!errors.appOs}
+                  ariaInvalid={!!errors.type}
                   data={[
-                    { name: "Android", value: "android" },
-                    { name: "iOS", value: "ios" },
+                    { name: "Mobile App", value: "mobile" },
+                    { name: "Web", value: "web" },
+                    { name: "CTV / Video", value: "ctv" },
                   ]}
-                  errorTooltip={errors.appOs?.message}
+                  errorTooltip={errors.type?.message}
                 />
               )}
             />
+            <p className="text-[11px] text-muted-foreground">
+              {watchType === "ctv"
+                ? "CTV runs video creatives (upload MP4 or paste a VAST tag) on connected-TV & in-app video."
+                : "Mobile & Web run image (display) creatives."}
+            </p>
           </div>
 
-          {/* Bundle ID */}
-          <div className="space-y-2">
-            <Label htmlFor="bundleId">Bundle / Package ID</Label>
-            <div className="relative flex items-center">
-              <Input
-                id="bundleId"
-                placeholder={
-                  !Boolean(watchAppOs)
-                    ? "Please select app OS first"
-                    : "Provide Bundle ID ex.(com.package.name)"
-                }
-                disabled={isEdit || !Boolean(watchAppOs)}
-                {...register("bundleId")}
-                aria-invalid={!!errors.bundleId || appDetailsIsError}
-                errorTooltip={
-                  errors.bundleId?.message || appDetailsErrorMessage
-                }
-                className={
-                  appDetailsData?.data?.data?.iconUrl || appDetailsLoading
-                    ? "pr-9"
-                    : ""
-                }
-              />
-              {appDetailsLoading && (
-                <Loader2 className="absolute right-2.5 w-4 h-4 animate-spin text-muted-foreground" />
-              )}
-              {!appDetailsLoading &&
-                (appDetailsData?.data?.data?.iconUrl || watchAppIconLink) && (
-                  <img
-                    src={
-                      appDetailsData?.data?.data?.iconUrl || watchAppIconLink
+          {/* App OS + Bundle — mobile app-install only */}
+          {isMobile && (
+            <>
+              <div className="space-y-2">
+                <Label htmlFor="appOs">Selelect App OS</Label>
+                <Controller
+                  name="appOs"
+                  control={control}
+                  render={({ field }) => (
+                    <SelectComponent
+                      ref={field.ref}
+                      disabled={isEdit}
+                      id="appOs"
+                      placeholder="Please select app OS"
+                      onValueChange={field.onChange}
+                      value={field.value}
+                      ariaInvalid={!!errors.appOs}
+                      data={[
+                        { name: "Android", value: "android" },
+                        { name: "iOS", value: "ios" },
+                      ]}
+                      errorTooltip={errors.appOs?.message}
+                    />
+                  )}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="bundleId">Bundle / Package ID</Label>
+                <div className="relative flex items-center">
+                  <Input
+                    id="bundleId"
+                    placeholder={
+                      !Boolean(watchAppOs)
+                        ? "Please select app OS first"
+                        : "Provide Bundle ID ex.(com.package.name)"
                     }
-                    alt="App Icon"
-                    className="absolute right-0 top-0 w-9 h-full rounded-md object-cover"
+                    disabled={isEdit || !Boolean(watchAppOs)}
+                    {...register("bundleId")}
+                    aria-invalid={!!errors.bundleId || appDetailsIsError}
+                    errorTooltip={
+                      errors.bundleId?.message || appDetailsErrorMessage
+                    }
+                    className={
+                      appDetailsData?.data?.data?.iconUrl || appDetailsLoading
+                        ? "pr-9"
+                        : ""
+                    }
                   />
-                )}
-            </div>
-          </div>
+                  {appDetailsLoading && (
+                    <Loader2 className="absolute right-2.5 w-4 h-4 animate-spin text-muted-foreground" />
+                  )}
+                  {!appDetailsLoading &&
+                    (appDetailsData?.data?.data?.iconUrl || watchAppIconLink) && (
+                      <img
+                        src={
+                          appDetailsData?.data?.data?.iconUrl || watchAppIconLink
+                        }
+                        alt="App Icon"
+                        className="absolute right-0 top-0 w-9 h-full rounded-md object-cover"
+                      />
+                    )}
+                </div>
+              </div>
+            </>
+          )}
 
           <div className="space-y-2">
             <Label htmlFor="dailyBudget">Daily Budget</Label>
