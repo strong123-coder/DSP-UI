@@ -51,6 +51,7 @@ const StepCampaignDetails = () => {
 
   const watchType = watch("type");
   const isMobile = watchType === "mobile";
+  const isCtv = watchType === "ctv";
   const watchIsScheduling = watch("isScheduling");
   const watchBundleId = watch("bundleId");
   const watchAppOs = watch("appOs");
@@ -157,71 +158,83 @@ const StepCampaignDetails = () => {
             </p>
           </div>
 
-          {/* App OS + Bundle — mobile app-install only */}
+          {/* App OS — mobile app-install only (android/iOS store OS).
+              CTV runs on TV OSes (Fire TV / Roku / Android TV) so this doesn't apply. */}
           {isMobile && (
-            <>
-              <div className="space-y-2">
-                <Label htmlFor="appOs">Selelect App OS</Label>
-                <Controller
-                  name="appOs"
-                  control={control}
-                  render={({ field }) => (
-                    <SelectComponent
-                      ref={field.ref}
-                      disabled={isEdit}
-                      id="appOs"
-                      placeholder="Please select app OS"
-                      onValueChange={field.onChange}
-                      value={field.value}
-                      ariaInvalid={!!errors.appOs}
-                      data={[
-                        { name: "Android", value: "android" },
-                        { name: "iOS", value: "ios" },
-                      ]}
-                      errorTooltip={errors.appOs?.message}
-                    />
-                  )}
-                />
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="appOs">Selelect App OS</Label>
+              <Controller
+                name="appOs"
+                control={control}
+                render={({ field }) => (
+                  <SelectComponent
+                    ref={field.ref}
+                    disabled={isEdit}
+                    id="appOs"
+                    placeholder="Please select app OS"
+                    onValueChange={field.onChange}
+                    value={field.value}
+                    ariaInvalid={!!errors.appOs}
+                    data={[
+                      { name: "Android", value: "android" },
+                      { name: "iOS", value: "ios" },
+                    ]}
+                    errorTooltip={errors.appOs?.message}
+                  />
+                )}
+              />
+            </div>
+          )}
 
-              <div className="space-y-2">
-                <Label htmlFor="bundleId">Bundle / Package ID</Label>
-                <div className="relative flex items-center">
-                  <Input
-                    id="bundleId"
-                    placeholder={
-                      !Boolean(watchAppOs)
+          {/* App / Bundle ID — Mobile (with store lookup) AND CTV (plain input:
+              the CTV app the campaign advertises/targets, e.g. B07DBBTDBS). */}
+          {(isMobile || isCtv) && (
+            <div className="space-y-2">
+              <Label htmlFor="bundleId">
+                {isCtv ? "App Bundle ID" : "Bundle / Package ID"}
+                {isCtv && (
+                  <span className="text-muted-foreground font-normal"> (Optional)</span>
+                )}
+              </Label>
+              <div className="relative flex items-center">
+                <Input
+                  id="bundleId"
+                  placeholder={
+                    isCtv
+                      ? "CTV app bundle e.g. B07DBBTDBS / com.roku.channel"
+                      : !Boolean(watchAppOs)
                         ? "Please select app OS first"
                         : "Provide Bundle ID ex.(com.package.name)"
-                    }
-                    disabled={isEdit || !Boolean(watchAppOs)}
-                    {...register("bundleId")}
-                    aria-invalid={!!errors.bundleId || appDetailsIsError}
-                    errorTooltip={
-                      errors.bundleId?.message || appDetailsErrorMessage
-                    }
-                    className={
-                      appDetailsData?.data?.data?.iconUrl || appDetailsLoading
-                        ? "pr-9"
-                        : ""
-                    }
-                  />
-                  {appDetailsLoading && (
-                    <Loader2 className="absolute right-2.5 w-4 h-4 animate-spin text-muted-foreground" />
+                  }
+                  disabled={isEdit || (isMobile && !Boolean(watchAppOs))}
+                  {...register("bundleId")}
+                  aria-invalid={!!errors.bundleId || (isMobile && appDetailsIsError)}
+                  errorTooltip={
+                    errors.bundleId?.message ||
+                    (isMobile ? appDetailsErrorMessage : undefined)
+                  }
+                  className={
+                    isMobile && (appDetailsData?.data?.data?.iconUrl || appDetailsLoading)
+                      ? "pr-9"
+                      : ""
+                  }
+                />
+                {isMobile && appDetailsLoading && (
+                  <Loader2 className="absolute right-2.5 w-4 h-4 animate-spin text-muted-foreground" />
+                )}
+                {isMobile &&
+                  !appDetailsLoading &&
+                  (appDetailsData?.data?.data?.iconUrl || watchAppIconLink) && (
+                    <img
+                      src={
+                        appDetailsData?.data?.data?.iconUrl || watchAppIconLink
+                      }
+                      alt="App Icon"
+                      className="absolute right-0 top-0 w-9 h-full rounded-md object-cover"
+                    />
                   )}
-                  {!appDetailsLoading &&
-                    (appDetailsData?.data?.data?.iconUrl || watchAppIconLink) && (
-                      <img
-                        src={
-                          appDetailsData?.data?.data?.iconUrl || watchAppIconLink
-                        }
-                        alt="App Icon"
-                        className="absolute right-0 top-0 w-9 h-full rounded-md object-cover"
-                      />
-                    )}
-                </div>
               </div>
-            </>
+            </div>
           )}
 
           <div className="space-y-2">
