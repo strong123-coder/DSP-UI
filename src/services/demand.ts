@@ -1,25 +1,20 @@
 import { apiClient } from "@/api/apiClient";
+import type { PartnerEndpoint, PartnerAuth, PartnerDeal, DealTerm } from "@/services/mediation";
 
-export interface DemandEndpoint {
-  label?: string;
-  url: string;
-  geos: string[];
-  tmaxMs?: number;
-  priority?: number;
-  qps?: number | null;
-}
+export type DemandEndpoint = PartnerEndpoint;
 
 export interface DemandPartner {
   _id?: string;
   name: string;
-  partnerKind: string;
+  kind: string; // dsp | exchange | network (buy-side only)
   integration: string;
   status: string;
   endpoints: DemandEndpoint[];
   protocol?: string;
-  auth?: { type: string; headerName?: string | null; value?: string | null };
+  auth?: PartnerAuth;
   seat?: string | null;
-  revenue?: { marginPct?: number; minMarginCpm?: number | null; bidAdjustPct?: number };
+  deal?: PartnerDeal; // revshare | margin — our cut
+  deals?: DealTerm[]; // PMP deals negotiated with this partner
   targeting?: {
     geos?: string[];
     adFormats?: string[];
@@ -42,7 +37,7 @@ export interface DemandListParams {
   page?: number;
   limit?: number;
   status?: string;
-  partnerKind?: string;
+  kind?: string;
   integration?: string;
   search?: string;
 }

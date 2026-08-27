@@ -20,6 +20,13 @@ export const apiConfig: ApiEndpoint[] = [
   { name: "demandUpdate", path: "/api/v1/demand/{id}", hasPathParams: true },
   { name: "demandStatus", path: "/api/v1/demand/{id}/status", hasPathParams: true },
   { name: "demandDelete", path: "/api/v1/demand/{id}", hasPathParams: true },
+  // supply partners (super admin only)
+  { name: "supplyList", path: "/api/v1/supply" },
+  { name: "supplyCreate", path: "/api/v1/supply" },
+  { name: "supplyGet", path: "/api/v1/supply/{id}", hasPathParams: true },
+  { name: "supplyUpdate", path: "/api/v1/supply/{id}", hasPathParams: true },
+  { name: "supplyStatus", path: "/api/v1/supply/{id}/status", hasPathParams: true },
+  { name: "supplyDelete", path: "/api/v1/supply/{id}", hasPathParams: true },
   // bid configuration (super admin only)
   { name: "bidConfigGet", path: "/api/v1/bid-config/get" },
   { name: "bidConfigUpsert", path: "/api/v1/bid-config/upsert" },

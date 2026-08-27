@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
-  ArrowLeft, Plus, Trash2, Server, Percent, Globe, Target, Settings2, ShieldCheck,
+  ArrowLeft, Plus, Trash2, Server, Percent, Globe, Target, Settings2, ShieldCheck, Handshake,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,10 +14,10 @@ import {
 import LoadingFallback from "@/components/ui/loading-fallback";
 import { useDemandPartner, useCreateDemand, useUpdateDemand } from "@/query/useDemand";
 import type { DemandPartner, DemandEndpoint } from "@/services/demand";
+import { CommercialDealFields, DealTermsEditor } from "@/pages/super-admin/_shared/partner-fields";
 
 const KINDS = [
   { v: "dsp", l: "DSP — external demand" },
-  { v: "ssp", l: "SSP — resell our supply" },
   { v: "exchange", l: "Exchange" },
   { v: "network", l: "Ad network" },
 ];
@@ -47,11 +47,12 @@ const arrToCsv = (a?: (string | number)[]) => (a || []).join(", ");
 
 const emptyEndpoint = (): DemandEndpoint => ({ label: "", url: "", geos: [], tmaxMs: 200, priority: 0, qps: null });
 const emptyPartner = (): Partial<DemandPartner> => ({
-  name: "", partnerKind: "dsp", integration: "rtb", protocol: "openrtb-2.5", status: "paused",
+  name: "", kind: "dsp", integration: "rtb", protocol: "openrtb-2.5", status: "paused",
   currency: "USD", seat: "",
   endpoints: [emptyEndpoint()],
   auth: { type: "none", headerName: "", value: "" },
-  revenue: { marginPct: 15, minMarginCpm: null, bidAdjustPct: 0 },
+  deal: { model: "margin", marginPct: 15, revSharePct: null, minMarginCpm: null, bidAdjustPct: 0 },
+  deals: [],
   targeting: { geos: [], adFormats: [], deviceTypes: [], os: [], trafficType: "all", bundlesAllow: [], bundlesBlock: [], categoriesBlock: [] },
   limits: { qps: null, dailyReqCap: null, dailySpendCap: null, timeoutMs: 200 },
   sampling: { trafficPct: 100 },
@@ -117,6 +118,8 @@ const DemandForm: React.FC = () => {
     if (!form.name?.trim()) e.push("Partner name is required.");
     const eps = (form.endpoints || []).filter((x) => x.url?.trim());
     if (!eps.length) e.push("At least one endpoint with a URL is required.");
+    if (form.deal?.model === "revshare" && (form.deal?.revSharePct === null || form.deal?.revSharePct === undefined))
+      e.push("Rev share % is required for a rev-share deal.");
     return e;
   }, [form]);
 
@@ -125,6 +128,7 @@ const DemandForm: React.FC = () => {
     const payload: Partial<DemandPartner> = {
       ...form,
       endpoints: (form.endpoints || []).filter((x) => x.url?.trim()),
+      deals: (form.deals || []).filter((d) => d.dealId?.trim()),
     };
     const done = () => navigate("/super-admin/demand");
     if (isEdit) updateMut.mutate({ id: id as string, payload }, { onSuccess: done });
@@ -155,7 +159,7 @@ const DemandForm: React.FC = () => {
           </div>
           <div className="space-y-1.5">
             <Label>Kind</Label>
-            <Select value={form.partnerKind} onValueChange={(v) => setField("partnerKind", v)}>
+            <Select value={form.kind} onValueChange={(v) => setField("kind", v)}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>{KINDS.map((k) => <SelectItem key={k.v} value={k.v}>{k.l}</SelectItem>)}</SelectContent>
             </Select>
@@ -192,27 +196,25 @@ const DemandForm: React.FC = () => {
         </div>
       </Section>
 
-      {/* Economics */}
-      <Section icon={<Percent className="w-4 h-4 text-primary" />} title="Economics — your cut"
-        desc="bidToSSP = winPrice × (1 − margin). Traffic % ramps how much eligible supply is sent while testing.">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="space-y-1.5">
-            <Label>Margin %</Label>
-            <Input type="number" min={0} max={100} value={form.revenue?.marginPct ?? 0} onChange={(e) => setField("revenue.marginPct", Number(e.target.value))} />
-          </div>
-          <div className="space-y-1.5">
-            <Label>Min margin CPM</Label>
-            <Input type="number" min={0} step="0.01" value={form.revenue?.minMarginCpm ?? ""} onChange={(e) => setField("revenue.minMarginCpm", e.target.value === "" ? null : Number(e.target.value))} placeholder="optional" />
-          </div>
-          <div className="space-y-1.5">
-            <Label>Bid adjust %</Label>
-            <Input type="number" value={form.revenue?.bidAdjustPct ?? 0} onChange={(e) => setField("revenue.bidAdjustPct", Number(e.target.value))} />
-          </div>
-          <div className="space-y-1.5">
-            <Label>Traffic %</Label>
-            <Input type="number" min={0} max={100} value={form.sampling?.trafficPct ?? 100} onChange={(e) => setField("sampling.trafficPct", Number(e.target.value))} />
-          </div>
-        </div>
+      {/* Deal — our cut */}
+      <Section icon={<Percent className="w-4 h-4 text-primary" />} title="Deal — your cut"
+        desc="How this partner pays us: rev share or a margin cut on eCPM. Traffic % ramps how much eligible supply is sent while testing.">
+        <CommercialDealFields
+          deal={form.deal}
+          onChange={(deal) => setField("deal", deal)}
+          extra={
+            <div className="space-y-1.5">
+              <Label>Traffic %</Label>
+              <Input type="number" min={0} max={100} value={form.sampling?.trafficPct ?? 100} onChange={(e) => setField("sampling.trafficPct", Number(e.target.value))} />
+            </div>
+          }
+        />
+      </Section>
+
+      {/* PMP deals */}
+      <Section icon={<Handshake className="w-4 h-4 text-primary" />} title="Deals (PMP)"
+        desc="OpenRTB Deal IDs negotiated offline with this partner — sent as imp.pmp.deals in our bid requests; their bids answer with bid.dealid and are priced by the deal terms.">
+        <DealTermsEditor deals={form.deals} onChange={(deals) => setField("deals", deals)} />
       </Section>
 
       {/* Geo-wise endpoints */}

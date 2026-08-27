@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Trash2, Pencil, Search, Server, Globe } from "lucide-react";
+import { Plus, Trash2, Pencil, Search, Radio, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -12,10 +12,10 @@ import {
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import ThreeButtonPagination from "@/components/pagination/three-button-pagination";
 import LoadingFallback from "@/components/ui/loading-fallback";
-import { useDemandList, useDemandStatus, useDeleteDemand } from "@/query/useDemand";
-import type { DemandPartner } from "@/services/demand";
+import { useSupplyList, useSupplyStatus, useDeleteSupply } from "@/query/useSupply";
+import type { SupplyPartner } from "@/services/supply";
 
-const DemandPartners: React.FC = () => {
+const SupplyPartners: React.FC = () => {
   const navigate = useNavigate();
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(20);
@@ -26,24 +26,24 @@ const DemandPartners: React.FC = () => {
     () => ({ page, limit, search: search || undefined, status: statusFilter === "all" ? undefined : statusFilter }),
     [page, limit, search, statusFilter],
   );
-  const { data: resp, isLoading } = useDemandList(listPayload);
-  const rows: DemandPartner[] = resp?.data?.data ?? [];
+  const { data: resp, isLoading } = useSupplyList(listPayload);
+  const rows: SupplyPartner[] = resp?.data?.data ?? [];
   const pagination = resp?.data?.pagination;
   const totalPages = pagination?.totalPages || 1;
 
-  const statusMut = useDemandStatus();
-  const deleteMut = useDeleteDemand();
+  const statusMut = useSupplyStatus();
+  const deleteMut = useDeleteSupply();
 
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div>
-          <h1 className="text-xl font-bold flex items-center gap-2"><Server className="w-5 h-5 text-primary" /> Demand Partners</h1>
+          <h1 className="text-xl font-bold flex items-center gap-2"><Radio className="w-5 h-5 text-primary" /> Supply Partners</h1>
           <p className="text-sm text-muted-foreground">
-            External DSP / exchange endpoints the engine calls for bids. Set geo-wise endpoints and the deal (rev share or margin).
+            Where traffic comes from (inbound /rtb?zone=) or goes to (outbound). Zones, per-zone floors, and the deal (rev share or margin).
           </p>
         </div>
-        <Button onClick={() => navigate("/super-admin/demand/new")} className="gap-1.5"><Plus className="w-4 h-4" /> Add partner</Button>
+        <Button onClick={() => navigate("/super-admin/supply/new")} className="gap-1.5"><Plus className="w-4 h-4" /> Add partner</Button>
       </div>
 
       <div className="flex items-center gap-3 flex-wrap">
@@ -72,8 +72,8 @@ const DemandPartners: React.FC = () => {
                 <TableRow>
                   <TableHead className="pl-5">Partner</TableHead>
                   <TableHead>Kind</TableHead>
-                  <TableHead>Integration</TableHead>
-                  <TableHead>Endpoints / Geos</TableHead>
+                  <TableHead>Flow</TableHead>
+                  <TableHead>Zones</TableHead>
                   <TableHead className="text-right">Deal</TableHead>
                   <TableHead>Active</TableHead>
                   <TableHead className="text-right pr-5">Actions</TableHead>
@@ -82,17 +82,17 @@ const DemandPartners: React.FC = () => {
               <TableBody>
                 {rows.length === 0 ? (
                   <TableRow><TableCell colSpan={7} className="text-center py-10 text-muted-foreground">
-                    No demand partners yet. Click <b>Add partner</b> to create one.
+                    No supply partners yet. Click <b>Add partner</b> to create one.
                   </TableCell></TableRow>
                 ) : rows.map((p) => (
                   <TableRow key={p._id} className="cursor-pointer hover:bg-muted/20"
-                    onClick={() => navigate(`/super-admin/demand/${p._id}/edit`)}>
+                    onClick={() => navigate(`/super-admin/supply/${p._id}/edit`)}>
                     <TableCell className="pl-5 font-medium">{p.name}</TableCell>
                     <TableCell><Badge variant="secondary" className="uppercase text-[10px]">{p.kind}</Badge></TableCell>
-                    <TableCell className="uppercase text-xs">{p.integration}</TableCell>
+                    <TableCell className="uppercase text-xs">{p.flow}</TableCell>
                     <TableCell className="text-xs text-muted-foreground">
-                      <div className="flex items-center gap-1"><Globe className="w-3 h-3" />{p.endpoints?.length || 0} endpoint(s)</div>
-                      <div className="truncate max-w-[220px]">{(p.targeting?.geos?.length ? p.targeting.geos : ["all geos"]).join(", ")}</div>
+                      <div className="flex items-center gap-1"><MapPin className="w-3 h-3" />{p.zones?.length || 0} zone(s)</div>
+                      <div className="truncate max-w-[220px]">{(p.zones || []).map((z) => z.zoneId).join(", ")}</div>
                     </TableCell>
                     <TableCell className="text-right font-semibold">
                       {p.deal?.model === "revshare"
@@ -104,7 +104,7 @@ const DemandPartners: React.FC = () => {
                         onCheckedChange={(v) => statusMut.mutate({ id: p._id!, status: v ? "active" : "paused" })} />
                     </TableCell>
                     <TableCell className="text-right pr-5" onClick={(e) => e.stopPropagation()}>
-                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => navigate(`/super-admin/demand/${p._id}/edit`)}><Pencil className="w-4 h-4" /></Button>
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => navigate(`/super-admin/supply/${p._id}/edit`)}><Pencil className="w-4 h-4" /></Button>
                       <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive"
                         onClick={() => { if (confirm(`Delete "${p.name}"?`)) deleteMut.mutate(p._id!); }}><Trash2 className="w-4 h-4" /></Button>
                     </TableCell>
@@ -123,4 +123,4 @@ const DemandPartners: React.FC = () => {
   );
 };
 
-export default DemandPartners;
+export default SupplyPartners;
