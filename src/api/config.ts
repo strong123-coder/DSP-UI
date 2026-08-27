@@ -13,6 +13,13 @@ export const apiConfig: ApiEndpoint[] = [
   { name: "superAdminCampaigns", path: "/api/v1/super-admin/campaigns" },
   { name: "superAdminEngineCounts", path: "/api/v1/super-admin/engine-counts" },
   { name: "superAdminReport", path: "/api/v1/super-admin/report" },
+  // demand partners (super admin only)
+  { name: "demandList", path: "/api/v1/demand" },
+  { name: "demandCreate", path: "/api/v1/demand" },
+  { name: "demandGet", path: "/api/v1/demand/{id}", hasPathParams: true },
+  { name: "demandUpdate", path: "/api/v1/demand/{id}", hasPathParams: true },
+  { name: "demandStatus", path: "/api/v1/demand/{id}/status", hasPathParams: true },
+  { name: "demandDelete", path: "/api/v1/demand/{id}", hasPathParams: true },
   // bid configuration (super admin only)
   { name: "bidConfigGet", path: "/api/v1/bid-config/get" },
   { name: "bidConfigUpsert", path: "/api/v1/bid-config/upsert" },

@@ -16,6 +16,7 @@ import ReportConfig from "@/pages/report/report-config";
 import SuperAdminDashboardConfig from "@/pages/super-admin/dashboard/dashboard-config";
 import SuperAdminBidConfigConfig from "@/pages/super-admin/bid-config/bid-config-config";
 import SuperAdminReportConfig from "@/pages/super-admin/report/report-config";
+import SuperAdminDemandConfig from "@/pages/super-admin/demand/demand-config";
 
 export const routes = [
   {
@@ -56,6 +57,7 @@ export const routes = [
       },
       SuperAdminDashboardConfig,
       SuperAdminReportConfig,
+      SuperAdminDemandConfig,
       SuperAdminBidConfigConfig,
     ],
   },
