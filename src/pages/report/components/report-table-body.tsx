@@ -63,7 +63,11 @@ const ReportTableBody: React.FC<ReportTableBodyProps> = ({
               }
             >
               {activeHeaders.map((col) => (
-                <TableCell key={col.key} className="py-3.5 px-4 text-sm max-w-[200px] truncate">
+                <TableCell
+                  key={col.key}
+                  // Label columns get more room than the numeric ones.
+                  className={`py-3.5 px-4 text-sm truncate ${METRIC_KEYS.has(col.key) ? "max-w-[200px]" : "max-w-[340px]"}`}
+                >
                   {renderCell(row, col.key)}
                 </TableCell>
               ))}

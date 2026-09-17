@@ -287,12 +287,20 @@ const ReportListTable: React.FC = () => {
   const renderCell = (row: ReportDataRow, key: string) => {
     const val = row[key];
     if (key === "campaignTitle") {
+      // Name first — the column truncates, so a leading 24-char id used to push
+      // the title out of view. The id stays available on hover and as a small
+      // secondary line; it is the fallback only when the campaign has no title
+      // (e.g. it was deleted but still has historical rows).
       const campId = row.campaign ? row.campaign.replace(/\.\.\./g, "") : "";
-      const displayTitle = row.campaignTitle || "Unknown Campaign";
+      const title = (row.campaignTitle || "").trim();
+      const primary = title || campId || "Unknown Campaign";
       return (
-        <span className="text-primary font-medium hover:underline hover:cursor-pointer transition-all">
-          {campId ? `${campId} - ${displayTitle}` : displayTitle}
-        </span>
+        <div className="min-w-0" title={title && campId ? `${title} · ${campId}` : primary}>
+          <div className="text-primary font-medium hover:underline truncate">{primary}</div>
+          {title && campId && (
+            <div className="text-[11px] text-muted-foreground font-mono truncate">{campId}</div>
+          )}
+        </div>
       );
     }
     if (key === "advertiser") {
