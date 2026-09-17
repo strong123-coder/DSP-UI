@@ -95,7 +95,9 @@ const DemandPartners: React.FC = () => {
                       <div className="truncate max-w-[220px]">{(p.targeting?.geos?.length ? p.targeting.geos : ["all geos"]).join(", ")}</div>
                     </TableCell>
                     <TableCell className="text-right font-semibold">
-                      {p.deal?.model === "revshare"
+                      {p.deal?.model === "fixed"
+                        ? `$${p.deal?.fixedCpm ?? 0} fixed eCPM`
+                        : p.deal?.model === "revshare"
                         ? `${p.deal?.revSharePct ?? 0}% rev share`
                         : `${p.deal?.marginPct ?? 0}% margin`}
                     </TableCell>

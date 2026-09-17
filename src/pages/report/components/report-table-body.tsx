@@ -19,6 +19,9 @@ interface ReportTableBodyProps {
   activeHeaders: Array<{ key: string; label: string; sortable: boolean }>;
   totals: ReportTotals | null;
   renderCell: (row: ReportDataRow, key: string) => React.ReactNode;
+  /** Optional drill-down. Rows for which `isRowClickable` is false stay inert. */
+  onRowClick?: (row: ReportDataRow) => void;
+  isRowClickable?: (row: ReportDataRow) => boolean;
 }
 
 const ReportTableBody: React.FC<ReportTableBodyProps> = ({
@@ -26,6 +29,8 @@ const ReportTableBody: React.FC<ReportTableBodyProps> = ({
   activeHeaders,
   totals,
   renderCell,
+  onRowClick,
+  isRowClickable,
 }) => {
   return (
     <TableBody>
@@ -36,15 +41,35 @@ const ReportTableBody: React.FC<ReportTableBodyProps> = ({
           </TableCell>
         </TableRow>
       ) : (
-        reportData.map((row, index) => (
-          <TableRow key={index} className="hover:bg-muted/20">
-            {activeHeaders.map((col) => (
-              <TableCell key={col.key} className="py-3.5 px-4 text-sm max-w-[200px] truncate">
-                {renderCell(row, col.key)}
-              </TableCell>
-            ))}
-          </TableRow>
-        ))
+        reportData.map((row, index) => {
+          const clickable = !!onRowClick && (isRowClickable ? isRowClickable(row) : true);
+          return (
+            <TableRow
+              key={index}
+              className={clickable ? "hover:bg-muted/30 cursor-pointer" : "hover:bg-muted/20"}
+              onClick={clickable ? () => onRowClick!(row) : undefined}
+              // Keyboard access: a clickable row behaves like a link.
+              tabIndex={clickable ? 0 : undefined}
+              role={clickable ? "link" : undefined}
+              onKeyDown={
+                clickable
+                  ? (e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        onRowClick!(row);
+                      }
+                    }
+                  : undefined
+              }
+            >
+              {activeHeaders.map((col) => (
+                <TableCell key={col.key} className="py-3.5 px-4 text-sm max-w-[200px] truncate">
+                  {renderCell(row, col.key)}
+                </TableCell>
+              ))}
+            </TableRow>
+          );
+        })
       )}
 
       {/* Total Row — reuse renderCell for metric columns; first col shows TOTAL. */}

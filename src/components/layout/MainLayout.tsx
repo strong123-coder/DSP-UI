@@ -96,7 +96,8 @@ export default function MainLayout() {
                     ? pathname.startsWith("/campaign")
                     : isProfile
                       ? pathname.startsWith("/profile")
-                      : pathname === item.url;
+                      : // exact, or a sub-page (e.g. /report/campaign/:id stays under Report)
+                        pathname === item.url || pathname.startsWith(item.url + "/");
 
                 return (
                   <NavLink

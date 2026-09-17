@@ -13,6 +13,7 @@ import LoginConfig from "@/pages/auth/login-config";
 import SuperAdminLoginConfig from "@/pages/auth/super-admin-login-config";
 import CampaignConfig from "@/pages/campaign/campaign-config";
 import ReportConfig from "@/pages/report/report-config";
+import ReportCampaignBundlesConfig from "@/pages/report/report-campaign-bundles-config";
 import SuperAdminDashboardConfig from "@/pages/super-admin/dashboard/dashboard-config";
 import SuperAdminBidConfigConfig from "@/pages/super-admin/bid-config/bid-config-config";
 import SuperAdminReportConfig from "@/pages/super-admin/report/report-config";
@@ -37,6 +38,7 @@ export const routes = [
       DashboardConfig,
       CampaignConfig,
       ReportConfig,
+      ReportCampaignBundlesConfig,
       ProfileConfig,
       UsersConfig,
       LogsConfig,

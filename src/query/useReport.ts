@@ -31,6 +31,32 @@ export const useGetReportData = (
   });
 };
 
+export interface CampaignBundlesPayload {
+  campaignId: string;
+  search?: string;
+  preset?: string;
+  startDate?: string;
+  endDate?: string;
+  timezone?: string;
+  sortBy?: string;
+  sortOrder?: string;
+  page: number;
+  limit: number;
+}
+
+// Campaign drill-down: one campaign's delivery grouped by supply bundleId.
+export const useGetCampaignBundles = (
+  enabled: boolean,
+  payload: CampaignBundlesPayload,
+) => {
+  return useQuery({
+    queryKey: ["reportCampaignBundles", payload],
+    queryFn: () => reportService.campaignBundles(payload),
+    placeholderData: keepPreviousData,
+    enabled,
+  });
+};
+
 export const useGetReportPrefetch = (
   isPlaceholderData: boolean,
   totalPages: number,

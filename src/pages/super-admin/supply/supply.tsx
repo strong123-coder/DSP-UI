@@ -95,7 +95,9 @@ const SupplyPartners: React.FC = () => {
                       <div className="truncate max-w-[220px]">{(p.zones || []).map((z) => z.zoneId).join(", ")}</div>
                     </TableCell>
                     <TableCell className="text-right font-semibold">
-                      {p.deal?.model === "revshare"
+                      {p.deal?.model === "fixed"
+                        ? `$${p.deal?.fixedCpm ?? 0} fixed eCPM`
+                        : p.deal?.model === "revshare"
                         ? `${p.deal?.revSharePct ?? 0}% rev share`
                         : `${p.deal?.marginPct ?? 0}% margin`}
                     </TableCell>

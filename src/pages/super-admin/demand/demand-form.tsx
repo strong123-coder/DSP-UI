@@ -51,7 +51,7 @@ const emptyPartner = (): Partial<DemandPartner> => ({
   currency: "USD", seat: "",
   endpoints: [emptyEndpoint()],
   auth: { type: "none", headerName: "", value: "" },
-  deal: { model: "margin", marginPct: 15, revSharePct: null, minMarginCpm: null, bidAdjustPct: 0 },
+  deal: { model: "margin", marginPct: 15, revSharePct: null, fixedCpm: null, minMarginCpm: null, bidAdjustPct: 0 },
   deals: [],
   targeting: { geos: [], adFormats: [], deviceTypes: [], os: [], trafficType: "all", bundlesAllow: [], bundlesBlock: [], categoriesBlock: [] },
   limits: { qps: null, dailyReqCap: null, dailySpendCap: null, timeoutMs: 200 },
@@ -120,6 +120,8 @@ const DemandForm: React.FC = () => {
     if (!eps.length) e.push("At least one endpoint with a URL is required.");
     if (form.deal?.model === "revshare" && (form.deal?.revSharePct === null || form.deal?.revSharePct === undefined))
       e.push("Rev share % is required for a rev-share deal.");
+    if (form.deal?.model === "fixed" && (form.deal?.fixedCpm === null || form.deal?.fixedCpm === undefined))
+      e.push("Fixed eCPM is required for a fixed-price deal.");
     return e;
   }, [form]);
 

@@ -268,6 +268,22 @@ const ReportListTable: React.FC = () => {
     setPage(1);
   };
 
+  // Drill-down: a campaign row opens that campaign's delivery grouped by
+  // bundleId. Only rows that carry a real campaign id are clickable (a row
+  // grouped purely by country/date has no single campaign to open). The
+  // current date range travels along so both pages show the same period.
+  const isCampaignRow = (row: ReportDataRow) =>
+    typeof row.campaign === "string" && /^[a-f0-9]{24}$/i.test(row.campaign);
+
+  const openCampaignBundles = (row: ReportDataRow) => {
+    if (!isCampaignRow(row)) return;
+    const params = new URLSearchParams();
+    if (filters.startDate) params.set("startDate", filters.startDate);
+    if (filters.endDate) params.set("endDate", filters.endDate);
+    const qs = params.toString();
+    navigate(`/report/campaign/${row.campaign}${qs ? `?${qs}` : ""}`);
+  };
+
   const renderCell = (row: ReportDataRow, key: string) => {
     const val = row[key];
     if (key === "campaignTitle") {
@@ -385,6 +401,8 @@ const ReportListTable: React.FC = () => {
             activeHeaders={activeHeaders}
             totals={totals}
             renderCell={renderCell}
+            onRowClick={openCampaignBundles}
+            isRowClickable={isCampaignRow}
           />
         </Table>
       </div>

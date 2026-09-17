@@ -11,6 +11,7 @@ import type { PartnerDeal, DealTerm } from "@/services/mediation";
 export const DEAL_MODELS = [
   { v: "margin", l: "Margin — % cut on eCPM" },
   { v: "revshare", l: "Rev share — % of revenue we keep" },
+  { v: "fixed", l: "Fixed eCPM — bids called at a fixed price" },
 ];
 
 const DEAL_TYPES = [
@@ -38,6 +39,7 @@ export const CommercialDealFields: React.FC<{
   const d: PartnerDeal = { model: "margin", marginPct: 0, ...(deal || {}) };
   const set = (patch: Partial<PartnerDeal>) => onChange({ ...d, ...patch });
   const isRevshare = d.model === "revshare";
+  const isFixed = d.model === "fixed";
 
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -48,7 +50,13 @@ export const CommercialDealFields: React.FC<{
           <SelectContent>{DEAL_MODELS.map((m) => <SelectItem key={m.v} value={m.v}>{m.l}</SelectItem>)}</SelectContent>
         </Select>
       </div>
-      {isRevshare ? (
+      {isFixed ? (
+        <div className="space-y-1.5">
+          <Label>Fixed eCPM <span className="text-destructive">*</span></Label>
+          <Input type="number" min={0} step="0.01" value={d.fixedCpm ?? ""} placeholder="5.00"
+            onChange={(e) => set({ fixedCpm: e.target.value === "" ? null : Number(e.target.value) })} />
+        </div>
+      ) : isRevshare ? (
         <div className="space-y-1.5">
           <Label>Rev share % <span className="text-destructive">*</span></Label>
           <Input type="number" min={0} max={100} value={d.revSharePct ?? ""} placeholder="70"
@@ -82,7 +90,9 @@ export const CommercialDealFields: React.FC<{
       )}
       {extra}
       <p className="col-span-2 md:col-span-4 text-xs text-muted-foreground">
-        {isRevshare
+        {isFixed
+          ? "Fixed eCPM: bids are called at this fixed price — every billable impression settles at the fixed eCPM regardless of the bid price on the wire."
+          : isRevshare
           ? "Rev share: bids pass through unmodified; settlement is a billing-time split — we keep the configured % of the revenue this partner generates."
           : "Margin: the cut is taken in the bid price at auction time — partner bids P, we forward P × (1 − margin) and keep the difference."}
       </p>

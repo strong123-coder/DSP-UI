@@ -15,13 +15,15 @@ export interface PartnerAuth {
   value?: string | null;
 }
 
-// The partner's commercial arrangement with us — how our cut is taken.
+// The partner's commercial arrangement with us — how the money is settled.
 //   margin   → cut in the bid price (P × (1 − marginPct))
 //   revshare → bid passes through; billing-time split by revSharePct
+//   fixed    → fixed eCPM pricing: every billable impression settles at fixedCpm
 export interface PartnerDeal {
-  model: "revshare" | "margin";
+  model: "revshare" | "margin" | "fixed";
   revSharePct?: number | null;
   marginPct?: number;
+  fixedCpm?: number | null;
   minMarginCpm?: number | null;
   bidAdjustPct?: number;
   floorCpm?: number | null; // supply only: partner-level default floor

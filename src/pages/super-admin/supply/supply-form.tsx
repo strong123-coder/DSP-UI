@@ -46,7 +46,7 @@ const emptyPartner = (): Partial<SupplyPartner> => ({
   name: "", kind: "ssp", status: "paused", flow: "inbound", currency: "USD",
   inbound: { authToken: "", qps: null },
   outbound: { endpoints: [], auth: { type: "none", headerName: "", value: "" } },
-  deal: { model: "revshare", revSharePct: 60, marginPct: 0, bidAdjustPct: 0, floorCpm: null },
+  deal: { model: "revshare", revSharePct: 60, marginPct: 0, fixedCpm: null, bidAdjustPct: 0, floorCpm: null },
   zones: [emptyZone()],
   deals: [],
   supplyChain: { sellerId: "", sellerDomain: "", isDirect: true },
@@ -131,6 +131,8 @@ const SupplyForm: React.FC = () => {
       e.push("Outbound flow needs at least one endpoint URL.");
     if (form.deal?.model === "revshare" && (form.deal?.revSharePct === null || form.deal?.revSharePct === undefined))
       e.push("Rev share % is required for a rev-share deal.");
+    if (form.deal?.model === "fixed" && (form.deal?.fixedCpm === null || form.deal?.fixedCpm === undefined))
+      e.push("Fixed eCPM is required for a fixed-price deal.");
     return e;
   }, [form, hasOutbound]);
 
