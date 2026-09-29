@@ -237,7 +237,12 @@ const CamapaingAdd = () => {
             for (const key of Object.keys(errObj)) {
               if (errObj[key]?.message) {
                 return {
-                  message: errObj[key].message,
+                  // Media creatives have no input to focus, so name the
+                  // creative instead of showing a bare schema message.
+                  message:
+                    field === "media"
+                      ? `Creative #${firstErrIndex + 1} has invalid data (${key}): ${errObj[key].message}`
+                      : errObj[key].message,
                   path: `${field}.${firstErrIndex}.${key}`,
                 };
               }

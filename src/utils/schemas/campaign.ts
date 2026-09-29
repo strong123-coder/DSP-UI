@@ -29,17 +29,20 @@ const customTargatingSchema = z.object({
   city: z.string().trim().optional(),
 });
 
-// Nested Media schema
+// Nested Media schema. Fields are .nullish(), not .optional(): the backend
+// stores null for fields a creative doesn't use (e.g. an image has no
+// duration/vastTag/mime), and .optional() rejects null — which blocked the
+// whole Edit Campaign form for any campaign with such a creative.
 const mediaObjectSchema = z.object({
-  id: z.string().trim().optional(),
-  link: z.string().trim().optional(),
-  type: z.string().trim().optional(),
-  w: z.number().optional(),
-  h: z.number().optional(),
+  id: z.string().trim().nullish(),
+  link: z.string().trim().nullish(),
+  type: z.string().trim().nullish(),
+  w: z.number().nullish(),
+  h: z.number().nullish(),
   // Video / CTV creative fields.
-  duration: z.number().optional(),
-  vastTag: z.string().trim().optional(),
-  mime: z.string().trim().optional(),
+  duration: z.number().nullish(),
+  vastTag: z.string().trim().nullish(),
+  mime: z.string().trim().nullish(),
 });
 
 // Root Add Campaign schema
