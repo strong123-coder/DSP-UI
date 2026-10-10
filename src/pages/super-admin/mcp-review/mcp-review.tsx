@@ -40,7 +40,7 @@ const SponsoredPreview: React.FC<{ c: any }> = ({ c }) => (
 
 const McpReview: React.FC = () => {
   const [tab, setTab] = useState<"servers" | "campaigns">("servers");
-  const [serverStatus, setServerStatus] = useState("in_review");
+  const [serverStatus, setServerStatus] = useState("all");
   const [reviewStatus, setReviewStatus] = useState("pending");
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
@@ -101,8 +101,8 @@ const McpReview: React.FC = () => {
           <Select value={serverStatus} onValueChange={(v) => { setServerStatus(v); setPage(1); }}>
             <SelectTrigger className="w-[170px]"><SelectValue /></SelectTrigger>
             <SelectContent>
-              {["in_review", "live", "paused", "rejected", "suspended", "draft"].map((s) => (
-                <SelectItem key={s} value={s}>{s.replace("_", " ")}</SelectItem>
+              {["all", "in_review", "draft", "live", "paused", "rejected", "suspended"].map((s) => (
+                <SelectItem key={s} value={s}>{s === "all" ? "All servers" : s.replace("_", " ")}</SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -128,11 +128,11 @@ const McpReview: React.FC = () => {
                 <TableHeader className="bg-muted/30">
                   <TableRow>
                     <TableHead className="pl-5">Server</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Decision</TableHead>
                     <TableHead>Categories</TableHead>
                     <TableHead>Placements / tools</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Share</TableHead>
-                    <TableHead className="text-right pr-5">Decision</TableHead>
+                    <TableHead className="pr-5">Share</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -150,17 +150,9 @@ const McpReview: React.FC = () => {
                             </a>
                           )}
                         </TableCell>
-                        <TableCell className="text-xs">{s.categories.join(", ")}</TableCell>
-                        <TableCell className="text-xs text-muted-foreground max-w-[220px]">
-                          {s.placements.map((p) => (
-                            <div key={p.key}><b className="text-foreground">{p.key}</b>: {p.toolAllowlist.length ? p.toolAllowlist.join(", ") : "all tools"}</div>
-                          ))}
-                          {s.blockedHosts.length > 0 && <div>Blocked hosts: {s.blockedHosts.join(", ")}</div>}
-                        </TableCell>
                         <TableCell><StatusBadge status={s.status} /></TableCell>
-                        <TableCell className="text-xs">{Math.round((s.revShare ?? 0.7) * 100)}%</TableCell>
-                        <TableCell className="text-right pr-5 whitespace-nowrap">
-                          {(s.status === "in_review" || s.status === "suspended") && (
+                        <TableCell className="whitespace-nowrap">
+                          {s.status !== "live" && s.status !== "paused" && (
                             <Button size="sm" variant="ghost" className="text-emerald-700 gap-1" onClick={() => open({ kind: "server", id: s._id!, name: s.name, decision: "approve", revShare: s.revShare ?? 0.7 })}>
                               <CheckCircle2 className="w-4 h-4" /> Approve
                             </Button>
@@ -176,6 +168,14 @@ const McpReview: React.FC = () => {
                             </Button>
                           )}
                         </TableCell>
+                        <TableCell className="text-xs">{s.categories.join(", ")}</TableCell>
+                        <TableCell className="text-xs text-muted-foreground max-w-[220px]">
+                          {s.placements.map((p) => (
+                            <div key={p.key}><b className="text-foreground">{p.key}</b>: {p.toolAllowlist.length ? p.toolAllowlist.join(", ") : "all tools"}</div>
+                          ))}
+                          {s.blockedHosts.length > 0 && <div>Blocked hosts: {s.blockedHosts.join(", ")}</div>}
+                        </TableCell>
+                        <TableCell className="text-xs pr-5">{Math.round((s.revShare ?? 0.7) * 100)}%</TableCell>
                       </TableRow>
                     ))
                   )}
@@ -186,11 +186,11 @@ const McpReview: React.FC = () => {
                 <TableHeader className="bg-muted/30">
                   <TableRow>
                     <TableHead className="pl-5">Campaign</TableHead>
+                    <TableHead>Action</TableHead>
                     <TableHead>Existing creative</TableHead>
                     <TableHead>CTA link</TableHead>
                     <TableHead>MCP ad</TableHead>
-                    <TableHead>Review</TableHead>
-                    <TableHead className="text-right pr-5">Action</TableHead>
+                    <TableHead className="pr-5">Review</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -204,6 +204,11 @@ const McpReview: React.FC = () => {
                           <div className="text-xs text-muted-foreground">
                             {c.orgName || c.orgId} · <span className="uppercase">{c.type}</span> · {c.status}
                           </div>
+                        </TableCell>
+                        <TableCell>
+                          <Button size="sm" className="gap-1" onClick={() => setEditing(c)}>
+                            <Settings2 className="w-4 h-4" /> {c.mcp?.reviewStatus === "approved" ? "Edit" : "Configure"}
+                          </Button>
                         </TableCell>
                         <TableCell>
                           {c.suggestedMcp?.creative?.imageUrl ? (
@@ -224,11 +229,6 @@ const McpReview: React.FC = () => {
                         <TableCell>
                           <Badge variant="secondary" className="capitalize">{c.mcp?.reviewStatus || "pending"}</Badge>
                           {c.mcp?.reviewNotes && <div className="text-[11px] text-muted-foreground mt-1 max-w-[160px]">{c.mcp.reviewNotes}</div>}
-                        </TableCell>
-                        <TableCell className="text-right pr-5">
-                          <Button size="sm" className="gap-1" onClick={() => setEditing(c)}>
-                            <Settings2 className="w-4 h-4" /> {c.mcp?.reviewStatus === "approved" ? "Edit" : "Configure"}
-                          </Button>
                         </TableCell>
                       </TableRow>
                     ))
