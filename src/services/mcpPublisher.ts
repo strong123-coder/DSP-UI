@@ -135,4 +135,28 @@ export const mcpReviewService = {
     (await apiClient().get("mcpReviewCampaigns", params)).data,
   decideCampaign: async (id: string, payload: { decision: string; notes?: string }) =>
     (await apiClient().post("mcpReviewCampaignDecision", payload, undefined, { id })).data,
+  saveCampaignConfig: async (id: string, payload: McpCampaignConfig) =>
+    (await apiClient().put("mcpReviewCampaignConfig", payload, undefined, { id })).data,
+  categories: async () => (await apiClient().get("mcpReviewCategories")).data,
 };
+
+// MCP ad + targeting super admin sets on an opted-in campaign.
+export interface McpCampaignConfig {
+  bid: number | null;
+  categories: string[];
+  intents: string[];
+  keywords: string[];
+  negativeKeywords: string[];
+  hosts: string[];
+  frequencyCapPerSession: number;
+  dailyBudget: number | null;
+  creative: {
+    advertiser: string;
+    title: string;
+    description: string;
+    cta: string;
+    destinationUrl: string;
+    displayDomain: string;
+    imageUrl: string;
+  };
+}

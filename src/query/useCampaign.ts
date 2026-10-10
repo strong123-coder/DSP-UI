@@ -222,3 +222,19 @@ export const useGetAppDetails = (
     enabled: enabled && !!params.bundleId && !!params.platform,
   });
 };
+
+// Advertiser opt-in: run this campaign on the MCP bidder too.
+export const useSetCampaignMcp = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, enabled }: { id: string; enabled: boolean }) =>
+      campaignService.setMcpEnabled(id, enabled),
+    onSuccess: (response) => {
+      toast.success(response?.data?.message || "MCP setting updated");
+      queryClient.invalidateQueries({ queryKey: ["campaigns"] });
+    },
+    onError: (error: AxiosError<{ message?: string }>) => {
+      extractApiErrors(error.response?.data).forEach((msg) => toast.error(msg));
+    },
+  });
+};

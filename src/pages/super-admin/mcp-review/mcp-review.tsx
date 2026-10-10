@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { CheckCircle2, XCircle, Ban, Sparkles, ExternalLink } from "lucide-react";
+import { CheckCircle2, XCircle, Ban, Sparkles, ExternalLink, Settings2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -18,6 +18,7 @@ import {
 } from "@/query/useMcpPublisher";
 import type { McpServer } from "@/services/mcpPublisher";
 import { StatusBadge } from "@/pages/supply/_shared";
+import McpCampaignDialog from "./mcp-campaign-dialog";
 
 type Decision = "approve" | "reject" | "suspend";
 interface Pending {
@@ -45,6 +46,7 @@ const McpReview: React.FC = () => {
   const [limit, setLimit] = useState(10);
   const [pending, setPending] = useState<Pending | null>(null);
   const [notes, setNotes] = useState("");
+  const [editing, setEditing] = useState<any | null>(null);
 
   const sParams = useMemo(() => ({ page, limit, status: serverStatus }), [page, limit, serverStatus]);
   const cParams = useMemo(() => ({ page, limit, reviewStatus }), [page, limit, reviewStatus]);
@@ -79,7 +81,7 @@ const McpReview: React.FC = () => {
       <div>
         <h1 className="text-xl font-bold flex items-center gap-2"><Sparkles className="w-5 h-5 text-primary" /> MCP Review</h1>
         <p className="text-sm text-muted-foreground">
-          Approve publisher MCP servers before their live keys fill, and approve MCP ad copy before it serves.
+          Approve publisher MCP servers, and set up + approve the MCP ad for campaigns advertisers opted in.
         </p>
       </div>
 
@@ -91,7 +93,7 @@ const McpReview: React.FC = () => {
               onClick={() => { setTab(t); setPage(1); }}
               className={`px-4 py-1.5 text-sm rounded-md font-medium ${tab === t ? "bg-background shadow-sm" : "text-muted-foreground"}`}
             >
-              {t === "servers" ? "MCP servers" : "Ad creatives"}
+              {t === "servers" ? "MCP servers" : "Campaigns"}
             </button>
           ))}
         </div>
@@ -184,48 +186,49 @@ const McpReview: React.FC = () => {
                 <TableHeader className="bg-muted/30">
                   <TableRow>
                     <TableHead className="pl-5">Campaign</TableHead>
-                    <TableHead>Ad preview</TableHead>
-                    <TableHead>Landing page</TableHead>
-                    <TableHead>Targeting</TableHead>
+                    <TableHead>Existing creative</TableHead>
+                    <TableHead>CTA link</TableHead>
+                    <TableHead>MCP ad</TableHead>
                     <TableHead>Review</TableHead>
-                    <TableHead className="text-right pr-5">Decision</TableHead>
+                    <TableHead className="text-right pr-5">Action</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {rows.length === 0 ? (
-                    <TableRow><TableCell colSpan={6} className="text-center py-10 text-muted-foreground">Nothing here.</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={6} className="text-center py-10 text-muted-foreground">No campaigns opted in to MCP here.</TableCell></TableRow>
                   ) : (
                     rows.map((c: any) => (
                       <TableRow key={c._id}>
                         <TableCell className="pl-5">
                           <div className="font-medium">{c.title}</div>
-                          <div className="text-xs text-muted-foreground">${c.mcp?.bid} CPC · {c.status}</div>
-                        </TableCell>
-                        <TableCell><SponsoredPreview c={c.mcp?.creative} /></TableCell>
-                        <TableCell className="text-xs max-w-[200px] break-all">
-                          <a href={c.mcp?.creative?.destinationUrl} target="_blank" rel="noreferrer" className="text-primary">
-                            {c.mcp?.creative?.destinationUrl}
-                          </a>
-                        </TableCell>
-                        <TableCell className="text-xs text-muted-foreground max-w-[180px]">
-                          {c.mcp?.categories?.join(", ")}
-                          {c.mcp?.keywords?.length > 0 && <div>kw: {c.mcp.keywords.join(", ")}</div>}
+                          <div className="text-xs text-muted-foreground">
+                            {c.orgName || c.orgId} · <span className="uppercase">{c.type}</span> · {c.status}
+                          </div>
                         </TableCell>
                         <TableCell>
-                          <Badge variant="secondary" className="capitalize">{c.mcp?.reviewStatus}</Badge>
+                          {c.suggestedMcp?.creative?.imageUrl ? (
+                            <img src={c.suggestedMcp.creative.imageUrl} alt="" className="h-12 w-20 object-cover rounded border border-border" />
+                          ) : (
+                            <span className="text-xs text-muted-foreground">No image</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-xs max-w-[200px] truncate" title={c.ctaUrl}>{c.ctaUrl || "—"}</TableCell>
+                        <TableCell>
+                          {c.mcp?.creative?.title ? (
+                            <SponsoredPreview c={c.mcp.creative} />
+                          ) : (
+                            <span className="text-xs text-muted-foreground">Not configured</span>
+                          )}
+                          {c.mcp?.bid ? <div className="text-[11px] text-muted-foreground mt-1">${c.mcp.bid} CPC</div> : null}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="secondary" className="capitalize">{c.mcp?.reviewStatus || "pending"}</Badge>
                           {c.mcp?.reviewNotes && <div className="text-[11px] text-muted-foreground mt-1 max-w-[160px]">{c.mcp.reviewNotes}</div>}
                         </TableCell>
-                        <TableCell className="text-right pr-5 whitespace-nowrap">
-                          {c.mcp?.reviewStatus !== "approved" && (
-                            <Button size="sm" variant="ghost" className="text-emerald-700 gap-1" onClick={() => open({ kind: "campaign", id: c._id, name: c.title, decision: "approve" })}>
-                              <CheckCircle2 className="w-4 h-4" /> Approve
-                            </Button>
-                          )}
-                          {c.mcp?.reviewStatus !== "rejected" && (
-                            <Button size="sm" variant="ghost" className="text-destructive gap-1" onClick={() => open({ kind: "campaign", id: c._id, name: c.title, decision: "reject" })}>
-                              <XCircle className="w-4 h-4" /> Reject
-                            </Button>
-                          )}
+                        <TableCell className="text-right pr-5">
+                          <Button size="sm" className="gap-1" onClick={() => setEditing(c)}>
+                            <Settings2 className="w-4 h-4" /> {c.mcp?.reviewStatus === "approved" ? "Edit" : "Configure"}
+                          </Button>
                         </TableCell>
                       </TableRow>
                     ))
@@ -240,6 +243,8 @@ const McpReview: React.FC = () => {
       {rows.length > 0 && (
         <ThreeButtonPagination page={page} setPage={setPage} totalPages={totalPages} limit={limit} setLimit={setLimit} />
       )}
+
+      <McpCampaignDialog campaign={editing} onClose={() => setEditing(null)} />
 
       <Dialog open={!!pending} onOpenChange={(o) => !o && setPending(null)}>
         <DialogContent>

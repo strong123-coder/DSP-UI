@@ -20,10 +20,6 @@ interface CampaignTableBodyProps {
   getDisplayValue: (campaign: Campaign, key: string) => React.ReactNode;
 }
 
-// MCP campaigns have their own form; everything else uses the wizard.
-const editPath = (campaign: Campaign) =>
-  campaign.type === "mcp" ? `/campaign/mcp/${campaign._id}/edit` : `/campaign/edit/${campaign._id}`;
-
 const CampaignTableBody: React.FC<CampaignTableBodyProps> = ({
   campaigns,
   dataMapping,
@@ -57,7 +53,7 @@ const CampaignTableBody: React.FC<CampaignTableBodyProps> = ({
           key={campaign._id}
           className="cursor-pointer"
           onClick={() => {
-            navigate(editPath(campaign));
+            navigate(`/campaign/edit/${campaign._id}`);
           }}
         >
           {Object.keys(dataMapping).map((key) => (
@@ -81,7 +77,7 @@ const CampaignTableBody: React.FC<CampaignTableBodyProps> = ({
               <DropdownMenuContent align="end">
                 <DropdownMenuItem
                   onClick={() => {
-                    navigate(editPath(campaign));
+                    navigate(`/campaign/edit/${campaign._id}`);
                   }}
                 >
                   Edit

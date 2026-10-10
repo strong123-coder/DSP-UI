@@ -26,6 +26,8 @@ export const apiConfig: ApiEndpoint[] = [
   { name: "mcpReviewServerDecision", path: "/api/v1/mcp-review/servers/{id}/decision", hasPathParams: true },
   { name: "mcpReviewCampaigns", path: "/api/v1/mcp-review/campaigns" },
   { name: "mcpReviewCampaignDecision", path: "/api/v1/mcp-review/campaigns/{id}/decision", hasPathParams: true },
+  { name: "mcpReviewCampaignConfig", path: "/api/v1/mcp-review/campaigns/{id}/config", hasPathParams: true },
+  { name: "mcpReviewCategories", path: "/api/v1/mcp-review/categories" },
   // super admin
   { name: "superAdminLogin", path: "/api/v1/user/super-admin/login" },
   { name: "superAdminDashboardSummary", path: "/api/v1/super-admin/dashboard/summary" },
@@ -92,6 +94,12 @@ export const apiConfig: ApiEndpoint[] = [
   {
     name: "updateCampaignStatus",
     path: "/api/v1/campaign/status/{id}",
+    hasPathParams: true,
+  },
+  // advertiser opt-in to the MCP bidder
+  {
+    name: "setCampaignMcp",
+    path: "/api/v1/campaign/mcp/{id}",
     hasPathParams: true,
   },
   {

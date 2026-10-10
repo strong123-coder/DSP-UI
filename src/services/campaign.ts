@@ -44,6 +44,10 @@ export const campaignService = {
     );
     return response.data;
   },
+  setMcpEnabled: async (id: string, enabled: boolean) => {
+    const response = await apiClient().patch("setCampaignMcp", { enabled }, {}, { id });
+    return response.data;
+  },
   deleteCampaign: async (id: string) => {
     const response = await apiClient().del(
       "deletCampaign",

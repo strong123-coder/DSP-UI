@@ -16,6 +16,7 @@ import CampaignTableBody, {
   TypeBadge,
 } from "./campaign-table-body";
 import CampaignDetailsModal from "./campaign-details-modal";
+import CampaignMcpToggle from "./campaign-mcp-toggle";
 import type { Campaign, SortDirection } from "../../types";
 import LoadingFallback from "@/components/ui/loading-fallback";
 import {
@@ -264,6 +265,7 @@ const CampaignListTable: React.FC = () => {
         );
       }
       if (key === "type") return <TypeBadge type={String(value || "")} />;
+      if (key === "mcpEnabled") return <CampaignMcpToggle campaign={campaign} />;
       if (key === "budget" || key === "dailyBudget") {
         return `$${Number(value || 0).toLocaleString()} ${campaign.currency || "USD"}`;
       }

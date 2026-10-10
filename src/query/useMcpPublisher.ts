@@ -6,6 +6,7 @@ import {
   mcpPublisherService,
   mcpReviewService,
   type McpListParams,
+  type McpCampaignConfig,
 } from "@/services/mcpPublisher";
 import { useAppStore } from "@/store";
 import { extractApiErrors } from "@/utils/getErrorMessage";
@@ -221,6 +222,23 @@ export const useMcpServerDecision = () => {
       toast.success(r?.data?.message || "Decision saved");
       qc.invalidateQueries({ queryKey: ["mcpReviewServers"] });
     },
+    onError: onErr,
+  });
+};
+
+export const useMcpReviewCategories = () =>
+  useQuery({
+    queryKey: ["mcpReviewCategories"],
+    queryFn: () => mcpReviewService.categories(),
+    staleTime: Infinity,
+  });
+
+export const useSaveMcpCampaignConfig = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, payload }: { id: string; payload: McpCampaignConfig }) =>
+      mcpReviewService.saveCampaignConfig(id, payload),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["mcpReviewCampaigns"] }),
     onError: onErr,
   });
 };

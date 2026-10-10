@@ -38,6 +38,9 @@ export interface Campaign {
   }>;
   // Managed by super admin via bid config (read-only elsewhere).
   enableBidding?: boolean;
+  // Advertiser opt-in to the MCP bidder; `mcp` is set by super admin.
+  mcpEnabled?: boolean;
+  mcp?: { reviewStatus?: "pending" | "approved" | "rejected"; reviewNotes?: string | null };
   createdAt: string;
   updatedAt: string;
 }
