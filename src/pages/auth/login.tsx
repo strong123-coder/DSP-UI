@@ -1,7 +1,7 @@
 import { useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { RefreshCw, Lock, Mail, Building2 } from "lucide-react";
 import logo from "@/assets/strongmetrics-logo.webp";
 
@@ -195,6 +195,13 @@ export default function Login() {
             </form>
           </CardContent>
         </Card>
+
+        <p className="text-xs text-center text-muted-foreground mt-6">
+          Publisher with an MCP server?{" "}
+          <Link to="/supply/login" className="text-primary font-medium hover:underline">
+            Monetize your MCP
+          </Link>
+        </p>
       </div>
     </div>
   );

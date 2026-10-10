@@ -36,8 +36,9 @@ instance.interceptors.response.use(
       error.response &&
       (error.response.status === 401 || error.response.status === 403)
     ) {
+      const wasSupply = useAppStore.getState().user?.type === "supply";
       useAppStore.getState().logout();
-      window.location.href = "/login";
+      window.location.href = wasSupply ? "/supply/login" : "/login";
       return Promise.reject(error);
     }
 

@@ -6,6 +6,26 @@ export interface ApiEndpoint {
 
 export const apiConfig: ApiEndpoint[] = [
   { name: "login", path: "/api/v1/user/login" },
+  // MCP publishers (supply login)
+  { name: "supplyLogin", path: "/api/v1/user/supply/login" },
+  { name: "supplySignup", path: "/api/v1/user/supply/signup" },
+  { name: "mcpCategories", path: "/api/v1/mcp-publisher/categories" },
+  { name: "mcpServerList", path: "/api/v1/mcp-publisher/servers" },
+  { name: "mcpServerCreate", path: "/api/v1/mcp-publisher/servers" },
+  { name: "mcpServerGet", path: "/api/v1/mcp-publisher/servers/{id}", hasPathParams: true },
+  { name: "mcpServerUpdate", path: "/api/v1/mcp-publisher/servers/{id}", hasPathParams: true },
+  { name: "mcpServerDelete", path: "/api/v1/mcp-publisher/servers/{id}", hasPathParams: true },
+  { name: "mcpServerSubmit", path: "/api/v1/mcp-publisher/servers/{id}/submit", hasPathParams: true },
+  { name: "mcpServerStatus", path: "/api/v1/mcp-publisher/servers/{id}/status", hasPathParams: true },
+  { name: "mcpKeyList", path: "/api/v1/mcp-publisher/servers/{id}/keys", hasPathParams: true },
+  { name: "mcpKeyCreate", path: "/api/v1/mcp-publisher/servers/{id}/keys", hasPathParams: true },
+  { name: "mcpKeyRevoke", path: "/api/v1/mcp-publisher/servers/{id}/keys/{keyId}", hasPathParams: true },
+  { name: "mcpIntegration", path: "/api/v1/mcp-publisher/servers/{id}/integration", hasPathParams: true },
+  // MCP review (super admin only)
+  { name: "mcpReviewServers", path: "/api/v1/mcp-review/servers" },
+  { name: "mcpReviewServerDecision", path: "/api/v1/mcp-review/servers/{id}/decision", hasPathParams: true },
+  { name: "mcpReviewCampaigns", path: "/api/v1/mcp-review/campaigns" },
+  { name: "mcpReviewCampaignDecision", path: "/api/v1/mcp-review/campaigns/{id}/decision", hasPathParams: true },
   // super admin
   { name: "superAdminLogin", path: "/api/v1/user/super-admin/login" },
   { name: "superAdminDashboardSummary", path: "/api/v1/super-admin/dashboard/summary" },

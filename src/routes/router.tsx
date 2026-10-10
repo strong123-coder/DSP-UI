@@ -1,6 +1,8 @@
 import { createBrowserRouter, Navigate } from "react-router-dom";
 import { AuthGuard } from "@/components/auth/AuthGuard";
 import { SuperAdminGuard } from "@/components/auth/SuperAdminGuard";
+import { SupplyGuard } from "@/components/auth/SupplyGuard";
+import SupplyLayout from "@/components/layout/SupplyLayout";
 import MainLayout from "@/components/layout/MainLayout";
 import SuperAdminLayout from "@/components/layout/SuperAdminLayout";
 import DashboardConfig from "@/pages/dashboard/dashboard-config";
@@ -21,6 +23,15 @@ import SuperAdminDemandConfig from "@/pages/super-admin/demand/demand-config";
 import { SuperAdminDemandNewConfig, SuperAdminDemandEditConfig } from "@/pages/super-admin/demand/demand-form-config";
 import SuperAdminSupplyConfig from "@/pages/super-admin/supply/supply-config";
 import { SuperAdminSupplyNewConfig, SuperAdminSupplyEditConfig } from "@/pages/super-admin/supply/supply-form-config";
+import SuperAdminMcpReviewConfig from "@/pages/super-admin/mcp-review/mcp-review-config";
+import { SupplyLoginConfig, SupplySignupConfig } from "@/pages/supply/auth/supply-auth-config";
+import {
+  SupplyServersConfig,
+  SupplyServerNewConfig,
+  SupplyServerEditConfig,
+  SupplyServerDetailConfig,
+} from "@/pages/supply/servers/servers-config";
+import SupplyGuideConfig from "@/pages/supply/guide/guide-config";
 
 export const routes = [
   {
@@ -69,6 +80,27 @@ export const routes = [
       SuperAdminSupplyNewConfig,
       SuperAdminSupplyEditConfig,
       SuperAdminBidConfigConfig,
+      SuperAdminMcpReviewConfig,
+    ],
+  },
+  // MCP publisher (supply) area: self-serve "Monetize your MCP".
+  {
+    path: "/supply",
+    element: (
+      <SupplyGuard>
+        <SupplyLayout />
+      </SupplyGuard>
+    ),
+    children: [
+      {
+        index: true,
+        element: <Navigate to="/supply/servers" replace />,
+      },
+      SupplyServersConfig,
+      SupplyServerNewConfig,
+      SupplyServerEditConfig,
+      SupplyServerDetailConfig,
+      SupplyGuideConfig,
     ],
   },
   {
@@ -77,6 +109,8 @@ export const routes = [
   },
   LoginConfig,
   SuperAdminLoginConfig,
+  SupplyLoginConfig,
+  SupplySignupConfig,
 ];
 
 const router = createBrowserRouter(routes);

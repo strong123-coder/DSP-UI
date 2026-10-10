@@ -17,11 +17,13 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
   const setOrgConfig = useAppStore((state) => state.setOrgConfig);
 
   const isSuperAdmin = user?.type === "super_admin";
+  // MCP publishers have their own area and cannot read org config.
+  const isSupply = user?.type === "supply";
   // A super admin only has org context once they've "entered" an org.
   const superAdminWithoutSelectedOrg = isSuperAdmin && !selectedOrg;
 
   const { data: fetchedConfig, isLoading: configLoading } = useGetOrgConfig(
-    hasHydrated && !!token && !superAdminWithoutSelectedOrg,
+    hasHydrated && !!token && !superAdminWithoutSelectedOrg && !isSupply,
   );
 
   useEffect(() => {
@@ -31,6 +33,10 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({ children }) => {
   }, [fetchedConfig, setOrgConfig]);
 
   // Prevent redirect flicker during hydration / config fetch.
+  if (hasHydrated && token && isSupply) {
+    return <Navigate to="/supply/servers" replace />;
+  }
+
   if (!hasHydrated || (!orgConfig && configLoading)) {
     return <LoadingFallback />;
   }
