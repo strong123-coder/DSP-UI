@@ -2,6 +2,13 @@ export type SortDirection = "asc" | "desc";
 
 export interface Campaign {
   _id: string;
+  advertiserId?: string | null;
+  advertiserName?: string | null;
+  advertiser?: { id: string; name: string; status?: string; category?: string } | null;
+  budgetType?: "spend" | "impressions";
+  alternativeId?: string | null;
+  notes?: string | null;
+  lineItems?: { total: number; active: number };
   title: string;
   goal: string;
   type: string;

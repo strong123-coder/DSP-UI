@@ -109,6 +109,27 @@ export const apiConfig: ApiEndpoint[] = [
   },
 
   { name: "getAppDetails", path: "/api/v1/campaign/app-details" },
+  // advertisers (org → advertiser → campaign → line item)
+  { name: "advertiserList", path: "/api/v1/advertiser/list" },
+  { name: "advertiserOptions", path: "/api/v1/advertiser/options" },
+  { name: "advertiserCategories", path: "/api/v1/advertiser/categories" },
+  { name: "advertiserGet", path: "/api/v1/advertiser/get/{id}", hasPathParams: true },
+  { name: "advertiserAdd", path: "/api/v1/advertiser/add" },
+  { name: "advertiserUpdate", path: "/api/v1/advertiser/update/{id}", hasPathParams: true },
+  { name: "advertiserStatus", path: "/api/v1/advertiser/status/{id}", hasPathParams: true },
+  { name: "advertiserDelete", path: "/api/v1/advertiser/delete/{id}", hasPathParams: true },
+  // line items
+  { name: "lineItemList", path: "/api/v1/line-item/list" },
+  { name: "lineItemGet", path: "/api/v1/line-item/get/{id}", hasPathParams: true },
+  { name: "lineItemAdd", path: "/api/v1/line-item/add" },
+  { name: "lineItemUpdate", path: "/api/v1/line-item/update/{id}", hasPathParams: true },
+  { name: "lineItemStatus", path: "/api/v1/line-item/status/{id}", hasPathParams: true },
+  { name: "lineItemDelete", path: "/api/v1/line-item/delete/{id}", hasPathParams: true },
+  // creatives (advertiser library)
+  { name: "creativeList", path: "/api/v1/creative/list" },
+  { name: "creativeAdd", path: "/api/v1/creative/add" },
+  { name: "creativeUpdate", path: "/api/v1/creative/update/{id}", hasPathParams: true },
+  { name: "creativeDelete", path: "/api/v1/creative/delete/{id}", hasPathParams: true },
 
   // media
 

@@ -79,6 +79,7 @@ export const useGetCampaign = (
     search?: string;
     type?: string;
     status?: string;
+    advertiserId?: string;
   },
 ) => {
   return useQuery({
@@ -89,6 +90,7 @@ export const useGetCampaign = (
       payload?.search,
       payload?.type,
       payload?.status,
+      payload?.advertiserId,
     ],
     queryFn: () => campaignService.campaignList(payload),
     placeholderData: keepPreviousData,

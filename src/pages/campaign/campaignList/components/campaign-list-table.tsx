@@ -54,6 +54,7 @@ const CampaignListTable: React.FC = () => {
     search?: string;
     type?: string;
     status?: string;
+    advertiserId?: string;
   }>({});
   const [dataMapping, setDataMapping] = useState<Record<string, string>>({});
   const [sortConfig, setSortConfig] = useState<{
@@ -98,6 +99,7 @@ const CampaignListTable: React.FC = () => {
       const searchParam = params.get("search");
       const typeParam = params.get("type");
       const statusParam = params.get("status");
+      const advertiserParam = params.get("advertiserId");
 
       const pageLocal = Math.max(1, parseInt(pageParam || "1", 10));
       const limitLocal = Math.min(
@@ -115,6 +117,7 @@ const CampaignListTable: React.FC = () => {
       }
       if (typeParam?.trim()) nextFilters.type = typeParam.trim();
       if (statusParam?.trim()) nextFilters.status = statusParam.trim();
+      if (advertiserParam?.trim()) nextFilters.advertiserId = advertiserParam.trim();
 
       setFilters(nextFilters);
       setInitialized(true);
@@ -131,6 +134,7 @@ const CampaignListTable: React.FC = () => {
     if (filters.search) params.set("search", filters.search);
     if (filters.type) params.set("type", filters.type);
     if (filters.status) params.set("status", filters.status);
+    if (filters.advertiserId) params.set("advertiserId", filters.advertiserId);
 
     const newQuery = params.toString();
     const currentQuery = window.location.search.slice(1);
@@ -265,6 +269,18 @@ const CampaignListTable: React.FC = () => {
         );
       }
       if (key === "type") return <TypeBadge type={String(value || "")} />;
+      if (key === "advertiserName") {
+        return value ? String(value) : <span className="text-muted-foreground">No advertiser</span>;
+      }
+      if (key === "lineItems") {
+        const li = campaign.lineItems;
+        if (!li || li.total === 0) return <span className="text-muted-foreground">None yet</span>;
+        return (
+          <span className="tabular-nums">
+            {li.active} active <span className="text-muted-foreground">/ {li.total}</span>
+          </span>
+        );
+      }
       if (key === "mcpEnabled") return <CampaignMcpToggle campaign={campaign} />;
       if (key === "budget" || key === "dailyBudget") {
         return `$${Number(value || 0).toLocaleString()} ${campaign.currency || "USD"}`;
@@ -332,6 +348,38 @@ const CampaignListTable: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      {/* Advertiser filter (from an advertiser's page or a breadcrumb) */}
+      {filters.advertiserId && (
+        <div className="flex items-center gap-2 text-sm">
+          <span className="text-muted-foreground">Advertiser:</span>
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 text-primary px-3 py-0.5 font-medium">
+            {campaignsList[0]?.advertiserName || "Selected advertiser"}
+            <button
+              type="button"
+              aria-label="Show all advertisers"
+              className="hover:text-destructive"
+              onClick={() => {
+                setPage(1);
+                setFilters((prev) => {
+                  const next = { ...prev };
+                  delete next.advertiserId;
+                  return next;
+                });
+              }}
+            >
+              &times;
+            </button>
+          </span>
+          <button
+            type="button"
+            className="text-xs text-primary hover:underline"
+            onClick={() => navigate(`/campaign/add?advertiserId=${filters.advertiserId}`)}
+          >
+            + New campaign for this advertiser
+          </button>
+        </div>
+      )}
+
       {/* Search */}
       <div className="w-full flex justify-center">
         <div className="relative w-full max-w-md">

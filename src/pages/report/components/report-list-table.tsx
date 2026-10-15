@@ -108,11 +108,13 @@ const ReportListTable: React.FC = () => {
 
   // Compute active headers list based on selected column
   const activeHeaders = useMemo(() => {
+    const groupBy = filters.groupBy || ["campaign"];
     return allColHeaders.filter((col) => {
+      if (col.dimension) return groupBy.includes(col.dimension);
       if (col.isAlwaysVisible) return true;
       return selectedColumns.includes(col.key);
     });
-  }, [selectedColumns]);
+  }, [selectedColumns, filters.groupBy]);
 
   // Assemble full payload for the API
   const apiPayload = useMemo(() => {
@@ -305,6 +307,12 @@ const ReportListTable: React.FC = () => {
     }
     if (key === "advertiser") {
       return row.advertiser || row.advertiserName || row.advertiserTitle || "-";
+    }
+    if (key === "advertiserName") {
+      return row.advertiserName || <span className="text-muted-foreground">{row.advertiser ? row.advertiser : "No advertiser"}</span>;
+    }
+    if (key === "lineItemName") {
+      return row.lineItemName || <span className="text-muted-foreground">{row.lineItem || "—"}</span>;
     }
     // Counts: abbreviated (1.2M / 3.4K) with the exact figure on hover.
     if (key === "impressions" || key === "clicks" || key === "installs" || key === "events") {

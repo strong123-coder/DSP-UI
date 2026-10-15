@@ -41,7 +41,7 @@ const SponsoredPreview: React.FC<{ c: any }> = ({ c }) => (
 const McpReview: React.FC = () => {
   const [tab, setTab] = useState<"servers" | "campaigns">("servers");
   const [serverStatus, setServerStatus] = useState("all");
-  const [reviewStatus, setReviewStatus] = useState("pending");
+  const [reviewStatus, setReviewStatus] = useState("all");
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [pending, setPending] = useState<Pending | null>(null);
@@ -110,8 +110,8 @@ const McpReview: React.FC = () => {
           <Select value={reviewStatus} onValueChange={(v) => { setReviewStatus(v); setPage(1); }}>
             <SelectTrigger className="w-[170px]"><SelectValue /></SelectTrigger>
             <SelectContent>
-              {["pending", "approved", "rejected"].map((s) => (
-                <SelectItem key={s} value={s}>{s}</SelectItem>
+              {["all", "pending", "approved", "rejected"].map((s) => (
+                <SelectItem key={s} value={s}>{s === "all" ? "All campaigns" : s}</SelectItem>
               ))}
             </SelectContent>
           </Select>

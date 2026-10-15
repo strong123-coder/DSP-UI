@@ -22,32 +22,11 @@ const eventDetailSchema = z.object({
   currency: z.string().trim().min(1, { message: "Currency is required" }),
 });
 
-// Nested Targeting schema
-const customTargatingSchema = z.object({
-  country: z.string().trim().optional(),
-  state: z.string().trim().optional(),
-  city: z.string().trim().optional(),
-});
-
-// Nested Media schema. Fields are .nullish(), not .optional(): the backend
-// stores null for fields a creative doesn't use (e.g. an image has no
-// duration/vastTag/mime), and .optional() rejects null — which blocked the
-// whole Edit Campaign form for any campaign with such a creative.
-const mediaObjectSchema = z.object({
-  id: z.string().trim().nullish(),
-  link: z.string().trim().nullish(),
-  type: z.string().trim().nullish(),
-  w: z.number().nullish(),
-  h: z.number().nullish(),
-  // Video / CTV creative fields.
-  duration: z.number().nullish(),
-  vastTag: z.string().trim().nullish(),
-  mime: z.string().trim().nullish(),
-});
-
 // Root Add Campaign schema
 export const addCampaignSchema = z
   .object({
+    // Every campaign belongs to an advertiser (Advertiser → Campaign → Line Item).
+    advertiserId: z.string().trim().min(1, { message: "Pick an advertiser" }),
     title: z.string().trim().min(1, { message: "Campaign name is required" }),
     type: z.enum(["mobile", "ctv", "web"], {
       message: "Platform type is required",
@@ -94,6 +73,10 @@ export const addCampaignSchema = z
         },
       ),
     kpi: z.string().trim().min(1, { message: "KPI is required" }),
+    // What the budgets count: money spent, or impressions delivered.
+    budgetType: z.enum(["spend", "impressions"]).default("spend").optional(),
+    alternativeId: z.string().trim().optional(),
+    notes: z.string().trim().max(2000).optional(),
     isScheduling: z.boolean().optional(),
     startDate: z.string().trim().optional(),
     endDate: z.string().trim().optional(),
@@ -112,14 +95,7 @@ export const addCampaignSchema = z
     ctaUrl: z.string().trim().min(1, { message: "CTA URL is required" }),
     vtaUrl: z.string().trim().optional(),
     eventDetails: z.array(eventDetailSchema).optional(),
-    geo: z.array(z.string().trim()).min(1, { message: "Geo is required" }),
-    isCustomTargating: z.boolean().optional(),
-    customTargating: z.array(customTargatingSchema).optional(),
-    audienceTarget: z.enum(["all", "custom"]).optional(),
-    customAudienceIds: z.array(z.string().trim()).optional(),
-    inventoryType: z.enum(["programmatic", "oem_premium_partners"]).optional(),
-    oemPremiumPartners: z.array(z.string().trim()).optional(),
-    media: z.array(mediaObjectSchema).optional(),
+    // Geo, audience, inventory and creatives are set per line item now.
   })
   .superRefine((data, ctx) => {
     // Mobile campaigns must specify the app OS + bundle (app-install targeting).

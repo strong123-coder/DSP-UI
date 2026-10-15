@@ -1,15 +1,13 @@
-import { useState, lazy, Suspense, useEffect, useRef } from "react";
+import { useState, lazy, Suspense } from "react";
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowLeft, ArrowRight, Check } from "lucide-react";
 import { toast } from "sonner";
-import { deleteMediaOnUnload } from "@/utils/mediaCleanup";
 import { FormModeContext } from "@/utils/context/FormModeContext";
 
 import { Button } from "@/components/ui/button";
 import { useAddCampaign } from "@/query/useCampaign";
-import { useDeleteMedias } from "@/query/useMedia";
 import {
   addCampaignSchema,
   type AddCampaignFormValues,
@@ -27,21 +25,15 @@ const StepObjectiveInfo = lazy(
 const StepMmpIntegration = lazy(
   () => import("../components/stepComponents/stepMmpIntegrations"),
 );
-const StepTargeting = lazy(
-  () => import("../components/stepComponents/stepTargeting"),
-);
-const StepInventoryType = lazy(
-  () => import("../components/stepComponents/stepInventoryType"),
-);
-const StepMediaCreatives = lazy(
-  () => import("../components/stepComponents/stepMediaCreatives"),
-);
 
+// Campaign = the envelope: advertiser, app, goal, budget, flight, tracking.
+// Targeting, bids and creatives are set per line item after the campaign is
+// created (Advertiser → Campaign → Line Item).
 const STEPS = [
   {
     id: 1,
     label: "Objective & Details",
-    description: "Set campaign target & platform",
+    description: "Advertiser, campaign target & platform, budget",
   },
   {
     id: 2,
@@ -49,64 +41,41 @@ const STEPS = [
     description:
       "MMP integration enables accurate tracking, measurement, and optimization of advertising campaigns across multiple channels.",
   },
-  {
-    id: 3,
-    label: "Targeting",
-    description:
-      "The strategic process of locating and reaching particular audiences with information or ads that is suited to them based on behavioral, psychographic, and demographic characteristics.",
-  },
-  {
-    id: 4,
-    label: "Inventroy Type",
-    description:
-      "Refers to the various forms of advertising space or placements available for purchase or allocation, such as display ads, video ads, or sponsored content.",
-  },
+];
 
-  {
-    id: 5,
-    label: "Media Creatives",
-    description: "Upload creative assets & links",
-  },
+const ORDERED_FIELDS = [
+  "advertiserId",
+  "title",
+  "goal",
+  "appOs",
+  "bundleId",
+  "appName",
+  "appIconLink",
+  "budget",
+  "dailyBudget",
+  "kpi",
+  "isScheduling",
+  "startDate",
+  "endDate",
+  "mmpPlatform",
+  "ctaUrl",
+  "vtaUrl",
+  "eventDetails",
 ];
 
 const CamapaingAdd = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [step, setStep] = useState(1);
   const [maxStepReached, setMaxStepReached] = useState(1);
   const { mutate: addCampaignMutation, isPending: addCampaignPending } =
     useAddCampaign();
-  const { mutate: deleteMediasMutation } = useDeleteMedias();
-  const [newlyUploadedMediaIds, setNewlyUploadedMediaIds] = useState<string[]>(
-    [],
-  );
-  const newlyUploadedMediaIdsRef = useRef<string[]>([]);
-  const isSubmitted = useRef(false);
-
-  useEffect(() => {
-    newlyUploadedMediaIdsRef.current = newlyUploadedMediaIds;
-  }, [newlyUploadedMediaIds]);
-
-  useEffect(() => {
-    const handleBeforeUnload = () => {
-      if (!isSubmitted.current && newlyUploadedMediaIdsRef.current.length > 0) {
-        deleteMediaOnUnload(newlyUploadedMediaIdsRef.current);
-      }
-    };
-
-    window.addEventListener("beforeunload", handleBeforeUnload);
-
-    return () => {
-      window.removeEventListener("beforeunload", handleBeforeUnload);
-
-      if (!isSubmitted.current && newlyUploadedMediaIdsRef.current.length > 0) {
-        deleteMediasMutation(newlyUploadedMediaIdsRef.current);
-      }
-    };
-  }, [deleteMediasMutation]);
 
   const methods = useForm<AddCampaignFormValues>({
     resolver: zodResolver(addCampaignSchema),
     defaultValues: {
+      // Opened from an advertiser's page → that advertiser is preselected.
+      advertiserId: searchParams.get("advertiserId") || "",
       title: "",
       type: "mobile",
       goal: "install",
@@ -115,6 +84,9 @@ const CamapaingAdd = () => {
       bundleId: "",
       budget: "",
       dailyBudget: "",
+      budgetType: "spend",
+      alternativeId: "",
+      notes: "",
       kpi: "",
       isScheduling: false,
       startDate: "",
@@ -129,101 +101,10 @@ const CamapaingAdd = () => {
           currency: CurrencyType.USD,
         },
       ],
-      geo: [],
-      isCustomTargating: false,
-      customTargating: [],
-      audienceTarget: "all",
-      customAudienceIds: [],
-      inventoryType: "programmatic",
-      oemPremiumPartners: [],
-      media: [],
     },
   });
 
   const { handleSubmit, trigger } = methods;
-
-  const nextStep = async () => {
-    let fieldsToValidate: (keyof AddCampaignFormValues)[] = [];
-
-    if (step === 1) {
-      fieldsToValidate = [
-        "goal",
-        "title",
-        "appOs",
-        "appIconLink",
-        "appName",
-        "bundleId",
-        "dailyBudget",
-        "budget",
-        "kpi",
-        "isScheduling",
-        "startDate",
-        "endDate",
-        "currency",
-        "type",
-      ];
-    } else if (step === 2) {
-      fieldsToValidate = ["mmpPlatform", "ctaUrl", "vtaUrl", "eventDetails"];
-    } else if (step === 3) {
-      fieldsToValidate = [
-        "geo",
-        "isCustomTargating",
-        "customTargating",
-        "audienceTarget",
-        "customAudienceIds",
-      ];
-    } else if (step === 4) {
-      fieldsToValidate = ["inventoryType", "oemPremiumPartners"];
-    }
-
-    const isValid = await trigger(fieldsToValidate);
-    if (isValid) {
-      const nextStepVal = step + 1;
-      setStep(nextStepVal);
-      if (nextStepVal > maxStepReached) {
-        setMaxStepReached(nextStepVal);
-      }
-    } else {
-      const stepErrors: any = {};
-      fieldsToValidate.forEach((field) => {
-        if (methods.formState.errors[field]) {
-          stepErrors[field] = methods.formState.errors[field];
-        }
-      });
-      onInvalid(stepErrors);
-    }
-  };
-
-  const prevStep = () => {
-    setStep((prev) => Math.max(1, prev - 1));
-  };
-
-  const ORDERED_FIELDS = [
-    "title",
-    "goal",
-    "appOs",
-    "bundleId",
-    "appName",
-    "appIconLink",
-    "budget",
-    "dailyBudget",
-    "kpi",
-    "isScheduling",
-    "startDate",
-    "endDate",
-    "mmpPlatform",
-    "ctaUrl",
-    "vtaUrl",
-    "eventDetails",
-    "geo",
-    "isCustomTargating",
-    "customTargating",
-    "audienceTarget",
-    "customAudienceIds",
-    "inventoryType",
-    "oemPremiumPartners",
-    "media",
-  ];
 
   const getFirstVisualError = (errorsObj: any) => {
     for (const field of ORDERED_FIELDS) {
@@ -236,24 +117,13 @@ const CamapaingAdd = () => {
             const errObj = errorsObj[field][firstErrIndex];
             for (const key of Object.keys(errObj)) {
               if (errObj[key]?.message) {
-                return {
-                  // Media creatives have no input to focus, so name the
-                  // creative instead of showing a bare schema message.
-                  message:
-                    field === "media"
-                      ? `Creative #${firstErrIndex + 1} has invalid data (${key}): ${errObj[key].message}`
-                      : errObj[key].message,
-                  path: `${field}.${firstErrIndex}.${key}`,
-                };
+                return { message: errObj[key].message, path: `${field}.${firstErrIndex}.${key}` };
               }
             }
           }
         }
         if (errorsObj[field].message) {
-          return {
-            message: errorsObj[field].message,
-            path: field,
-          };
+          return { message: errorsObj[field].message, path: field };
         }
       }
     }
@@ -261,29 +131,49 @@ const CamapaingAdd = () => {
   };
 
   const onInvalid = (errors: any) => {
-    console.log("Validation Errors:", errors);
     const firstError = getFirstVisualError(errors);
-    
     if (firstError) {
       toast.error(firstError.message);
-      // Wait for React Hook Form's native focus to fire (if using handleSubmit), then override it
+      // Wait for React Hook Form's native focus to fire, then override it.
       setTimeout(() => {
         methods.setFocus(firstError.path as any);
       }, 0);
     }
   };
 
-  const handleButtonClick = async (e: React.MouseEvent) => {
-    e.preventDefault();
-    if (step < STEPS.length) {
-      await nextStep();
+  const nextStep = async () => {
+    const fieldsToValidate: (keyof AddCampaignFormValues)[] = [
+      "advertiserId",
+      "goal",
+      "title",
+      "appOs",
+      "appIconLink",
+      "appName",
+      "bundleId",
+      "dailyBudget",
+      "budget",
+      "budgetType",
+      "kpi",
+      "isScheduling",
+      "startDate",
+      "endDate",
+      "currency",
+      "type",
+    ];
+    const isValid = await trigger(fieldsToValidate);
+    if (isValid) {
+      setStep(2);
+      setMaxStepReached(2);
     } else {
-      handleSubmit(onSubmit, onInvalid)();
+      const stepErrors: any = {};
+      fieldsToValidate.forEach((field) => {
+        if (methods.formState.errors[field]) stepErrors[field] = methods.formState.errors[field];
+      });
+      onInvalid(stepErrors);
     }
   };
 
   const onSubmit = (data: AddCampaignFormValues) => {
-    isSubmitted.current = true;
     const cleanedData = { ...data };
 
     // Remove dates from the payload if scheduling is disabled, or if they are empty
@@ -291,22 +181,23 @@ const CamapaingAdd = () => {
       delete cleanedData.startDate;
       delete cleanedData.endDate;
     } else {
-      if (!cleanedData.startDate || cleanedData.startDate.trim() === "") {
-        delete cleanedData.startDate;
-      }
-      if (!cleanedData.endDate || cleanedData.endDate.trim() === "") {
-        delete cleanedData.endDate;
-      }
+      if (!cleanedData.startDate || cleanedData.startDate.trim() === "") delete cleanedData.startDate;
+      if (!cleanedData.endDate || cleanedData.endDate.trim() === "") delete cleanedData.endDate;
     }
 
     addCampaignMutation(cleanedData, {
-      onSuccess: () => {
-        navigate("/campaign/list");
-      },
-      onError: () => {
-        isSubmitted.current = false;
+      onSuccess: (response: any) => {
+        // Next step in the flow: add the campaign's line items.
+        const id = response?.data?.data?._id;
+        navigate(id ? `/campaign/view/${id}` : "/campaign/list");
       },
     });
+  };
+
+  const handleButtonClick = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (step < STEPS.length) await nextStep();
+    else handleSubmit(onSubmit, onInvalid)();
   };
 
   return (
@@ -316,9 +207,7 @@ const CamapaingAdd = () => {
           <form
             onSubmit={(e) => {
               e.preventDefault();
-              if (step === STEPS.length) {
-                handleSubmit(onSubmit, onInvalid)(e);
-              }
+              if (step === STEPS.length) handleSubmit(onSubmit, onInvalid)(e);
             }}
             className="space-y-6"
           >
@@ -328,9 +217,7 @@ const CamapaingAdd = () => {
               onValueChange={(val) => {
                 if (val) {
                   const stepNum = parseInt(val.replace("step-", ""), 10);
-                  if (stepNum <= maxStepReached) {
-                    setStep(stepNum);
-                  }
+                  if (stepNum <= maxStepReached) setStep(stepNum);
                 }
               }}
               className="w-full space-y-4 border-none"
@@ -338,7 +225,6 @@ const CamapaingAdd = () => {
               {STEPS.filter((s) => s.id <= maxStepReached).map((s) => {
                 const isCompleted = maxStepReached > s.id;
                 const isActive = step === s.id;
-
                 return (
                   <AccordionItem
                     key={s.id}
@@ -359,12 +245,8 @@ const CamapaingAdd = () => {
                           {isCompleted ? <Check className="w-4 h-4" /> : s.id}
                         </div>
                         <div>
-                          <p className="text-sm font-semibold text-foreground">
-                            {s.label}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            {s.description}
-                          </p>
+                          <p className="text-sm font-semibold text-foreground">{s.label}</p>
+                          <p className="text-xs text-muted-foreground">{s.description}</p>
                         </div>
                       </div>
                     </AccordionTrigger>
@@ -378,14 +260,6 @@ const CamapaingAdd = () => {
                       >
                         {s.id === 1 && <StepObjectiveInfo />}
                         {s.id === 2 && <StepMmpIntegration />}
-                        {s.id === 3 && <StepTargeting />}
-                        {s.id === 4 && <StepInventoryType />}
-                        {s.id === 5 && (
-                          <StepMediaCreatives
-                            newlyUploadedMediaIds={newlyUploadedMediaIds}
-                            setNewlyUploadedMediaIds={setNewlyUploadedMediaIds}
-                          />
-                        )}
                       </Suspense>
                     </AccordionContent>
                   </AccordionItem>
@@ -393,12 +267,16 @@ const CamapaingAdd = () => {
               })}
             </Accordion>
 
+            <p className="text-xs text-muted-foreground">
+              After the campaign is created you'll add its line items: targeting, bid, and creatives.
+            </p>
+
             {/* Form Action Controls */}
             <div className="flex justify-between items-center pt-4 mb-10 border-t border-border">
               <Button
                 type="button"
                 variant="ghost"
-                onClick={prevStep}
+                onClick={() => setStep(1)}
                 disabled={step === 1 || addCampaignPending}
                 className="flex items-center gap-1.5"
               >
@@ -409,7 +287,7 @@ const CamapaingAdd = () => {
                 type="button"
                 onClick={handleButtonClick}
                 disabled={addCampaignPending}
-                className="flex items-center gap-1.5 w-36 justify-center animate-in fade-in duration-200"
+                className="flex items-center gap-1.5 justify-center animate-in fade-in duration-200"
               >
                 {step < STEPS.length ? (
                   <>
@@ -418,7 +296,7 @@ const CamapaingAdd = () => {
                 ) : addCampaignPending ? (
                   "Creating..."
                 ) : (
-                  "Create Campaign"
+                  "Create & add line items"
                 )}
               </Button>
             </div>

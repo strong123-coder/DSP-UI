@@ -14,6 +14,7 @@ import AccountConfig from "@/pages/settings/account/account-config";
 import LoginConfig from "@/pages/auth/login-config";
 import SuperAdminLoginConfig from "@/pages/auth/super-admin-login-config";
 import CampaignConfig from "@/pages/campaign/campaign-config";
+import AdvertiserConfig from "@/pages/advertiser/advertiser-config";
 import ReportConfig from "@/pages/report/report-config";
 import ReportCampaignBundlesConfig from "@/pages/report/report-campaign-bundles-config";
 import SuperAdminDashboardConfig from "@/pages/super-admin/dashboard/dashboard-config";
@@ -47,6 +48,7 @@ export const routes = [
         element: <Navigate to="/dashboard" replace />,
       },
       DashboardConfig,
+      AdvertiserConfig,
       CampaignConfig,
       ReportConfig,
       ReportCampaignBundlesConfig,

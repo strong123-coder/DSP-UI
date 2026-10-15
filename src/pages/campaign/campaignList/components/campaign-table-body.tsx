@@ -53,7 +53,8 @@ const CampaignTableBody: React.FC<CampaignTableBodyProps> = ({
           key={campaign._id}
           className="cursor-pointer"
           onClick={() => {
-            navigate(`/campaign/edit/${campaign._id}`);
+            // Campaign page: its line items (targeting, bids, creatives).
+            navigate(`/campaign/view/${campaign._id}`);
           }}
         >
           {Object.keys(dataMapping).map((key) => (
@@ -75,6 +76,13 @@ const CampaignTableBody: React.FC<CampaignTableBodyProps> = ({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  onClick={() => {
+                    navigate(`/campaign/view/${campaign._id}`);
+                  }}
+                >
+                  Line items
+                </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => {
                     navigate(`/campaign/edit/${campaign._id}`);
