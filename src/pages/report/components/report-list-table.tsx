@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
+import DealCell from "./deal-cell";
 import { useNavigate } from "react-router-dom";
 import { Search, BookOpen } from "lucide-react";
 import { format } from "date-fns";
@@ -314,6 +315,7 @@ const ReportListTable: React.FC = () => {
     if (key === "lineItemName") {
       return row.lineItemName || <span className="text-muted-foreground">{row.lineItem || "—"}</span>;
     }
+    if (key === "dealName") return <DealCell row={row} />;
     // Counts: abbreviated (1.2M / 3.4K) with the exact figure on hover.
     if (key === "impressions" || key === "clicks" || key === "installs" || key === "events") {
       return <MetricValue value={val} />;

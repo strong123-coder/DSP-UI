@@ -20,6 +20,7 @@ import { extractApiErrors } from "@/utils/getErrorMessage";
 import { useFormMode } from "@/utils/context/FormModeContext";
 import { toast } from "sonner";
 import { currencyData } from "@/utils/data/data";
+import FrequencyCapsEditor from "@/components/targeting/frequency-caps-editor";
 
 function useDebounce<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
@@ -73,28 +74,26 @@ const StepCampaignDetails = () => {
     !isEdit && isMobile, // app-store lookup only applies to Mobile campaigns
   );
 
+  // App name + icon always mirror the store lookup for the bundle and OS
+  // currently entered: filled when the lookup for exactly that bundle is in
+  // (including a cached one, e.g. when the advertiser prefilled the bundle),
+  // empty while it's typed / loading / not found. One effect, so a clearing
+  // pass can never run after a fill and wipe it.
   useEffect(() => {
-    if (appDetailsData?.data?.data) {
-      const { iconUrl, title } = appDetailsData.data.data;
-      if (iconUrl) {
-        setValue("appIconLink", iconUrl, { shouldValidate: true });
-      }
-      if (title) {
-        setValue("appName", title, { shouldValidate: true });
-      }
-    } else if (appDetailsIsError) {
+    if (isEdit || !isMobile) return;
+    const app = appDetailsData?.data?.data;
+    if (app && debouncedBundleId === watchBundleId) {
+      setValue("appIconLink", app.iconUrl || "", { shouldValidate: true });
+      setValue("appName", app.title || "", { shouldValidate: true });
+    } else {
       setValue("appIconLink", "");
       setValue("appName", "");
-      toast.error(extractApiErrors((appDetailsError as any).response?.data)[0]);
     }
-  }, [appDetailsData, appDetailsIsError, appDetailsError, setValue]);
+  }, [appDetailsData, debouncedBundleId, watchBundleId, watchAppOs, isEdit, isMobile, setValue]);
 
   useEffect(() => {
-    if (!isEdit) {
-      setValue("appIconLink", "");
-      setValue("appName", "");
-    }
-  }, [watchBundleId, watchAppOs, isEdit, setValue]);
+    if (appDetailsIsError) toast.error(extractApiErrors((appDetailsError as any)?.response?.data)[0]);
+  }, [appDetailsIsError, appDetailsError]);
 
   const appDetailsErrorMessage =
     appDetailsIsError && appDetailsError
@@ -298,6 +297,21 @@ const StepCampaignDetails = () => {
                 className="pl-7"
               />
             </div>
+          </div>
+
+          <div className="space-y-2 col-span-2">
+            <Label>Frequency cap</Label>
+            <p className="text-[11px] text-muted-foreground -mt-1">
+              Limits how often one person sees any of this campaign's ads, across all its line items.
+            </p>
+            <Controller
+              name="frequencyCaps"
+              control={control}
+              render={({ field }) => (
+                <FrequencyCapsEditor id="campaign-fcap" value={field.value || []} onChange={field.onChange}
+                  errors={errors.frequencyCaps as any} />
+              )}
+            />
           </div>
 
           <div className="space-y-2 col-span-2">

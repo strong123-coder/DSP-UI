@@ -5,6 +5,7 @@ import {
   Compass,
   BarChart3,
   Building2,
+  Library,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -48,6 +49,7 @@ export const SidebarConf: SidebarConfiguration = {
       url: "/campaign/list",
       icon: Compass,
     },
+
     {
       title: "Report",
       url: "/report",
@@ -60,6 +62,17 @@ export const SidebarConf: SidebarConfiguration = {
     },
   ],
   navCategories: [
+    {
+      title: "Library",
+      icon: Library,
+      value: "library",
+      items: [
+        { title: "Targeting lists", url: "/targeting-list/list" },
+        { title: "Bid modifiers", url: "/bid-modifier/list" },
+        { title: "Delivery modifiers", url: "/delivery-modifier/list" },
+        { title: "Presets", url: "/preset" },
+      ],
+    },
     {
       title: "Management",
       icon: FolderLock,

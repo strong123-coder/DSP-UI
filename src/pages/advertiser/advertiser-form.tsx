@@ -18,6 +18,8 @@ import { useAdvertiser, useAdvertiserCategories, useCreateAdvertiser, useUpdateA
 import { useGetAppDetails } from "@/query/useCampaign";
 import { geoData, currencyData } from "@/utils/data/data";
 import { MmpPlatformData } from "@/utils/data/campaignData";
+import { usePresetOptions } from "@/query/usePreset";
+import type { PresetKind } from "@/services/preset";
 
 const schema = z.object({
   name: z.string().trim().min(1, { message: "Advertiser name is required" }).max(120),
@@ -39,6 +41,9 @@ const schema = z.object({
     currency: z.string(),
     clickUrl: z.string().trim().optional(),
     mmpPlatform: z.string().optional(),
+    campaignPresetId: z.string(),
+    lineItemPresetId: z.string(),
+    targetingPresetId: z.string(),
   }),
 });
 type FormValues = z.infer<typeof schema>;
@@ -50,6 +55,29 @@ const useDebounced = <T,>(value: T, ms: number) => {
     return () => clearTimeout(t);
   }, [value, ms]);
   return v;
+};
+
+const PRESET_DEFAULTS: Array<{ field: "campaignPresetId" | "lineItemPresetId" | "targetingPresetId"; kind: PresetKind; label: string }> = [
+  { field: "campaignPresetId", kind: "campaign", label: "Campaign preset" },
+  { field: "lineItemPresetId", kind: "lineItem", label: "Line item preset" },
+  { field: "targetingPresetId", kind: "targeting", label: "Targeting preset" },
+];
+
+// The presets this advertiser can use (its own + org-wide) for one kind.
+const PresetSelect: React.FC<{ id: string; kind: PresetKind; advertiserId?: string; value: string; onChange: (v: string) => void }> = ({
+  id,
+  kind,
+  advertiserId,
+  value,
+  onChange,
+}) => {
+  const { data } = usePresetOptions(kind, advertiserId);
+  const options: Array<{ id: string; value: string }> = data?.data ?? [];
+  return (
+    <SelectComponent id={id} value={value || "__none__"}
+      data={[{ name: "None", value: "__none__" }, ...options.map((o) => ({ name: o.value, value: String(o.id) }))]}
+      onValueChange={(v) => onChange(v === "__none__" ? "" : v)} />
+  );
 };
 
 const AdvertiserForm: React.FC = () => {
@@ -75,7 +103,7 @@ const AdvertiserForm: React.FC = () => {
       alternativeId: "",
       notes: "",
       status: "active",
-      defaults: { geo: [], currency: "USD", clickUrl: "", mmpPlatform: "appsflyer" },
+      defaults: { geo: [], currency: "USD", clickUrl: "", mmpPlatform: "appsflyer", campaignPresetId: "", lineItemPresetId: "", targetingPresetId: "" },
     },
   });
 
@@ -98,6 +126,9 @@ const AdvertiserForm: React.FC = () => {
           currency: adv.defaults?.currency || "USD",
           clickUrl: adv.defaults?.clickUrl || "",
           mmpPlatform: adv.defaults?.mmpPlatform || "appsflyer",
+          campaignPresetId: adv.defaults?.campaignPresetId || "",
+          lineItemPresetId: adv.defaults?.lineItemPresetId || "",
+          targetingPresetId: adv.defaults?.targetingPresetId || "",
         },
       });
     }
@@ -126,7 +157,14 @@ const AdvertiserForm: React.FC = () => {
       appBundle: v.appBundle || null,
       appName: v.appName || null,
       appIconLink: v.appIconLink || null,
-      defaults: { ...v.defaults, clickUrl: v.defaults.clickUrl || null, mmpPlatform: v.defaults.mmpPlatform || null },
+      defaults: {
+        ...v.defaults,
+        clickUrl: v.defaults.clickUrl || null,
+        mmpPlatform: v.defaults.mmpPlatform || null,
+        campaignPresetId: v.defaults.campaignPresetId || null,
+        lineItemPresetId: v.defaults.lineItemPresetId || null,
+        targetingPresetId: v.defaults.targetingPresetId || null,
+      },
     } as any;
     const done = () => navigate("/advertiser/list");
     if (isEdit) updateMut.mutate({ id: id!, payload }, { onSuccess: done });
@@ -262,6 +300,22 @@ const AdvertiserForm: React.FC = () => {
               )}
             />
           </div>
+
+          {PRESET_DEFAULTS.map((d) => (
+            <div className="space-y-2" key={d.field}>
+              <Label htmlFor={d.field}>{d.label}</Label>
+              <Controller
+                name={`defaults.${d.field}` as const}
+                control={control}
+                render={({ field }) => (
+                  <PresetSelect id={d.field} kind={d.kind} advertiserId={id} value={field.value} onChange={field.onChange} />
+                )}
+              />
+            </div>
+          ))}
+          <p className="md:col-span-3 -mt-2 text-[11px] text-muted-foreground">
+            Presets prefill new campaigns and line items for this advertiser. Save presets from the campaign or line item form.
+          </p>
         </CardContent>
       </Card>
 

@@ -34,6 +34,23 @@ const AdvertiserList: React.FC = () => {
   const totalPages = data?.data?.pagination?.totalPages || 1;
   const statusMut = useAdvertiserStatus();
   const deleteMut = useDeleteAdvertiser();
+  // The status the user just picked, shown at once while the change saves;
+  // cleared when it's saved (the refreshed list then shows it) or fails.
+  const [pending, setPending] = useState<Record<string, "active" | "paused">>({});
+  const setStatus = (a: Advertiser, active: boolean) => {
+    const id = a._id!;
+    setPending((p) => ({ ...p, [id]: active ? "active" : "paused" }));
+    statusMut.mutate(
+      { id, status: active ? "active" : "paused" },
+      {
+        onSettled: () =>
+          setPending((p) => {
+            const { [id]: _done, ...rest } = p;
+            return rest;
+          }),
+      },
+    );
+  };
 
   return (
     <div className="space-y-5">
@@ -99,10 +116,14 @@ const AdvertiserList: React.FC = () => {
                       </TableCell>
                       <TableCell className="text-right tabular-nums text-sm">
                         {a.campaigns?.active ?? 0} <span className="text-muted-foreground">/ {a.campaigns?.total ?? 0}</span>
+                        {(pending[a._id!] ?? a.status) === "paused" && (a.campaigns?.active ?? 0) > 0 && (
+                          <div className="text-[11px] text-amber-600 dark:text-amber-400">not bidding: advertiser paused</div>
+                        )}
                       </TableCell>
                       <TableCell onClick={(e) => e.stopPropagation()}>
-                        <Switch checked={a.status === "active"} aria-label={`Activate ${a.name}`}
-                          onCheckedChange={(v) => statusMut.mutate({ id: a._id!, status: v ? "active" : "paused" })} />
+                        <Switch checked={(pending[a._id!] ?? a.status) === "active"} disabled={!!pending[a._id!]}
+                          aria-label={`${a.status === "active" ? "Pause" : "Activate"} ${a.name}`}
+                          onCheckedChange={(v) => setStatus(a, v)} />
                       </TableCell>
                       <TableCell className="text-right pr-5 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                         <Button variant="ghost" size="sm" className="gap-1" onClick={() => navigate(`/campaign/add?advertiserId=${a._id}`)}>

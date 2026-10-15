@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { FormProvider, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -10,17 +10,29 @@ import { Card } from "@/components/ui/card";
 import LoadingFallback from "@/components/ui/loading-fallback";
 import { useGetSingleCampaign } from "@/query/useCampaign";
 import { useCreateLineItem, useLineItem, useUpdateLineItem } from "@/query/useLineItem";
-import { lineItemSchema, toLineItemPayload, type LineItemFormValues } from "@/utils/schemas/lineItem";
+import {
+  browserTimezone,
+  lineItemSchema,
+  targetingToForm,
+  toLineItemPayload,
+  type LineItemFormValues,
+} from "@/utils/schemas/lineItem";
+import { fromFrequencyCaps } from "@/components/targeting/frequency-caps-editor";
 import GeneralTab from "./tabs/general-tab";
 import TargetingTab from "./tabs/targeting-tab";
 import CreativesTab from "./tabs/creatives-tab";
 import SummaryTab from "./tabs/summary-tab";
+import ModifiersTab from "./tabs/modifiers-tab";
+import LineItemPresets, { applyPresetToForm } from "./components/line-item-presets";
+import { useAdvertiser } from "@/query/useAdvertiser";
+import { useFetchPreset } from "@/query/usePreset";
 
-type TabId = "general" | "targeting" | "creatives" | "summary";
+type TabId = "general" | "targeting" | "modifiers" | "creatives" | "summary";
 
 const TABS: Array<{ id: TabId; label: string }> = [
   { id: "general", label: "General" },
   { id: "targeting", label: "Targeting" },
+  { id: "modifiers", label: "Modifiers" },
   { id: "creatives", label: "Creative Association" },
   { id: "summary", label: "Summary" },
 ];
@@ -34,6 +46,10 @@ const FIELD_TAB: Record<string, TabId> = {
   budget: "general",
   dailyBudget: "general",
   bidding: "general",
+  frequencyCaps: "general",
+  flights: "general",
+  bidModifierId: "modifiers",
+  deliveryModifierId: "modifiers",
   targeting: "targeting",
   creatives: "creatives",
 };
@@ -77,18 +93,45 @@ const LineItemForm: React.FC = () => {
       budget: "",
       dailyBudget: "",
       pacing: "asap",
+      frequencyCaps: [],
+      flights: [],
+      bidModifierId: "",
+      deliveryModifierId: "",
       bidding: { strategy: "inherit", cpm: "", maxCpm: "" },
-      targeting: {
-        geo: { countries: { include: [], exclude: [] }, custom: [] },
-        segments: { audienceTarget: "all", customAudienceIds: [] },
-        exchange: { inventoryType: "programmatic", oemPremiumPartners: [] },
-      },
+      targeting: targetingToForm(undefined, browserTimezone()),
       creatives: [],
     }),
     [format],
   );
 
   const methods = useForm<LineItemFormValues>({ resolver: zodResolver(lineItemSchema), defaultValues: defaults });
+
+  // A new line item starts from the advertiser's default presets (line item
+  // preset first, then its targeting preset on top), once.
+  const advertiserId = (campaign?.advertiser as { id: string } | null)?.id;
+  const { data: advResp } = useAdvertiser(!isEdit ? advertiserId : undefined);
+  const advDefaults = advResp?.data?.data?.defaults;
+  const fetchPreset = useFetchPreset();
+  const presetsApplied = useRef(false);
+  useEffect(() => {
+    if (isEdit || !campaign || !advDefaults || presetsApplied.current) return;
+    presetsApplied.current = true;
+    const ids = [advDefaults.lineItemPresetId, advDefaults.targetingPresetId].filter(Boolean) as string[];
+    if (!ids.length) return;
+    (async () => {
+      const names: string[] = [];
+      for (const id of ids) {
+        try {
+          const p = await fetchPreset(id);
+          applyPresetToForm(p, methods.setValue);
+          names.push(p.name);
+        } catch {
+          /* a deleted default preset just isn't applied */
+        }
+      }
+      if (names.length) toast.info(`Started from the advertiser's preset${names.length > 1 ? "s" : ""}: ${names.join(", ")}`);
+    })();
+  }, [isEdit, campaign, advDefaults, fetchPreset, methods]);
 
   // New line item: start from the advertiser's default geo. Edit: the saved one.
   useEffect(() => {
@@ -105,29 +148,24 @@ const LineItemForm: React.FC = () => {
         budget: s(lineItem.budget),
         dailyBudget: s(lineItem.dailyBudget),
         pacing: lineItem.pacing || "asap",
+        frequencyCaps: fromFrequencyCaps(lineItem.frequencyCaps),
+        flights: (lineItem.flights || []).map((f: any) => ({
+          startDate: String(f.startDate).slice(0, 10),
+          endDate: String(f.endDate).slice(0, 10),
+          budget: f.budget === null || f.budget === undefined ? "" : String(f.budget),
+        })),
+        bidModifierId: lineItem.bidModifierId || "",
+        deliveryModifierId: lineItem.deliveryModifierId || "",
         bidding: {
           strategy: lineItem.bidding?.strategy || "inherit",
           cpm: s(lineItem.bidding?.cpm),
           maxCpm: s(lineItem.bidding?.maxCpm),
         },
-        targeting: {
-          geo: {
-            countries: {
-              include: lineItem.targeting?.geo?.countries?.include || [],
-              exclude: lineItem.targeting?.geo?.countries?.exclude || [],
-            },
-            custom: lineItem.targeting?.geo?.custom || [],
-          },
-          segments: {
-            audienceTarget: lineItem.targeting?.segments?.audienceTarget || "all",
-            customAudienceIds: lineItem.targeting?.segments?.customAudienceIds || [],
-          },
-          exchange: {
-            inventoryType: lineItem.targeting?.exchange?.inventoryType || "programmatic",
-            oemPremiumPartners: lineItem.targeting?.exchange?.oemPremiumPartners || [],
-          },
-        },
-        creatives: lineItem.creatives || [],
+        targeting: targetingToForm(lineItem.targeting, browserTimezone()),
+        creatives: (lineItem.creatives || []).map((c: { creativeId: string; weight?: number }) => ({
+          creativeId: c.creativeId,
+          weight: c.weight || 1,
+        })),
       });
     } else if (!isEdit && campaign) {
       methods.reset({ ...defaults, format });
@@ -190,6 +228,9 @@ const LineItemForm: React.FC = () => {
             {format === "video" ? <Video className="w-3 h-3" /> : <ImageIcon className="w-3 h-3" />}
             {format}
           </Badge>
+          <div className="ml-auto">
+            <LineItemPresets advertiserId={advertiser.id} advertiserName={advertiser.name} />
+          </div>
         </div>
 
         {/* Tabs */}
@@ -215,7 +256,8 @@ const LineItemForm: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_240px] gap-5 items-start">
           <div className="min-w-0">
             {tab === "general" && <GeneralTab campaign={campaign} />}
-            {tab === "targeting" && <TargetingTab />}
+            {tab === "targeting" && <TargetingTab campaignId={campaignId!} campaignType={campaign.type} />}
+            {tab === "modifiers" && <ModifiersTab advertiserId={advertiser.id} currency={campaign.currency || "USD"} />}
             {tab === "creatives" && <CreativesTab advertiserId={advertiser.id} format={format} />}
             {tab === "summary" && <SummaryTab campaign={campaign} advertiserName={advertiser.name} />}
           </div>

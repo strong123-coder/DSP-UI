@@ -28,8 +28,24 @@ const CreativesTab: React.FC<{ advertiserId: string; format: "banner" | "video" 
 
   const selected = watch("creatives") || [];
   const selectedIds = new Set(selected.map((c) => c.creativeId));
+  const weightOf = new Map(selected.map((c) => [c.creativeId, c.weight || 1]));
   const setSelected = (ids: string[]) =>
-    setValue("creatives", ids.map((creativeId) => ({ creativeId })), { shouldDirty: true, shouldValidate: true });
+    setValue("creatives", ids.map((creativeId) => ({ creativeId, weight: weightOf.get(creativeId) ?? 1 })), {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+  const setWeight = (id: string, weight: number) =>
+    setValue("creatives", selected.map((c) => (c.creativeId === id ? { ...c, weight } : c)), { shouldDirty: true });
+
+  // Creatives rotate within a size (banners) or among videos; show each
+  // attached creative's share of its group.
+  const groupOf = (c: Creative) => (isVideo ? "video" : `${c.w || 0}x${c.h || 0}`);
+  const groupTotals = new Map<string, { total: number; count: number }>();
+  library.forEach((c) => {
+    if (!selectedIds.has(c._id)) return;
+    const g = groupTotals.get(groupOf(c)) || { total: 0, count: 0 };
+    groupTotals.set(groupOf(c), { total: g.total + (weightOf.get(c._id) || 1), count: g.count + 1 });
+  });
   const toggle = (id: string) =>
     setSelected(selectedIds.has(id) ? [...selectedIds].filter((x) => x !== id) : [...selectedIds, id]);
 
@@ -120,7 +136,8 @@ const CreativesTab: React.FC<{ advertiserId: string; format: "banner" | "video" 
           </CardTitle>
           <CardDescription>
             From this advertiser's library. A {format} line item takes {isVideo ? "video creatives (MP4 or VAST tag)" : "image creatives"}.
-            The bid engine picks the best size match for each impression.
+            The bid engine picks the best size match for each impression; when several attached creatives fit equally
+            well, they rotate by weight (a weight of 3 serves three times as often as 1).
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -143,37 +160,52 @@ const CreativesTab: React.FC<{ advertiserId: string; format: "banner" | "video" 
             <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3">
               {library.map((c) => {
                 const on = selectedIds.has(c._id);
+                const g = groupTotals.get(groupOf(c));
+                const w = weightOf.get(c._id) || 1;
                 return (
-                  <button
-                    key={c._id}
-                    type="button"
-                    aria-pressed={on}
-                    onClick={() => toggle(c._id)}
-                    className={`relative text-left rounded-xl border-2 overflow-hidden transition-colors focus-visible:outline-2 focus-visible:outline-primary ${
-                      on ? "border-primary" : "border-border hover:border-ring/40"
-                    }`}
-                  >
-                    <div className="aspect-video bg-muted flex items-center justify-center overflow-hidden">
-                      {c.type === "image" && c.link ? (
-                        <img src={c.link} alt="" className="max-w-full max-h-full object-contain" loading="lazy" />
-                      ) : (
-                        <Video className="w-6 h-6 text-muted-foreground" />
-                      )}
-                    </div>
-                    <div className="p-2">
-                      <div className="text-xs font-medium truncate" title={c.name || c.vastTag || ""}>{c.name || (c.vastTag ? "VAST tag" : "Creative")}</div>
-                      <div className="text-[11px] text-muted-foreground">
-                        {c.w && c.h ? `${c.w}×${c.h}` : "size unknown"}
-                        {c.duration ? ` · ${c.duration}s` : ""}
-                        {c.vastTag ? " · VAST" : ""}
+                  <div key={c._id} className="space-y-1.5">
+                    <button
+                      type="button"
+                      aria-pressed={on}
+                      onClick={() => toggle(c._id)}
+                      className={`relative w-full text-left rounded-xl border-2 overflow-hidden transition-colors focus-visible:outline-2 focus-visible:outline-primary ${
+                        on ? "border-primary" : "border-border hover:border-ring/40"
+                      }`}
+                    >
+                      <div className="aspect-video bg-muted flex items-center justify-center overflow-hidden">
+                        {c.type === "image" && c.link ? (
+                          <img src={c.link} alt="" className="max-w-full max-h-full object-contain" loading="lazy" />
+                        ) : (
+                          <Video className="w-6 h-6 text-muted-foreground" />
+                        )}
                       </div>
-                    </div>
+                      <div className="p-2">
+                        <div className="text-xs font-medium truncate" title={c.name || c.vastTag || ""}>{c.name || (c.vastTag ? "VAST tag" : "Creative")}</div>
+                        <div className="text-[11px] text-muted-foreground">
+                          {c.w && c.h ? `${c.w}×${c.h}` : "size unknown"}
+                          {c.duration ? ` · ${c.duration}s` : ""}
+                          {c.vastTag ? " · VAST" : ""}
+                        </div>
+                      </div>
+                      {on && (
+                        <span className="absolute top-2 right-2 w-5 h-5 rounded-full bg-primary text-primary-foreground flex items-center justify-center">
+                          <Check className="w-3 h-3" />
+                        </span>
+                      )}
+                    </button>
                     {on && (
-                      <span className="absolute top-2 right-2 w-5 h-5 rounded-full bg-primary text-primary-foreground flex items-center justify-center">
-                        <Check className="w-3 h-3" />
-                      </span>
+                      <div className="flex items-center gap-2 px-0.5">
+                        <label htmlFor={`weight-${c._id}`} className="text-[11px] text-muted-foreground">Weight</label>
+                        <Input id={`weight-${c._id}`} type="number" min={1} max={100} step={1} className="h-7 w-16 text-xs"
+                          value={w}
+                          onChange={(e) => setWeight(c._id, Math.min(100, Math.max(1, Math.round(Number(e.target.value) || 1))))} />
+                        <span className="text-[11px] text-muted-foreground tabular-nums truncate"
+                          title={g && g.count > 1 ? `Serves about ${Math.round((w / g.total) * 100)}% of ${isVideo ? "video" : `${c.w}×${c.h}`} impressions this line item wins` : "The only attached creative of this size"}>
+                          {g && g.count > 1 ? `≈ ${Math.round((w / g.total) * 100)}%` : "only one"}
+                        </span>
+                      </div>
                     )}
-                  </button>
+                  </div>
                 );
               })}
             </div>

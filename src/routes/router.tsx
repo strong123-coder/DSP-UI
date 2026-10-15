@@ -15,6 +15,10 @@ import LoginConfig from "@/pages/auth/login-config";
 import SuperAdminLoginConfig from "@/pages/auth/super-admin-login-config";
 import CampaignConfig from "@/pages/campaign/campaign-config";
 import AdvertiserConfig from "@/pages/advertiser/advertiser-config";
+import TargetingListConfig from "@/pages/targetingList/targeting-list-config";
+import BidModifierConfig from "@/pages/bidModifier/bid-modifier-config";
+import DeliveryModifierConfig from "@/pages/deliveryModifier/delivery-modifier-config";
+import PresetConfig from "@/pages/preset/preset-config";
 import ReportConfig from "@/pages/report/report-config";
 import ReportCampaignBundlesConfig from "@/pages/report/report-campaign-bundles-config";
 import SuperAdminDashboardConfig from "@/pages/super-admin/dashboard/dashboard-config";
@@ -50,6 +54,10 @@ export const routes = [
       DashboardConfig,
       AdvertiserConfig,
       CampaignConfig,
+      TargetingListConfig,
+      BidModifierConfig,
+      DeliveryModifierConfig,
+      PresetConfig,
       ReportConfig,
       ReportCampaignBundlesConfig,
       ProfileConfig,

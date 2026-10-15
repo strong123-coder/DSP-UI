@@ -1,4 +1,5 @@
 import { useState, lazy, Suspense, useEffect } from "react";
+import { fromFrequencyCaps } from "@/components/targeting/frequency-caps-editor";
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate, useParams } from "react-router-dom";
@@ -50,6 +51,7 @@ const ORDERED_FIELDS = [
   "budget",
   "dailyBudget",
   "kpi",
+  "frequencyCaps",
   "isScheduling",
   "startDate",
   "endDate",
@@ -85,6 +87,7 @@ const CamapaingEdit = () => {
       budgetType: "spend",
       alternativeId: "",
       notes: "",
+      frequencyCaps: [],
       kpi: "",
       isScheduling: false,
       startDate: "",
@@ -117,6 +120,7 @@ const CamapaingEdit = () => {
         budgetType: campaignData.budgetType || "spend",
         alternativeId: campaignData.alternativeId || "",
         notes: campaignData.notes || "",
+        frequencyCaps: fromFrequencyCaps(campaignData.frequencyCaps),
         kpi: campaignData.kpi || "",
         isScheduling: campaignData.isScheduling || false,
         startDate: campaignData.startDate || "",

@@ -17,6 +17,13 @@ export const useLineItems = (campaignId?: string) =>
 export const useLineItem = (id?: string) =>
   useQuery({ queryKey: ["lineItem", id], queryFn: () => lineItemService.get(id as string), enabled: !!id });
 
+export const useTargetingOptions = () =>
+  useQuery({
+    queryKey: ["lineItemTargetingOptions"],
+    queryFn: () => lineItemService.targetingOptions(),
+    staleTime: 5 * 60 * 1000,
+  });
+
 const useInvalidate = () => {
   const qc = useQueryClient();
   return () => {

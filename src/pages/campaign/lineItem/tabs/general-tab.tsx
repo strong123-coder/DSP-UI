@@ -1,5 +1,7 @@
 import React from "react";
-import { Controller, useFormContext } from "react-hook-form";
+import { Controller, useFieldArray, useFormContext } from "react-hook-form";
+import { Plus, Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -7,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import SelectComponent from "@/components/inputComponents/select-component";
 import { DatePickerComponent } from "@/components/inputComponents/date-picker-component";
+import FrequencyCapsEditor from "@/components/targeting/frequency-caps-editor";
 import type { LineItemFormValues } from "@/utils/schemas/lineItem";
 
 const toIsoDay = (d?: Date) => (d ? new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())).toISOString().slice(0, 10) : "");
@@ -23,9 +26,15 @@ const GeneralTab: React.FC<{ campaign: any }> = ({ campaign }) => {
     formState: { errors },
   } = useFormContext<LineItemFormValues>();
   const strategy = watch("bidding.strategy");
+  const { fields: flightRows, append: addFlight, remove: removeFlight } = useFieldArray({ control, name: "flights" });
+  const flights = watch("flights");
+  const flightTotal = flights.reduce((sum, f) => sum + (Number(f.budget) || 0), 0);
   const creatives = watch("creatives");
   const impressions = campaign.budgetType === "impressions";
   const unit = impressions ? "impressions" : campaign.currency || "USD";
+  const campaignCaps: string[] = (campaign.frequencyCaps || []).map(
+    (c: { count: number; every: number; unit: string }) => `${c.count} every ${c.every} ${c.unit}${c.every > 1 ? "s" : ""}`,
+  );
 
   return (
     <div className="space-y-5">
@@ -157,6 +166,75 @@ const GeneralTab: React.FC<{ campaign: any }> = ({ campaign }) => {
       </Card>
 
       <Card>
+        <CardHeader className="flex flex-row items-start justify-between space-y-0 gap-3">
+          <div>
+            <CardTitle className="text-base">Flights</CardTitle>
+            <CardDescription>
+              Split the line item into bursts. With flights, it bids only inside one, and each flight's budget caps what it
+              delivers in that flight. Leave empty to run continuously.
+            </CardDescription>
+          </div>
+          <Button type="button" size="sm" variant="outline" className="gap-1 shrink-0" disabled={flightRows.length >= 20}
+            onClick={() => addFlight({ startDate: "", endDate: "", budget: "" })}>
+            <Plus className="w-3.5 h-3.5" /> Add flight
+          </Button>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {flightRows.length === 0 ? (
+            <div className="text-center py-4 text-muted-foreground border border-dashed border-border rounded-xl text-xs">
+              No flights: bids for the whole line item run.
+            </div>
+          ) : (
+            <>
+              {flightRows.map((f, i) => (
+                <div key={f.id} className="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_140px_auto] gap-2 items-end">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs" htmlFor={`flight-${i}-start`}>Start</Label>
+                    <Controller
+                      name={`flights.${i}.startDate` as const}
+                      control={control}
+                      render={({ field }) => (
+                        <DatePickerComponent id={`flight-${i}-start`} placeholder="Start date"
+                          date={field.value ? new Date(field.value + "T00:00:00") : undefined}
+                          onSelect={(d) => field.onChange(toIsoDay(d))}
+                          ariaInvalid={!!errors.flights?.[i]?.startDate} errorTooltip={errors.flights?.[i]?.startDate?.message} />
+                      )}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs" htmlFor={`flight-${i}-end`}>End</Label>
+                    <Controller
+                      name={`flights.${i}.endDate` as const}
+                      control={control}
+                      render={({ field }) => (
+                        <DatePickerComponent id={`flight-${i}-end`} placeholder="End date"
+                          date={field.value ? new Date(field.value + "T00:00:00") : undefined}
+                          onSelect={(d) => field.onChange(toIsoDay(d))}
+                          ariaInvalid={!!errors.flights?.[i]?.endDate} errorTooltip={errors.flights?.[i]?.endDate?.message} />
+                      )}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs" htmlFor={`flight-${i}-budget`}>Budget ({unit})</Label>
+                    <Input id={`flight-${i}-budget`} type="number" min="0" step={impressions ? "1" : "0.01"} onKeyDown={noSign}
+                      placeholder="No cap" {...register(`flights.${i}.budget` as const)}
+                      aria-invalid={!!errors.flights?.[i]?.budget} errorTooltip={errors.flights?.[i]?.budget?.message} />
+                  </div>
+                  <Button type="button" variant="ghost" size="icon" aria-label="Remove flight"
+                    className="text-destructive hover:bg-destructive/10" onClick={() => removeFlight(i)}>
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+              ))}
+              <p className="text-[11px] text-muted-foreground tabular-nums">
+                Flight budgets: {flightTotal ? `${flightTotal} ${unit}` : "none set"}. Dates are whole days in UTC.
+              </p>
+            </>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
         <CardHeader>
           <CardTitle className="text-base">Bidding</CardTitle>
           <CardDescription>
@@ -200,6 +278,26 @@ const GeneralTab: React.FC<{ campaign: any }> = ({ campaign }) => {
               {...register("bidding.maxCpm")}
               aria-invalid={!!errors.bidding?.maxCpm} errorTooltip={errors.bidding?.maxCpm?.message} />
           </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Frequency cap</CardTitle>
+          <CardDescription>
+            Limit how often one person sees this line item's ads.
+            {campaignCaps.length > 0 && ` The campaign also caps it at ${campaignCaps.join(" and ")}; the stricter limit wins.`}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Controller
+            name="frequencyCaps"
+            control={control}
+            render={({ field }) => (
+              <FrequencyCapsEditor id="li-fcap" value={field.value} onChange={field.onChange}
+                errors={errors.frequencyCaps as any} />
+            )}
+          />
         </CardContent>
       </Card>
     </div>

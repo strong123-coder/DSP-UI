@@ -77,6 +77,11 @@ export const addCampaignSchema = z
     budgetType: z.enum(["spend", "impressions"]).default("spend").optional(),
     alternativeId: z.string().trim().optional(),
     notes: z.string().trim().max(2000).optional(),
+    // Per-user caps across all line items. Numbers stay strings in the form;
+    // the API converts them.
+    frequencyCaps: z
+      .array(z.object({ count: z.string().trim(), every: z.string().trim(), unit: z.enum(["hour", "day", "week"]) }))
+      .optional(),
     isScheduling: z.boolean().optional(),
     startDate: z.string().trim().optional(),
     endDate: z.string().trim().optional(),
@@ -127,6 +132,16 @@ export const addCampaignSchema = z
         });
       }
     }
+
+    (data.frequencyCaps || []).forEach((c, i) => {
+      const whole = (v: string, max: number) => /^\d+$/.test(v) && Number(v) >= 1 && Number(v) <= max;
+      if (!whole(c.count, 1000)) {
+        ctx.addIssue({ code: "custom", message: "Cap must be a whole number from 1 to 1000", path: ["frequencyCaps", i, "count"] });
+      }
+      if (!whole(c.every, 365)) {
+        ctx.addIssue({ code: "custom", message: "Window must be a whole number from 1 to 365", path: ["frequencyCaps", i, "every"] });
+      }
+    });
 
     if (data.dailyBudget && data.budget) {
       const daily = Number(data.dailyBudget);

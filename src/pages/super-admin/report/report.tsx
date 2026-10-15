@@ -25,11 +25,13 @@ import ReportTableBody from "@/pages/report/components/report-table-body";
 import { MetricValue } from "@/components/ui/metric-value";
 import { useSuperAdminReport, useSuperAdminOrgs } from "@/query/useSuperAdmin";
 import type { ReportDataRow, ReportTotals, SortDirection } from "@/pages/report/types";
+import DealCell from "@/pages/report/components/deal-cell";
 
 // Cross-org report dimensions (mirror backend SUPER_DIMENSION).
 const DIMENSIONS: Array<{ value: string; label: string }> = [
   { value: "org", label: "Organization" },
   { value: "campaign", label: "Campaign" },
+  { value: "deal", label: "Deal" },
   { value: "bundle", label: "Bundle / App" },
   { value: "publisher", label: "Placement" },
   { value: "country", label: "Country" },
@@ -152,6 +154,8 @@ const SuperAdminReport: React.FC = () => {
         );
       case "campaign":
         return <span className="font-medium">{row.campaignTitle || row.campaign || "—"}</span>;
+      case "deal":
+        return <DealCell row={row} />;
       case "bundle":
         return (
           <span className="font-mono text-xs">{row.bundle || "(unknown)"}</span>
