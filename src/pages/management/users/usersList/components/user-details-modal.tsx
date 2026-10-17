@@ -18,6 +18,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { isAdminRole, roleLabel } from "@/utils/roles";
 import type { User } from "../../types";
 
 interface UserDetailsModalProps {
@@ -43,12 +44,12 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({
                 <Badge
                   variant="outline"
                   className={
-                    user.type === "admin"
+                    isAdminRole(user.type)
                       ? "capitalize text-sky-500 bg-sky-500/10 border-sky-500/20"
                       : "capitalize text-indigo-500 bg-indigo-500/10 border-indigo-500/20"
                   }
                 >
-                  {user.type}
+                  {roleLabel(user.type)}
                 </Badge>
                 <Badge
                   variant="outline"

@@ -70,6 +70,7 @@ export interface LineItem {
   _id?: string;
   campaignId: string;
   advertiserId?: string;
+  approval?: import("./approval").Approval; // read-only; missing = approved
   name: string;
   format: "banner" | "video";
   status: "active" | "paused";

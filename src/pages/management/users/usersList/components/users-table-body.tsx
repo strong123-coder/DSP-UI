@@ -13,6 +13,7 @@ import type { User } from "../../types";
 import { useNavigate } from "react-router-dom";
 import DeletePopupModal from "@/components/popupModals/delete-popup-modal";
 import { useDeleteUser } from "@/query/useUserManagement";
+import { isAdminRole, roleLabel } from "@/utils/roles";
 import { useAppStore } from "@/store";
 
 interface UserTableBodyProps {
@@ -151,12 +152,12 @@ export const UserTypeBadge: React.FC<{ type: string }> = ({ type }) => (
   <Badge
     variant="outline"
     className={
-      type === "admin"
+      isAdminRole(type)
         ? "capitalize text-sky-500 bg-sky-500/10 border-sky-500/20 hover:bg-sky-500/10"
         : "capitalize text-indigo-500 bg-indigo-500/10 border-indigo-500/20 hover:bg-indigo-500/10"
     }
   >
-    {type}
+    {roleLabel(type)}
   </Badge>
 );
 

@@ -22,6 +22,8 @@ export interface Advertiser {
   status: "active" | "paused";
   defaults: AdvertiserDefaults;
   campaigns?: { total: number; active: number };
+  networkId?: string | null;
+  networkName?: string | null;
   createdAt?: string;
 }
 
@@ -30,11 +32,13 @@ export interface AdvertiserListParams {
   limit?: number;
   status?: string;
   search?: string;
+  networkId?: string; // org level: one network's advertisers
 }
 
 export const advertiserService = {
   list: async (params?: AdvertiserListParams) => (await apiClient().get("advertiserList", params)).data,
-  options: async () => (await apiClient().get("advertiserOptions")).data,
+  options: async (networkId?: string) =>
+    (await apiClient().get("advertiserOptions", networkId ? { networkId } : undefined)).data,
   categories: async () => (await apiClient().get("advertiserCategories")).data,
   get: async (id: string) => (await apiClient().get("advertiserGet", undefined, undefined, { id })).data,
   create: async (payload: Partial<Advertiser>) => (await apiClient().post("advertiserAdd", payload)).data,

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -20,6 +20,8 @@ import { geoData, currencyData } from "@/utils/data/data";
 import { MmpPlatformData } from "@/utils/data/campaignData";
 import { usePresetOptions } from "@/query/usePreset";
 import type { PresetKind } from "@/services/preset";
+import { useNetworkOptions } from "@/query/useNetwork";
+import { useScope } from "@/query/useScope";
 
 const schema = z.object({
   name: z.string().trim().min(1, { message: "Advertiser name is required" }).max(120),
@@ -89,6 +91,17 @@ const AdvertiserForm: React.FC = () => {
   const createMut = useCreateAdvertiser();
   const updateMut = useUpdateAdvertiser();
   const categories: Array<{ id: string; value: string }> = catResp?.data ?? [];
+
+  // At org level a new advertiser goes into a network the org picks (inside a
+  // network it joins that network). It can't move later.
+  const scope = useScope();
+  const [search] = useSearchParams();
+  const pickNetwork = !isEdit && scope.orgLevel && scope.canManageNetworks;
+  const { data: netResp } = useNetworkOptions(pickNetwork);
+  const networks: Array<{ id: string; value: string; status: string }> = netResp?.data ?? [];
+  const [pickedNetwork, setNetworkId] = useState(search.get("networkId") || "");
+  // The org's only network needs no picking.
+  const networkId = pickedNetwork || (networks.length === 1 ? String(networks[0].id) : "");
 
   const { register, control, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -168,7 +181,10 @@ const AdvertiserForm: React.FC = () => {
     } as any;
     const done = () => navigate("/advertiser/list");
     if (isEdit) updateMut.mutate({ id: id!, payload }, { onSuccess: done });
-    else createMut.mutate(payload, { onSuccess: done });
+    else {
+      if (pickNetwork && !networkId) return toast.error("Pick the network this advertiser belongs to");
+      createMut.mutate(pickNetwork ? { ...payload, networkId } : payload, { onSuccess: done });
+    }
   };
 
   if (isEdit && isLoading) return <LoadingFallback />;
@@ -188,6 +204,20 @@ const AdvertiserForm: React.FC = () => {
           <CardTitle className="text-base">Essential settings</CardTitle>
         </CardHeader>
         <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {pickNetwork && (
+            <div className="space-y-2 md:col-span-3 max-w-sm">
+              <Label htmlFor="network">Network <span className="text-destructive">*</span></Label>
+              <SelectComponent id="network" search placeholder="Select network" value={networkId}
+                data={networks.map((n) => ({ name: n.status === "active" ? n.value : `${n.value} (off)`, value: String(n.id) }))}
+                onValueChange={setNetworkId} />
+              <p className="text-xs text-muted-foreground">The network sees and runs this advertiser. It can't be moved later.</p>
+            </div>
+          )}
+          {isEdit && scope.orgLevel && adv?.networkName && (
+            <div className="space-y-1 md:col-span-3 text-sm">
+              <span className="text-muted-foreground">Network: </span><span className="font-medium">{adv.networkName}</span>
+            </div>
+          )}
           <div className="space-y-2">
             <Label htmlFor="name">Advertiser name <span className="text-destructive">*</span></Label>
             <Input id="name" placeholder="e.g. Snoop" {...register("name")} aria-invalid={!!errors.name} errorTooltip={errors.name?.message} />

@@ -6,6 +6,8 @@ import {
   BarChart3,
   Building2,
   Library,
+  Network,
+  ClipboardCheck,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -25,6 +27,12 @@ export interface SidebarFlatItem {
   title: string;
   url: string;
   icon: LucideIcon;
+  // Highlight for every page under this path (default: url and its sub-pages).
+  match?: string;
+  // Shown only when the user's scope allows it (see query/useScope).
+  requires?: "canManageNetworks" | "canApprove";
+  // Count shown next to the title.
+  badge?: "approvals";
 }
 
 export interface SidebarConfiguration {
@@ -40,6 +48,13 @@ export const SidebarConf: SidebarConfiguration = {
       icon: LayoutDashboard,
     },
     {
+      title: "Networks",
+      url: "/network/list",
+      icon: Network,
+      match: "/network",
+      requires: "canManageNetworks",
+    },
+    {
       title: "Advertisers",
       url: "/advertiser/list",
       icon: Building2,
@@ -50,6 +65,13 @@ export const SidebarConf: SidebarConfiguration = {
       icon: Compass,
     },
 
+    {
+      title: "Approvals",
+      url: "/approval",
+      icon: ClipboardCheck,
+      requires: "canApprove",
+      badge: "approvals",
+    },
     {
       title: "Report",
       url: "/report",

@@ -3,6 +3,7 @@ import { apiClient } from "@/api/apiClient";
 export interface Creative {
   _id: string;
   advertiserId: string;
+  approval?: import("./approval").Approval; // read-only; missing = approved
   name: string | null;
   type: "image" | "video";
   status: "active" | "paused";

@@ -10,6 +10,8 @@ import LoadingFallback from "@/components/ui/loading-fallback";
 import DeletePopupModal from "@/components/popupModals/delete-popup-modal";
 import { useDeleteTargetingList, useTargetingLists } from "@/query/useTargetingList";
 import type { TargetingList, TargetingListKind } from "@/services/targetingList";
+import { VisibilityTag } from "@/components/library/visibility-field";
+import { useScope } from "@/query/useScope";
 
 export const LIST_KINDS: Array<{ id: TargetingListKind; label: string; desc: string }> = [
   { id: "bundle", label: "Apps & sites", desc: "App bundles and site domains, used in Targeting › App/Site." },
@@ -21,6 +23,7 @@ const fmtDate = (d?: string) => (d ? new Date(d).toLocaleDateString(undefined, {
 
 const TargetingListList: React.FC = () => {
   const navigate = useNavigate();
+  const scope = useScope();
   const [params, setParams] = useSearchParams();
   const kind = (LIST_KINDS.some((k) => k.id === params.get("kind")) ? params.get("kind") : "bundle") as TargetingListKind;
   const [page, setPage] = useState(1);
@@ -100,7 +103,10 @@ const TargetingListList: React.FC = () => {
                   rows.map((l) => (
                     <TableRow key={l._id} className="cursor-pointer hover:bg-muted/20" onClick={() => navigate(`/targeting-list/edit/${l._id}`)}>
                       <TableCell className="pl-5">
-                        <div className="font-medium">{l.name}</div>
+                        <div className="font-medium flex items-center gap-2 flex-wrap">
+                          {l.name}
+                          <VisibilityTag shared={l.shared} networkName={l.networkName} visibility={l.visibility} orgLevel={scope.orgLevel} />
+                        </div>
                         {l.notes && <div className="text-xs text-muted-foreground truncate max-w-[360px]">{l.notes}</div>}
                       </TableCell>
                       <TableCell className="text-right tabular-nums">{(l.count ?? 0).toLocaleString()}</TableCell>
@@ -109,14 +115,18 @@ const TargetingListList: React.FC = () => {
                       </TableCell>
                       <TableCell className="text-xs text-muted-foreground whitespace-nowrap">{fmtDate(l.updatedAt)}</TableCell>
                       <TableCell className="text-right pr-5 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
-                        <Button variant="ghost" size="icon" className="h-8 w-8" aria-label={`Edit ${l.name}`}
-                          onClick={() => navigate(`/targeting-list/edit/${l._id}`)}>
-                          <Pencil className="w-4 h-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" aria-label={`Delete ${l.name}`}
-                          onClick={() => setToDelete(l)}>
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
+                        {!l.shared && (
+                          <>
+                            <Button variant="ghost" size="icon" className="h-8 w-8" aria-label={`Edit ${l.name}`}
+                              onClick={() => navigate(`/targeting-list/edit/${l._id}`)}>
+                              <Pencil className="w-4 h-4" />
+                            </Button>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" aria-label={`Delete ${l.name}`}
+                              onClick={() => setToDelete(l)}>
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </>
+                        )}
                       </TableCell>
                     </TableRow>
                   ))

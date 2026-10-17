@@ -6,6 +6,8 @@ export interface User {
   email: string;
   type: string;
   orgId?: string; // absent for super_admin
+  networkId?: string | null; // network users only
+  networkName?: string | null;
 }
 
 export interface AuthState {

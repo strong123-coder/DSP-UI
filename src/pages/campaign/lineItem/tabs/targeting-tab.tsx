@@ -34,6 +34,7 @@ import { LanguageData, SegmentData, timezoneData } from "@/utils/data/targetingD
 import { useAdvertiserCategories } from "@/query/useAdvertiser";
 import { useTargetingOptions } from "@/query/useLineItem";
 import { useTargetingListOptions } from "@/query/useTargetingList";
+import { useLineItemNetwork } from "../line-item-network";
 import type { TargetingOptions } from "@/services/lineItem";
 import type { LineItemFormValues } from "@/utils/schemas/lineItem";
 
@@ -80,7 +81,7 @@ const SectionTitle: React.FC<{ icon: React.ReactNode; children: React.ReactNode 
 
 const GeoPanel: React.FC = () => {
   const { control, register, watch, setValue } = useFormContext<LineItemFormValues>();
-  const { data: zipResp } = useTargetingListOptions("zip");
+  const { data: zipResp } = useTargetingListOptions("zip", useLineItemNetwork());
   const zipLists: Array<{ id: string; value: string; count: number }> = zipResp?.data ?? [];
   const countries = watch("targeting.geo.countries");
   const { fields, append, remove } = useFieldArray({ control, name: "targeting.geo.custom" });
@@ -193,9 +194,9 @@ const AppSitePanel: React.FC<{ options?: TargetingOptions }> = ({ options }) => 
   const { watch, setValue } = useFormContext<LineItemFormValues>();
   const lists = watch("targeting.inventory.bundleLists");
   const deals = watch("targeting.inventory.deals");
-  const { data: listResp } = useTargetingListOptions("bundle");
+  const { data: listResp } = useTargetingListOptions("bundle", useLineItemNetwork());
   const listOptions: Array<{ id: string; value: string; count: number }> = listResp?.data ?? [];
-  const { data: dealListResp } = useTargetingListOptions("deal");
+  const { data: dealListResp } = useTargetingListOptions("deal", useLineItemNetwork());
   const dealLists: Array<{ id: string; value: string; count: number }> = dealListResp?.data ?? [];
 
   // Deals arranged with supply partners, plus any id typed in by hand.

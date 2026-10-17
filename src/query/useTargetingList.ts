@@ -19,8 +19,12 @@ export const useTargetingLists = (params: TargetingListParams) =>
     placeholderData: keepPreviousData,
   });
 
-export const useTargetingListOptions = (kind: TargetingListKind = "bundle") =>
-  useQuery({ queryKey: ["targetingListOptions", kind], queryFn: () => targetingListService.options(kind) });
+// networkId (org level): only lists that network's line items may use.
+export const useTargetingListOptions = (kind: TargetingListKind = "bundle", networkId?: string) =>
+  useQuery({
+    queryKey: ["targetingListOptions", kind, networkId || ""],
+    queryFn: () => targetingListService.options(kind, networkId),
+  });
 
 export const useTargetingList = (id?: string) =>
   useQuery({ queryKey: ["targetingList", id], queryFn: () => targetingListService.get(id as string), enabled: !!id });

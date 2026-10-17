@@ -26,6 +26,9 @@ import ModifiersTab from "./tabs/modifiers-tab";
 import LineItemPresets, { applyPresetToForm } from "./components/line-item-presets";
 import { useAdvertiser } from "@/query/useAdvertiser";
 import { useFetchPreset } from "@/query/usePreset";
+import ApprovalPill from "@/components/approval/approval-pill";
+import { LineItemNetworkContext } from "./line-item-network";
+import { useScope } from "@/query/useScope";
 
 type TabId = "general" | "targeting" | "modifiers" | "creatives" | "summary";
 
@@ -68,6 +71,7 @@ const firstError = (errors: any, path: string[] = []): { path: string; message: 
 
 const LineItemForm: React.FC = () => {
   const { campaignId, lineItemId } = useParams<{ campaignId: string; lineItemId?: string }>();
+  const scope = useScope();
   const isEdit = !!lineItemId;
   const navigate = useNavigate();
   const [tab, setTab] = useState<TabId>("general");
@@ -228,6 +232,9 @@ const LineItemForm: React.FC = () => {
             {format === "video" ? <Video className="w-3 h-3" /> : <ImageIcon className="w-3 h-3" />}
             {format}
           </Badge>
+          {isEdit && lineItem && (
+            <ApprovalPill approval={lineItem.approval} kind="lineItem" id={lineItem._id} resubmit={scope.networkUser} />
+          )}
           <div className="ml-auto">
             <LineItemPresets advertiserId={advertiser.id} advertiserName={advertiser.name} />
           </div>
@@ -255,11 +262,13 @@ const LineItemForm: React.FC = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_240px] gap-5 items-start">
           <div className="min-w-0">
-            {tab === "general" && <GeneralTab campaign={campaign} />}
-            {tab === "targeting" && <TargetingTab campaignId={campaignId!} campaignType={campaign.type} />}
-            {tab === "modifiers" && <ModifiersTab advertiserId={advertiser.id} currency={campaign.currency || "USD"} />}
-            {tab === "creatives" && <CreativesTab advertiserId={advertiser.id} format={format} />}
-            {tab === "summary" && <SummaryTab campaign={campaign} advertiserName={advertiser.name} />}
+            <LineItemNetworkContext.Provider value={scope.orgLevel ? campaign.networkId || undefined : undefined}>
+              {tab === "general" && <GeneralTab campaign={campaign} />}
+              {tab === "targeting" && <TargetingTab campaignId={campaignId!} campaignType={campaign.type} />}
+              {tab === "modifiers" && <ModifiersTab advertiserId={advertiser.id} currency={campaign.currency || "USD"} />}
+              {tab === "creatives" && <CreativesTab advertiserId={advertiser.id} format={format} />}
+              {tab === "summary" && <SummaryTab campaign={campaign} advertiserName={advertiser.name} />}
+            </LineItemNetworkContext.Provider>
           </div>
 
           {/* Campaign context rail */}
@@ -281,6 +290,13 @@ const LineItemForm: React.FC = () => {
 
         {/* Sticky footer */}
         <div className="fixed bottom-0 left-0 right-0 border-t border-border bg-card/95 backdrop-blur px-6 py-3 flex items-center gap-3 justify-end z-20">
+          {scope.networkUser && (
+            <span className="text-xs text-muted-foreground mr-auto md:ml-64">
+              {isEdit
+                ? "Changing budget, bids, targeting, flights or creatives sends it to your organization for approval again."
+                : "New line items bid once your organization approves them."}
+            </span>
+          )}
           <Button type="button" variant="outline" onClick={back} disabled={saving}>Cancel</Button>
           <Button type="submit" disabled={saving}>{saving ? "Saving…" : isEdit ? "Save line item" : "Create line item"}</Button>
         </div>

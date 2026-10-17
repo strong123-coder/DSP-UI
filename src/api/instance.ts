@@ -10,7 +10,7 @@ const instance: AxiosInstance = axios.create({
 
 instance.interceptors.request.use(
   (config) => {
-    const { token, user, selectedOrg } = useAppStore.getState();
+    const { token, user, selectedOrg, selectedNetwork } = useAppStore.getState();
     if (token) {
       config.headers["Authorization"] = `Bearer ${token}`;
     }
@@ -19,6 +19,14 @@ instance.interceptors.request.use(
     // (backend auth.js honours this header only for super_admin tokens).
     if (user?.type === "super_admin" && selectedOrg?.id) {
       config.headers["x-org-id"] = selectedOrg.id;
+    }
+    // An org user (or a super admin inside an org) working inside one of the
+    // org's networks: every network-scoped endpoint answers for that network.
+    // Network users' own network comes from their token, never a header.
+    const canEnter =
+      user?.type === "admin" || user?.type === "team" || (user?.type === "super_admin" && !!selectedOrg?.id);
+    if (canEnter && selectedNetwork?.id) {
+      config.headers["x-network-id"] = selectedNetwork.id;
     }
     return config;
   },
@@ -37,8 +45,23 @@ instance.interceptors.response.use(
       (error.response.status === 401 || error.response.status === 403)
     ) {
       const wasSupply = useAppStore.getState().user?.type === "supply";
+      useAppStore.getState().exitNetwork();
       useAppStore.getState().logout();
       window.location.href = wasSupply ? "/supply/login" : "/login";
+      return Promise.reject(error);
+    }
+
+    // The network this user had entered is gone (deleted, or access removed):
+    // leave it instead of failing every request.
+    const body = error.response?.data;
+    if (
+      error.response?.status === 400 &&
+      useAppStore.getState().selectedNetwork &&
+      typeof body === "string" &&
+      /network/i.test(body)
+    ) {
+      useAppStore.getState().exitNetwork();
+      window.location.href = "/dashboard";
       return Promise.reject(error);
     }
 

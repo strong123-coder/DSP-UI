@@ -5,6 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useCreatePreset } from "@/query/usePreset";
 import type { PresetKind } from "@/services/preset";
+import VisibilityField, { type Visibility } from "@/components/library/visibility-field";
+import { useScope } from "@/query/useScope";
 
 const KIND_TEXT: Record<PresetKind, string> = {
   campaign: "campaign settings (goal, KPI, currency, budgets, frequency caps, MMP, events)",
@@ -24,13 +26,16 @@ const SavePresetDialog: React.FC<{
   const [name, setName] = useState("");
   const [scope, setScope] = useState<"advertiser" | "org">(advertiserId ? "advertiser" : "org");
   const [error, setError] = useState("");
+  const [visibility, setVisibility] = useState<Visibility>("private");
   const createMut = useCreatePreset();
+  const appScope = useScope();
 
   useEffect(() => {
     if (open) {
       setName("");
       setError("");
       setScope(advertiserId ? "advertiser" : "org");
+      setVisibility("private");
     }
   }, [open, advertiserId]);
 
@@ -40,7 +45,14 @@ const SavePresetDialog: React.FC<{
       return;
     }
     createMut.mutate(
-      { name: name.trim(), kind, advertiserId: scope === "advertiser" ? advertiserId || null : null, payload: buildPayload() },
+      {
+        name: name.trim(),
+        kind,
+        advertiserId: scope === "advertiser" ? advertiserId || null : null,
+        payload: buildPayload(),
+        // An org-wide preset made at org level can be shared with the networks.
+        ...(scope === "org" && appScope.orgLevel ? { visibility } : {}),
+      },
       { onSuccess: () => onOpenChange(false) },
     );
   };
@@ -73,7 +85,7 @@ const SavePresetDialog: React.FC<{
               <Label>Who can use it</Label>
               {([
                 { id: "advertiser", text: `Only ${advertiserName || "this advertiser"}` },
-                { id: "org", text: "Every advertiser in your organization" },
+                { id: "org", text: appScope.orgLevel ? "Every advertiser in your organization" : "Every advertiser in this network" },
               ] as const).map((o) => (
                 <label key={o.id} className="flex items-center gap-2 text-sm cursor-pointer">
                   <input type="radio" name="preset-scope" checked={scope === o.id} onChange={() => setScope(o.id)}
@@ -82,6 +94,9 @@ const SavePresetDialog: React.FC<{
                 </label>
               ))}
             </div>
+          )}
+          {scope === "org" && appScope.orgLevel && (
+            <VisibilityField id="save-preset-visibility" value={visibility} onChange={setVisibility} what="preset" />
           )}
         </div>
         <DialogFooter>

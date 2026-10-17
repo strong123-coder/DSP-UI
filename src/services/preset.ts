@@ -11,6 +11,11 @@ export interface Preset {
   payload?: Record<string, any>; // only on get
   notes?: string | null;
   updatedAt?: string;
+  // private = the org only; public = shared with every network (read-only there).
+  visibility?: "private" | "public";
+  networkId?: string | null; // set = a network's own preset
+  networkName?: string | null;
+  shared?: boolean; // an org preset seen from inside a network
 }
 
 export interface PresetParams {

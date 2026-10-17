@@ -118,6 +118,22 @@ export const apiConfig: ApiEndpoint[] = [
   { name: "advertiserUpdate", path: "/api/v1/advertiser/update/{id}", hasPathParams: true },
   { name: "advertiserStatus", path: "/api/v1/advertiser/status/{id}", hasPathParams: true },
   { name: "advertiserDelete", path: "/api/v1/advertiser/delete/{id}", hasPathParams: true },
+  // networks (org → network → advertiser); org users only, except networkCurrent
+  { name: "networkCurrent", path: "/api/v1/network/current" },
+  { name: "networkList", path: "/api/v1/network/list" },
+  { name: "networkOptions", path: "/api/v1/network/options" },
+  { name: "networkGet", path: "/api/v1/network/get/{id}", hasPathParams: true },
+  { name: "networkAdd", path: "/api/v1/network/add" },
+  { name: "networkUpdate", path: "/api/v1/network/update/{id}", hasPathParams: true },
+  { name: "networkStatus", path: "/api/v1/network/status/{id}", hasPathParams: true },
+  { name: "networkDelete", path: "/api/v1/network/delete/{id}", hasPathParams: true },
+  // the org's approval of what networks create or change
+  { name: "approvalQueue", path: "/api/v1/approval/queue" },
+  { name: "approvalCount", path: "/api/v1/approval/count" },
+  { name: "approvalReview", path: "/api/v1/approval/review" },
+  { name: "approvalResubmit", path: "/api/v1/approval/resubmit" },
+  // the signed-in user's own permission checklist (org / network team members)
+  { name: "userConfigMe", path: "/api/v1/user-config/me" },
   // line items
   { name: "lineItemList", path: "/api/v1/line-item/list" },
   { name: "lineItemGet", path: "/api/v1/line-item/get/{id}", hasPathParams: true },

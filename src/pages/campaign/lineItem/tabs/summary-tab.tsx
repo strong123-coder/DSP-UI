@@ -6,6 +6,7 @@ import { geoData } from "@/utils/data/data";
 import { DAYS, LanguageData } from "@/utils/data/targetingData";
 import { useTargetingOptions } from "@/query/useLineItem";
 import { useTargetingListOptions } from "@/query/useTargetingList";
+import { useLineItemNetwork } from "../line-item-network";
 import { useBidModifier } from "@/query/useBidModifier";
 import { useDeliveryModifier } from "@/query/useDeliveryModifier";
 import type { TargetingOptions } from "@/services/lineItem";
@@ -62,13 +63,14 @@ const scheduleText = (slots: number[], tz: string) => {
 // Read-only review of everything set on the other tabs.
 const SummaryTab: React.FC<{ campaign: any; advertiserName: string }> = ({ campaign, advertiserName }) => {
   const v = useFormContext<LineItemFormValues>().watch();
+  const networkId = useLineItemNetwork();
   const { data: optResp } = useTargetingOptions();
   const options: TargetingOptions | undefined = optResp?.data;
-  const { data: listResp } = useTargetingListOptions("bundle");
+  const { data: listResp } = useTargetingListOptions("bundle", networkId);
   const lists: Array<{ id: string; value: string }> = listResp?.data ?? [];
   const t = v.targeting;
-  const { data: zipResp } = useTargetingListOptions("zip");
-  const { data: dealResp } = useTargetingListOptions("deal");
+  const { data: zipResp } = useTargetingListOptions("zip", networkId);
+  const { data: dealResp } = useTargetingListOptions("deal", networkId);
   const allLists: Array<{ id: string; value: string }> = [...lists, ...(zipResp?.data ?? []), ...(dealResp?.data ?? [])];
   const listName = (id: string) => allLists.find((l) => l.id === id)?.value || id;
   const { data: modResp } = useBidModifier(v.bidModifierId || null);

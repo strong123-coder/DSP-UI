@@ -11,6 +11,9 @@ import LoadingFallback from "@/components/ui/loading-fallback";
 import DeletePopupModal from "@/components/popupModals/delete-popup-modal";
 import { useAdvertiserList, useAdvertiserStatus, useDeleteAdvertiser } from "@/query/useAdvertiser";
 import type { Advertiser } from "@/services/advertiser";
+import SelectComponent from "@/components/inputComponents/select-component";
+import { useNetworkOptions } from "@/query/useNetwork";
+import { useScope } from "@/query/useScope";
 
 const AdvertiserList: React.FC = () => {
   const navigate = useNavigate();
@@ -19,6 +22,12 @@ const AdvertiserList: React.FC = () => {
   const [searchText, setSearchText] = useState("");
   const [search, setSearch] = useState("");
   const [toDelete, setToDelete] = useState<Advertiser | null>(null);
+  // At org level: which network each advertiser is in, and a network filter.
+  const scope = useScope();
+  const showNetwork = scope.orgLevel && scope.canManageNetworks;
+  const { data: netResp } = useNetworkOptions(showNetwork);
+  const networks: Array<{ id: string; value: string }> = netResp?.data ?? [];
+  const [networkId, setNetworkId] = useState("");
 
   useEffect(() => {
     const t = setTimeout(() => {
@@ -28,7 +37,10 @@ const AdvertiserList: React.FC = () => {
     return () => clearTimeout(t);
   }, [searchText]);
 
-  const params = useMemo(() => ({ page, limit, search: search || undefined }), [page, limit, search]);
+  const params = useMemo(
+    () => ({ page, limit, search: search || undefined, networkId: networkId || undefined }),
+    [page, limit, search, networkId],
+  );
   const { data, isLoading } = useAdvertiserList(params);
   const rows: Advertiser[] = data?.data?.data ?? [];
   const totalPages = data?.data?.pagination?.totalPages || 1;
@@ -59,13 +71,27 @@ const AdvertiserList: React.FC = () => {
           <h1 className="text-xl font-bold flex items-center gap-2"><Building2 className="w-5 h-5 text-primary" /> Advertisers</h1>
           <p className="text-sm text-muted-foreground">The brands you run campaigns for. Each advertiser owns its campaigns and creatives.</p>
         </div>
-        <Button className="gap-1.5" onClick={() => navigate("/advertiser/new")}><Plus className="w-4 h-4" /> New advertiser</Button>
+        <Button className="gap-1.5" onClick={() => navigate(networkId ? `/advertiser/new?networkId=${networkId}` : "/advertiser/new")}>
+          <Plus className="w-4 h-4" /> New advertiser
+        </Button>
       </div>
 
-      <div className="relative max-w-md">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input id="advertiser-search" placeholder="Search by name, bundle or domain…" className="pl-9" value={searchText}
-          onChange={(e) => setSearchText(e.target.value)} autoComplete="off" />
+      <div className="flex items-center gap-3 flex-wrap">
+        <div className="relative w-full max-w-md">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input id="advertiser-search" placeholder="Search by name, bundle or domain…" className="pl-9" value={searchText}
+            onChange={(e) => setSearchText(e.target.value)} autoComplete="off" />
+        </div>
+        {showNetwork && networks.length > 1 && (
+          <div className="w-56">
+            <SelectComponent id="advertiser-network" value={networkId || "__all__"}
+              data={[{ name: "All networks", value: "__all__" }, ...networks.map((n) => ({ name: n.value, value: String(n.id) }))]}
+              onValueChange={(v) => {
+                setNetworkId(v === "__all__" ? "" : v);
+                setPage(1);
+              }} />
+          </div>
+        )}
       </div>
 
       {isLoading && rows.length === 0 ? (
@@ -77,6 +103,7 @@ const AdvertiserList: React.FC = () => {
               <TableHeader className="bg-muted/30">
                 <TableRow>
                   <TableHead className="pl-5">Advertiser</TableHead>
+                  {showNetwork && <TableHead>Network</TableHead>}
                   <TableHead>Category</TableHead>
                   <TableHead>App</TableHead>
                   <TableHead className="text-right">Campaigns</TableHead>
@@ -87,7 +114,7 @@ const AdvertiserList: React.FC = () => {
               <TableBody>
                 {rows.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-12 text-muted-foreground">
+                    <TableCell colSpan={showNetwork ? 7 : 6} className="text-center py-12 text-muted-foreground">
                       {search ? `No advertiser matches "${search}".` : "No advertisers yet. Create one, then add its campaigns."}
                     </TableCell>
                   </TableRow>
@@ -110,6 +137,7 @@ const AdvertiserList: React.FC = () => {
                           </div>
                         </div>
                       </TableCell>
+                      {showNetwork && <TableCell className="text-xs">{a.networkName || <span className="text-muted-foreground">—</span>}</TableCell>}
                       <TableCell className="text-xs">{a.categoryName || <span className="text-muted-foreground">Not set</span>}</TableCell>
                       <TableCell className="text-xs text-muted-foreground max-w-[200px] truncate">
                         {a.appBundle ? `${a.appBundle}${a.appOs ? ` · ${a.appOs}` : ""}` : "—"}

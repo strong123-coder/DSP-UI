@@ -15,6 +15,8 @@ import LoginConfig from "@/pages/auth/login-config";
 import SuperAdminLoginConfig from "@/pages/auth/super-admin-login-config";
 import CampaignConfig from "@/pages/campaign/campaign-config";
 import AdvertiserConfig from "@/pages/advertiser/advertiser-config";
+import NetworkConfig from "@/pages/network/network-config";
+import ApprovalConfig from "@/pages/approval/approval-config";
 import TargetingListConfig from "@/pages/targetingList/targeting-list-config";
 import BidModifierConfig from "@/pages/bidModifier/bid-modifier-config";
 import DeliveryModifierConfig from "@/pages/deliveryModifier/delivery-modifier-config";
@@ -52,6 +54,8 @@ export const routes = [
         element: <Navigate to="/dashboard" replace />,
       },
       DashboardConfig,
+      NetworkConfig,
+      ApprovalConfig,
       AdvertiserConfig,
       CampaignConfig,
       TargetingListConfig,

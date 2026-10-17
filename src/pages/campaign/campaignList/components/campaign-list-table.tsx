@@ -32,6 +32,8 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { geoData } from "@/utils/data/data";
+import ApprovalPill from "@/components/approval/approval-pill";
+import { useScope } from "@/query/useScope";
 
 const sortableKeys = new Set<string>([
   "title",
@@ -45,6 +47,7 @@ const sortableKeys = new Set<string>([
 
 const CampaignListTable: React.FC = () => {
   const navigate = useNavigate();
+  const scope = useScope();
   const [initialized, setInitialized] = useState(false);
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
@@ -228,7 +231,10 @@ const CampaignListTable: React.FC = () => {
                 </span>
               </div>
             )}
-            <span className="font-medium text-foreground">{String(value)}</span>
+            <div className="flex flex-col items-start gap-1">
+              <span className="font-medium text-foreground">{String(value)}</span>
+              <ApprovalPill approval={campaign.approval} kind="campaign" id={campaign._id} resubmit={scope.networkUser} />
+            </div>
           </div>
         );
       }
@@ -270,7 +276,14 @@ const CampaignListTable: React.FC = () => {
       }
       if (key === "type") return <TypeBadge type={String(value || "")} />;
       if (key === "advertiserName") {
-        return value ? String(value) : <span className="text-muted-foreground">No advertiser</span>;
+        return (
+          <div>
+            {value ? String(value) : <span className="text-muted-foreground">No advertiser</span>}
+            {scope.orgLevel && campaign.networkName && (
+              <div className="text-[11px] text-muted-foreground">{campaign.networkName}</div>
+            )}
+          </div>
+        );
       }
       if (key === "lineItems") {
         const li = campaign.lineItems;
@@ -330,7 +343,7 @@ const CampaignListTable: React.FC = () => {
 
       return value === undefined || value === null ? "-" : String(value);
     },
-    [],
+    [scope.networkUser, scope.orgLevel],
   );
 
   // --- Loading / Error states ---

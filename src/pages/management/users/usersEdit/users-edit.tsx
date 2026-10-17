@@ -22,6 +22,7 @@ import UpdatePopupModal from "@/components/popupModals/update-popup-modal";
 import { useGetSingleUser, useEditUser } from "@/query/useUserManagement";
 import { useAppStore } from "@/store";
 import { editUserSchema, type EditUserFormValues } from "@/utils/schemas/user";
+import { isNetworkUser, roleOptions } from "@/utils/roles";
 
 const UsersEdit = () => {
   const navigate = useNavigate();
@@ -199,10 +200,7 @@ const UsersEdit = () => {
                       onValueChange={field.onChange}
                       value={field.value}
                       ariaInvalid={!!errors.type}
-                      data={[
-                        { name: "Admin", value: "admin" },
-                        { name: "Team Member", value: "team" },
-                      ]}
+                      data={roleOptions(isNetworkUser(userResponse?.data?.data))}
                       errorTooltip={errors.type?.message}
                     />
                   )}

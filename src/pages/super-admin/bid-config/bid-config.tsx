@@ -304,6 +304,7 @@ export default function BidConfig() {
                   <th className="px-5 py-3 font-medium">Campaign</th>
                   <th className="px-5 py-3 font-medium">Organization</th>
                   <th className="px-5 py-3 font-medium">Status</th>
+                  <th className="px-5 py-3 font-medium">Org approval</th>
                   <th className="px-5 py-3 font-medium text-right">Bidding</th>
                 </tr>
               </thead>
@@ -311,7 +312,7 @@ export default function BidConfig() {
                 {allCampaigns.length === 0 && (
                   <tr>
                     <td
-                      colSpan={4}
+                      colSpan={5}
                       className="px-5 py-8 text-center text-muted-foreground"
                     >
                       No campaigns found.
@@ -328,9 +329,22 @@ export default function BidConfig() {
                       <td className="px-5 py-3">{c.title}</td>
                       <td className="px-5 py-3 text-muted-foreground">
                         {c.orgName || "—"}
+                        {c.networkName && (
+                          <div className="text-[11px]">{c.networkName}</div>
+                        )}
                       </td>
                       <td className="px-5 py-3 capitalize text-muted-foreground">
                         {c.status}
+                      </td>
+                      <td className="px-5 py-3">
+                        {/* The org approves first; bidding still needs this switch. */}
+                        {c.approvalStatus === "pending" ? (
+                          <span className="text-xs text-amber-600 dark:text-amber-400">Waiting for the org</span>
+                        ) : c.approvalStatus === "rejected" ? (
+                          <span className="text-xs text-red-600 dark:text-red-400">Rejected by the org</span>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">Approved</span>
+                        )}
                       </td>
                       <td className="px-5 py-3">
                         <div className="flex items-center justify-end gap-3">

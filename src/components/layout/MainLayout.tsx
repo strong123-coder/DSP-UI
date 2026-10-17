@@ -7,7 +7,7 @@ import {
   useNavigate,
   matchRoutes,
 } from "react-router-dom";
-import { Menu, LogOut, Circle, UserCircle } from "lucide-react";
+import { Menu, LogOut, Circle, UserCircle, Network } from "lucide-react";
 import { useAppStore } from "@/store";
 import logo from "@/assets/strongmetrics-logo.webp";
 import {
@@ -19,18 +19,25 @@ import {
 import { Button } from "@/components/ui/button";
 import SidebarConf from "@/configurations/sidebarConf";
 import { routes } from "@/routes/router";
+import { useScope } from "@/query/useScope";
+import { useApprovalCount } from "@/query/useApproval";
+import { roleLabel } from "@/utils/roles";
 
 export default function MainLayout() {
   const { pathname } = useLocation();
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, logout, selectedOrg, exitOrg } = useAppStore();
+  const { user, logout, selectedOrg, exitOrg, exitNetwork } = useAppStore();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const scope = useScope();
+  const { data: approvalCount } = useApprovalCount(scope.canApprove);
+  const pendingApprovals: number = approvalCount?.data?.data?.total || 0;
 
   const isImpersonating = user?.type === "super_admin" && !!selectedOrg;
 
   const handleLogout = () => {
     queryClient.removeQueries({ queryKey: ["orgConfig"] });
+    exitNetwork();
     exitOrg();
     logout();
     navigate("/login");
@@ -41,8 +48,16 @@ export default function MainLayout() {
   // Super admin leaving the entered org → back to the all-orgs area.
   const handleExitOrg = () => {
     queryClient.removeQueries({ queryKey: ["orgConfig"] });
+    exitNetwork();
     exitOrg();
     navigate("/super-admin/dashboard");
+  };
+
+  // Leaving a network: drop everything cached for it, back to the org's networks.
+  const handleExitNetwork = () => {
+    exitNetwork();
+    queryClient.removeQueries({ predicate: (q) => q.queryKey[0] !== "orgConfig" });
+    navigate("/network/list");
   };
 
   // Find page title dynamically based on route configuration
@@ -85,7 +100,7 @@ export default function MainLayout() {
           <nav className="p-4 space-y-2">
             {/* FLAT TABS */}
             <div className="space-y-1">
-              {SidebarConf.navMain.map((item) => {
+              {SidebarConf.navMain.filter((item) => !item.requires || scope[item.requires]).map((item) => {
                 const IconComponent = item.icon;
                 const isDashboard = item.url === "/dashboard";
                 const isCampaign = item.url === "/campaign/list";
@@ -96,6 +111,8 @@ export default function MainLayout() {
                     ? pathname.startsWith("/campaign")
                     : isProfile
                       ? pathname.startsWith("/profile")
+                      : item.match
+                        ? pathname.startsWith(item.match)
                       : // exact, or a sub-page (e.g. /report/campaign/:id stays under Report)
                         pathname === item.url || pathname.startsWith(item.url + "/");
 
@@ -115,6 +132,16 @@ export default function MainLayout() {
                   >
                     <IconComponent className="w-5 h-5 transition-transform duration-200 group-hover:scale-110" />
                     <span>{item.title}</span>
+                    {item.badge === "approvals" && pendingApprovals > 0 && (
+                      <span
+                        className={`ml-auto mr-3 min-w-5 h-5 px-1.5 rounded-full text-[11px] font-semibold flex items-center justify-center tabular-nums ${
+                          isSelected ? "bg-primary-foreground text-primary" : "bg-amber-500 text-white"
+                        }`}
+                        aria-label={`${pendingApprovals} waiting for approval`}
+                      >
+                        {pendingApprovals > 99 ? "99+" : pendingApprovals}
+                      </span>
+                    )}
                     {isSelected && (
                       <div className="absolute right-3 w-1.5 h-1.5 bg-primary-foreground rounded-full animate-pulse"></div>
                     )}
@@ -180,8 +207,13 @@ export default function MainLayout() {
                   {user?.name || "Console User"}
                 </span>
                 <span className="text-[10px] text-muted-foreground mt-0.5 font-medium uppercase tracking-wide">
-                  {user?.type || "Console Admin"}
+                  {roleLabel(user?.type) || "Console Admin"}
                 </span>
+                {scope.networkUser && scope.network && (
+                  <span className="text-[11px] text-muted-foreground mt-0.5 flex items-center gap-1">
+                    <Network className="w-3 h-3" /> {scope.network.name}
+                  </span>
+                )}
               </div>
             </div>
           </div>
@@ -213,6 +245,27 @@ export default function MainLayout() {
               onClick={handleExitOrg}
             >
               <LogOut className="w-4 h-4 mr-2" /> Exit org
+            </Button>
+          </div>
+        )}
+
+        {/* Org user working inside one of the org's networks */}
+        {scope.enteredNetwork && (
+          <div className="mb-3 flex items-center justify-between gap-3 rounded-lg border border-sky-300 bg-sky-50 dark:border-sky-800 dark:bg-sky-950/40 px-4 py-2.5">
+            <span className="text-sm text-sky-900 dark:text-sky-200 flex items-center gap-2">
+              <Network className="w-4 h-4 shrink-0" />
+              <span>
+                Working in network <strong>{scope.enteredNetwork.name}</strong>. You see and create only this
+                network's advertisers and campaigns.
+              </span>
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              className="cursor-pointer shrink-0 border-sky-400 text-sky-900 hover:bg-sky-100 dark:text-sky-200 dark:hover:bg-sky-900/40"
+              onClick={handleExitNetwork}
+            >
+              <LogOut className="w-4 h-4 mr-2" /> Exit network
             </Button>
           </div>
         )}

@@ -10,6 +10,7 @@ import { useCreatives, useCreateCreative } from "@/query/useCreative";
 import { mediaService } from "@/services/media";
 import { getMediaDimensions } from "@/utils/mediaDimensions";
 import type { Creative } from "@/services/creative";
+import ApprovalPill from "@/components/approval/approval-pill";
 import type { LineItemFormValues } from "@/utils/schemas/lineItem";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
@@ -186,6 +187,7 @@ const CreativesTab: React.FC<{ advertiserId: string; format: "banner" | "video" 
                           {c.duration ? ` · ${c.duration}s` : ""}
                           {c.vastTag ? " · VAST" : ""}
                         </div>
+                        <ApprovalPill approval={c.approval} className="mt-1" />
                       </div>
                       {on && (
                         <span className="absolute top-2 right-2 w-5 h-5 rounded-full bg-primary text-primary-foreground flex items-center justify-center">

@@ -4,6 +4,10 @@ export interface Campaign {
   _id: string;
   advertiserId?: string | null;
   advertiserName?: string | null;
+  networkId?: string | null;
+  networkName?: string | null;
+  network?: { id: string; name: string } | null;
+  approval?: import("@/services/approval").Approval;
   advertiser?: { id: string; name: string; status?: string; category?: string } | null;
   budgetType?: "spend" | "impressions";
   alternativeId?: string | null;

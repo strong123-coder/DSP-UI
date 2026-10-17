@@ -14,8 +14,10 @@ export const useAdvertiserList = (params: AdvertiserListParams) =>
     placeholderData: keepPreviousData,
   });
 
-export const useAdvertiserOptions = () =>
-  useQuery({ queryKey: ["advertiserOptions"], queryFn: () => advertiserService.options() });
+// networkId (org level): only that network's advertisers, e.g. the campaign
+// form after the org picks a network.
+export const useAdvertiserOptions = (networkId?: string) =>
+  useQuery({ queryKey: ["advertiserOptions", networkId || ""], queryFn: () => advertiserService.options(networkId) });
 
 export const useAdvertiserCategories = () =>
   useQuery({

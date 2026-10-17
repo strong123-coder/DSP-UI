@@ -11,6 +11,11 @@ export interface TargetingList {
   lineItems?: number; // line items using it (list)
   notes?: string | null;
   updatedAt?: string;
+  // private = the org only; public = shared with every network (read-only there).
+  visibility?: "private" | "public";
+  networkId?: string | null; // set = a network's own list
+  networkName?: string | null;
+  shared?: boolean; // an org list seen from inside a network
 }
 
 export interface TargetingListParams {
@@ -22,7 +27,8 @@ export interface TargetingListParams {
 
 export const targetingListService = {
   list: async (params?: TargetingListParams) => (await apiClient().get("targetingListList", params)).data,
-  options: async (kind: TargetingListKind = "bundle") => (await apiClient().get("targetingListOptions", { kind })).data,
+  options: async (kind: TargetingListKind = "bundle", networkId?: string) =>
+    (await apiClient().get("targetingListOptions", networkId ? { kind, networkId } : { kind })).data,
   get: async (id: string) => (await apiClient().get("targetingListGet", undefined, undefined, { id })).data,
   create: async (payload: Partial<TargetingList>) => (await apiClient().post("targetingListAdd", payload)).data,
   update: async (id: string, payload: Partial<TargetingList>) =>

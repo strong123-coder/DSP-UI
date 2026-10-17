@@ -12,6 +12,8 @@ import { useGetSingleCampaign } from "@/query/useCampaign";
 import { useDeleteLineItem, useLineItems, useLineItemStatus } from "@/query/useLineItem";
 import type { LineItem } from "@/services/lineItem";
 import { StatusBadge, TypeBadge } from "../campaignList/components/campaign-table-body";
+import ApprovalPill from "@/components/approval/approval-pill";
+import { useScope } from "@/query/useScope";
 
 const fmtDate = (d?: string | null) =>
   d ? new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : null;
@@ -46,6 +48,7 @@ const CampaignView: React.FC = () => {
   const navigate = useNavigate();
   const { data: campResp, isLoading } = useGetSingleCampaign(id || "");
   const { data: liResp, isLoading: lisLoading } = useLineItems(id);
+  const scope = useScope();
   const statusMut = useLineItemStatus();
   const deleteMut = useDeleteLineItem();
   const [toDelete, setToDelete] = useState<LineItem | null>(null);
@@ -62,6 +65,19 @@ const CampaignView: React.FC = () => {
   const allocated = lineItems.reduce((s, l) => s + (Number(l.budget) || 0), 0);
   const isLegacy = lineItems.length === 0 && ((campaign.geo || []).length > 0 || (campaign.media || []).length > 0);
   const addHref = `/campaign/view/${id}/line-item/new`;
+
+  // Why it is or isn't bidding: the org's approval, then the super admin's switch.
+  const approvalStatus = campaign.approval?.status;
+  const bidding =
+    approvalStatus === "pending"
+      ? "Waiting for approval"
+      : approvalStatus === "rejected"
+        ? "Rejected by the organization"
+        : !campaign.enableBidding
+          ? "Waiting for the super admin to turn bidding on"
+          : campaign.status === "active"
+            ? "On"
+            : "Paused";
 
   return (
     <div className="space-y-5">
@@ -92,6 +108,7 @@ const CampaignView: React.FC = () => {
               <h1 className="text-xl font-bold truncate">{campaign.title}</h1>
               <StatusBadge status={campaign.status} />
               <TypeBadge type={campaign.type} />
+              <ApprovalPill approval={campaign.approval} kind="campaign" id={id} resubmit={scope.networkUser} />
             </div>
             <p className="text-sm text-muted-foreground truncate">
               {[campaign.appName, campaign.bundleId, campaign.appOs].filter(Boolean).join(" · ") || campaign._id}
@@ -168,7 +185,10 @@ const CampaignView: React.FC = () => {
                       className="cursor-pointer hover:bg-muted/20"
                       onClick={() => navigate(`/campaign/view/${id}/line-item/${li._id}`)}
                     >
-                      <TableCell className="pl-5 font-medium max-w-[220px] truncate">{li.name}</TableCell>
+                      <TableCell className="pl-5 font-medium max-w-[220px]">
+                        <div className="truncate">{li.name}</div>
+                        <ApprovalPill approval={li.approval} kind="lineItem" id={li._id} resubmit={scope.networkUser} className="mt-1" />
+                      </TableCell>
                       <TableCell>
                         <Badge variant="outline" className="gap-1 capitalize">
                           {li.format === "video" ? <Video className="w-3 h-3" /> : <ImageIcon className="w-3 h-3" />}
@@ -217,7 +237,9 @@ const CampaignView: React.FC = () => {
         </Card>
 
         <Card className="p-5 space-y-4">
+          {scope.orgLevel && campaign.network && <Rail label="Network">{campaign.network.name}</Rail>}
           <Rail label="Advertiser">{advertiser?.name || "—"}</Rail>
+          <Rail label="Bidding">{bidding}</Rail>
           <Rail label="Total budget / Daily">
             {money(campaign.budget, cur, impressions)} / {money(campaign.dailyBudget, cur, impressions)}
           </Rail>

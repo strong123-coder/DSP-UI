@@ -1,6 +1,8 @@
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate } from "react-router-dom";
+import { useScope } from "@/query/useScope";
+import { roleOptions } from "@/utils/roles";
 import { ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 
@@ -23,6 +25,8 @@ import {
 } from "@/utils/schemas/user";
 
 const UsersAdd = () => {
+  // Inside a network, new users join it as network admins / team members.
+  const scope = useScope();
   const navigate = useNavigate();
   const { mutate: addUserMutation, isPending: addUserPending } = useAddUser();
 
@@ -33,7 +37,7 @@ const UsersAdd = () => {
       email: "",
       mobile: "",
       password: "",
-      type: "team",
+      type: scope.orgLevel ? "team" : "network_team",
       gender: "",
       age: "",
       address: "",
@@ -175,10 +179,7 @@ const UsersAdd = () => {
                       onValueChange={field.onChange}
                       value={field.value}
                       ariaInvalid={!!errors.type}
-                      data={[
-                        { name: "Admin", value: "admin" },
-                        { name: "Team Member", value: "team" },
-                      ]}
+                      data={roleOptions(!scope.orgLevel)}
                       errorTooltip={errors.type?.message}
                     />
                   )}

@@ -15,6 +15,8 @@ import { Textarea } from "@/components/ui/textarea";
 import SelectComponent from "@/components/inputComponents/select-component";
 import { useAdvertiser, useAdvertiserOptions } from "@/query/useAdvertiser";
 import { useFormMode } from "@/utils/context/FormModeContext";
+import { useNetworkOptions } from "@/query/useNetwork";
+import { useScope } from "@/query/useScope";
 import type { AddCampaignFormValues } from "@/utils/schemas/campaign";
 
 // First card of the campaign form: which advertiser owns the campaign, plus the
@@ -31,8 +33,6 @@ const StepAdvertiser = () => {
     useFormContext<AddCampaignFormValues>();
 
   const advertiserId = watch("advertiserId");
-  const { data: optionsResp, isLoading: optionsLoading } = useAdvertiserOptions();
-  const options: Array<{ id: string; value: string; status: string }> = optionsResp?.data ?? [];
   const { data: advResp } = useAdvertiser(advertiserId || undefined);
   const advertiser = advResp?.data?.data;
 
@@ -40,6 +40,22 @@ const StepAdvertiser = () => {
   // belong to it). Campaigns from before advertisers existed can pick one once.
   // defaultValues is what the edit page reset() the form to (the saved campaign).
   const locked = isEdit && !!defaultValues?.advertiserId;
+
+  // At org level the org picks the network first, then one of its advertisers.
+  // Inside a network (or as a network user) only that network's advertisers exist.
+  const scope = useScope();
+  const pickNetwork = !locked && scope.orgLevel && scope.canManageNetworks;
+  const { data: netResp } = useNetworkOptions(pickNetwork);
+  const networks: Array<{ id: string; value: string; status: string }> = netResp?.data ?? [];
+  const [pickedNetwork, setNetworkId] = useState("");
+  // Until the org picks one: the chosen advertiser's network (coming from
+  // "+ Campaign"), or the org's only network.
+  const networkId =
+    pickedNetwork || advertiser?.networkId || (networks.length === 1 ? String(networks[0].id) : "");
+  const { data: optionsResp, isLoading: optionsLoading } = useAdvertiserOptions(pickNetwork ? networkId : undefined);
+  const options: Array<{ id: string; value: string; status: string }> =
+    pickNetwork && !networkId ? [] : optionsResp?.data ?? [];
+  const pickNetworkFirst = pickNetwork && !networkId;
 
   const fetchPreset = useFetchPreset();
   const { data: presetResp } = usePresetOptions("campaign", advertiserId || undefined, !!advertiserId);
@@ -122,13 +138,30 @@ const StepAdvertiser = () => {
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {pickNetwork && (
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="campaignNetwork">Network <span className="text-destructive">*</span></Label>
+              <SelectComponent id="campaignNetwork" search placeholder="Select network" value={networkId}
+                data={networks.map((n) => ({ name: n.status === "active" ? n.value : `${n.value} (off)`, value: String(n.id) }))}
+                onValueChange={(v) => {
+                  setNetworkId(v);
+                  // The advertiser must be one of the new network's.
+                  if (advertiser && advertiser.networkId !== v) setValue("advertiserId", "", { shouldValidate: false });
+                }} />
+            </div>
+          )}
+          {locked && scope.orgLevel && advertiser?.networkName && (
+            <p className="text-sm md:col-span-2">
+              <span className="text-muted-foreground">Network: </span><span className="font-medium">{advertiser.networkName}</span>
+            </p>
+          )}
           <div className="space-y-2 md:col-span-2">
             <div className="flex items-center justify-between">
               <Label htmlFor="advertiserId">
                 Advertiser <span className="text-destructive">*</span>
               </Label>
               {!locked && (
-                <Link to="/advertiser/new" className="text-xs text-primary inline-flex items-center gap-1 hover:underline">
+                <Link to={networkId ? `/advertiser/new?networkId=${networkId}` : "/advertiser/new"} className="text-xs text-primary inline-flex items-center gap-1 hover:underline">
                   <Plus className="w-3 h-3" /> New advertiser
                 </Link>
               )}
@@ -141,8 +174,16 @@ const StepAdvertiser = () => {
                   ref={field.ref}
                   id="advertiserId"
                   search
-                  disabled={locked || optionsLoading}
-                  placeholder={optionsLoading ? "Loading advertisers…" : options.length ? "Select advertiser" : "No advertisers yet — create one first"}
+                  disabled={locked || optionsLoading || pickNetworkFirst}
+                  placeholder={
+                    pickNetworkFirst
+                      ? "Pick the network first"
+                      : optionsLoading
+                        ? "Loading advertisers…"
+                        : options.length
+                          ? "Select advertiser"
+                          : "No advertisers yet — create one first"
+                  }
                   onValueChange={field.onChange}
                   value={field.value}
                   ariaInvalid={!!errors.advertiserId}

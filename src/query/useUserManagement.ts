@@ -30,7 +30,11 @@ export const useLogin = () => {
           email: user.email,
           type: user.type,
           orgId: user.orgId,
+          networkId: user.networkId || null,
+          networkName: user.networkName || null,
         };
+        // A fresh login never starts inside a network.
+        useAppStore.getState().exitNetwork();
         loginAction(token, storeUser);
 
         toast.success(message);

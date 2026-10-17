@@ -18,6 +18,7 @@ import { useGetUserProfile, useUpdateUserProfilePic } from "@/query/useUserManag
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { isAdminRole, roleLabel } from "@/utils/roles";
 import { toast } from "sonner";
 
 const MyProfile: React.FC = () => {
@@ -152,12 +153,12 @@ const MyProfile: React.FC = () => {
                 <Badge
                   variant="outline"
                   className={
-                    profile.type === "admin"
+                    isAdminRole(profile.type)
                       ? "capitalize text-sky-500 bg-sky-500/10 border-sky-500/20"
                       : "capitalize text-indigo-500 bg-indigo-500/10 border-indigo-500/20"
                   }
                 >
-                  {profile.type}
+                  {roleLabel(profile.type)}
                 </Badge>
                 <Badge
                   variant="outline"

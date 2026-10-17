@@ -12,6 +12,8 @@ import { splitValues } from "@/components/targeting/values-input";
 import { useCreateTargetingList, useTargetingList, useUpdateTargetingList } from "@/query/useTargetingList";
 import SelectComponent from "@/components/inputComponents/select-component";
 import type { TargetingListKind } from "@/services/targetingList";
+import VisibilityField, { type Visibility } from "@/components/library/visibility-field";
+import { useScope } from "@/query/useScope";
 
 const MAX_VALUES = 50000;
 
@@ -50,6 +52,8 @@ const TargetingListForm: React.FC = () => {
   const [notes, setNotes] = useState("");
   const [text, setText] = useState("");
   const [nameError, setNameError] = useState("");
+  const [visibility, setVisibility] = useState<Visibility>("private");
+  const scope = useScope();
 
   const list = resp?.data?.data;
   useEffect(() => {
@@ -58,8 +62,13 @@ const TargetingListForm: React.FC = () => {
       setNotes(list.notes || "");
       setText((list.values || []).join("\n"));
       setKind(list.kind || "bundle");
+      setVisibility(list.visibility || "private");
     }
   }, [list]);
+  // An org list seen from inside a network: usable, not changeable.
+  const readOnly = !!list?.shared;
+  // Only the org's own lists can be shared with networks.
+  const canShare = scope.orgLevel && !list?.networkId;
 
   const values = useMemo(() => normalise(text, kind), [text, kind]);
   const tooMany = values.length > MAX_VALUES;
@@ -97,7 +106,7 @@ const TargetingListForm: React.FC = () => {
       toast.error(`A list can hold at most ${MAX_VALUES.toLocaleString()} entries`);
       return;
     }
-    const payload = { name: name.trim(), notes: notes.trim() || null, values };
+    const payload = { name: name.trim(), notes: notes.trim() || null, values, ...(canShare ? { visibility } : {}) };
     const done = () => navigate(`/targeting-list/list?kind=${kind}`);
     if (isEdit) updateMut.mutate({ id: id!, payload }, { onSuccess: done });
     else createMut.mutate({ ...payload, kind }, { onSuccess: done });
@@ -114,6 +123,17 @@ const TargetingListForm: React.FC = () => {
         <span className="text-foreground font-medium">{isEdit ? list?.name || "Edit list" : "New list"}</span>
       </nav>
 
+      {readOnly && (
+        <div className="rounded-lg border border-sky-300 bg-sky-50 dark:border-sky-800 dark:bg-sky-950/40 px-4 py-3 text-sm text-sky-900 dark:text-sky-200">
+          Your organization shares this list with its networks. You can use it in line items, but only the organization can change it.
+        </div>
+      )}
+      {isEdit && scope.orgLevel && list?.networkName && (
+        <div className="rounded-lg border border-border px-4 py-3 text-sm text-muted-foreground">
+          This list belongs to the network <strong className="text-foreground">{list.networkName}</strong>. Only its line items can use it.
+        </div>
+      )}
+
       <Card>
         <CardHeader>
           <CardTitle className="text-base">List</CardTitle>
@@ -121,7 +141,7 @@ const TargetingListForm: React.FC = () => {
         <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="list-name">Name <span className="text-destructive">*</span></Label>
-            <Input id="list-name" placeholder="e.g. ST_Vid_iOS" value={name} maxLength={120}
+            <Input id="list-name" placeholder="e.g. ST_Vid_iOS" value={name} maxLength={120} disabled={readOnly}
               onChange={(e) => {
                 setName(e.target.value);
                 setNameError("");
@@ -140,9 +160,14 @@ const TargetingListForm: React.FC = () => {
           </div>
           <div className="space-y-2 md:col-span-2">
             <Label htmlFor="list-notes">Notes</Label>
-            <Input id="list-notes" placeholder="What this list is for" value={notes} maxLength={2000}
+            <Input id="list-notes" placeholder="What this list is for" value={notes} maxLength={2000} disabled={readOnly}
               onChange={(e) => setNotes(e.target.value)} />
           </div>
+          {canShare && (
+            <div className="md:col-span-2">
+              <VisibilityField id="list-visibility" value={visibility} onChange={setVisibility} what="list" />
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -156,7 +181,7 @@ const TargetingListForm: React.FC = () => {
           </div>
           <div className="flex gap-2">
             <input ref={fileRef} type="file" accept=".txt,.csv,text/plain,text/csv" className="hidden" onChange={onFile} />
-            <Button type="button" variant="outline" size="sm" className="gap-1.5" onClick={() => fileRef.current?.click()}>
+            <Button type="button" variant="outline" size="sm" className="gap-1.5" disabled={readOnly} onClick={() => fileRef.current?.click()}>
               <Upload className="w-3.5 h-3.5" /> Upload file
             </Button>
             <Button type="button" variant="outline" size="sm" className="gap-1.5" disabled={!values.length} onClick={download}>
@@ -166,7 +191,7 @@ const TargetingListForm: React.FC = () => {
         </CardHeader>
         <CardContent className="space-y-2">
           <Textarea id="list-values" rows={16} spellCheck={false} className="font-mono text-xs min-h-[280px] max-h-[560px] overflow-y-auto"
-            placeholder={KIND_TEXT[kind].placeholder} value={text}
+            placeholder={KIND_TEXT[kind].placeholder} value={text} readOnly={readOnly}
             onChange={(e) => setText(e.target.value)} aria-describedby="list-count" />
           <p id="list-count" className={`text-xs tabular-nums ${tooMany ? "text-destructive" : "text-muted-foreground"}`}>
             {values.length.toLocaleString()} unique {values.length === 1 ? "entry" : "entries"}
@@ -177,7 +202,7 @@ const TargetingListForm: React.FC = () => {
 
       <div className="fixed bottom-0 left-0 right-0 border-t border-border bg-card/95 backdrop-blur px-6 py-3 flex items-center gap-3 justify-end z-20">
         <Button type="button" variant="outline" onClick={() => navigate(`/targeting-list/list?kind=${kind}`)} disabled={saving}>Cancel</Button>
-        <Button type="submit" disabled={saving}>{saving ? "Saving…" : isEdit ? "Save list" : "Create list"}</Button>
+        {!readOnly && <Button type="submit" disabled={saving}>{saving ? "Saving…" : isEdit ? "Save list" : "Create list"}</Button>}
       </div>
     </form>
   );

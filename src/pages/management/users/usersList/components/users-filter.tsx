@@ -12,12 +12,10 @@ import {
   DrawerTrigger,
 } from "@/components/ui/drawer";
 import { Label } from "@/components/ui/label";
+import { roleOptions } from "@/utils/roles";
+import { useScope } from "@/query/useScope";
 import SelectComponent from "@/components/inputComponents/select-component";
 
-const UserTypeFilterData = [
-  { name: "Admin", value: "admin" },
-  { name: "Team Member", value: "team" },
-];
 
 const UserStatusFilterData = [
   { name: "Active", value: "active" },
@@ -42,6 +40,7 @@ const UserFilter: React.FC<UserFilterProps> = ({
   setFilterData,
   setPage,
 }) => {
+  const scope = useScope();
   const [type, setType] = useState(" ");
   const [status, setStatus] = useState(" ");
 
@@ -128,7 +127,7 @@ const UserFilter: React.FC<UserFilterProps> = ({
             <SelectComponent
               id="user-type"
               placeholder="Select Role"
-              data={UserTypeFilterData}
+              data={roleOptions(!scope.orgLevel)}
               value={type === "" ? undefined : type}
               onValueChange={setType}
             />

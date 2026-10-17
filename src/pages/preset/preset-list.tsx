@@ -12,6 +12,8 @@ import LoadingFallback from "@/components/ui/loading-fallback";
 import DeletePopupModal from "@/components/popupModals/delete-popup-modal";
 import { useDeletePreset, usePresets, useUpdatePreset } from "@/query/usePreset";
 import type { Preset, PresetKind } from "@/services/preset";
+import VisibilityField, { VisibilityTag, type Visibility } from "@/components/library/visibility-field";
+import { useScope } from "@/query/useScope";
 
 const KINDS: Array<{ id: PresetKind | ""; label: string }> = [
   { id: "", label: "All" },
@@ -30,6 +32,10 @@ const PresetList: React.FC = () => {
   const [toDelete, setToDelete] = useState<Preset | null>(null);
   const [renaming, setRenaming] = useState<Preset | null>(null);
   const [newName, setNewName] = useState("");
+  const [newVisibility, setNewVisibility] = useState<Visibility>("private");
+  const scope = useScope();
+  // Only the org's own presets for every advertiser can be shared with networks.
+  const canShare = (p: Preset | null) => !!p && scope.orgLevel && !p.networkId && !p.advertiserId;
 
   const { data, isLoading } = usePresets({ page, limit, kind: kind || undefined });
   const rows: Preset[] = data?.data?.data ?? [];
@@ -87,22 +93,35 @@ const PresetList: React.FC = () => {
                 ) : (
                   rows.map((p) => (
                     <TableRow key={p._id}>
-                      <TableCell className="pl-5 font-medium">{p.name}</TableCell>
+                      <TableCell className="pl-5 font-medium">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {p.name}
+                          <VisibilityTag shared={p.shared} networkName={p.networkName}
+                            visibility={p.advertiserId ? undefined : p.visibility} orgLevel={scope.orgLevel && !p.advertiserId} />
+                        </div>
+                      </TableCell>
                       <TableCell className="text-sm">{KIND_LABEL[p.kind]}</TableCell>
-                      <TableCell className="text-sm">{p.advertiserId ? p.advertiserName || "One advertiser" : "Every advertiser"}</TableCell>
+                      <TableCell className="text-sm">
+                        {p.advertiserId ? p.advertiserName || "One advertiser" : scope.orgLevel ? "Every advertiser" : "Every advertiser in the network"}
+                      </TableCell>
                       <TableCell className="text-xs text-muted-foreground whitespace-nowrap">{fmtDate(p.updatedAt)}</TableCell>
                       <TableCell className="text-right pr-5 whitespace-nowrap">
-                        <Button variant="ghost" size="icon" className="h-8 w-8" aria-label={`Rename ${p.name}`}
-                          onClick={() => {
-                            setRenaming(p);
-                            setNewName(p.name);
-                          }}>
-                          <Pencil className="w-4 h-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" aria-label={`Delete ${p.name}`}
-                          onClick={() => setToDelete(p)}>
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
+                        {!p.shared && (
+                          <>
+                            <Button variant="ghost" size="icon" className="h-8 w-8" aria-label={`Edit ${p.name}`}
+                              onClick={() => {
+                                setRenaming(p);
+                                setNewName(p.name);
+                                setNewVisibility(p.visibility || "private");
+                              }}>
+                              <Pencil className="w-4 h-4" />
+                            </Button>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" aria-label={`Delete ${p.name}`}
+                              onClick={() => setToDelete(p)}>
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </>
+                        )}
                       </TableCell>
                     </TableRow>
                   ))
@@ -120,16 +139,27 @@ const PresetList: React.FC = () => {
       <Dialog open={!!renaming} onOpenChange={(o) => !o && setRenaming(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Rename preset</DialogTitle>
+            <DialogTitle>Edit preset</DialogTitle>
           </DialogHeader>
-          <div className="space-y-2">
-            <Label htmlFor="preset-rename">Name</Label>
-            <Input id="preset-rename" value={newName} maxLength={120} onChange={(e) => setNewName(e.target.value)} autoFocus />
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="preset-rename">Name</Label>
+              <Input id="preset-rename" value={newName} maxLength={120} onChange={(e) => setNewName(e.target.value)} autoFocus />
+            </div>
+            {canShare(renaming) && (
+              <VisibilityField id="preset-visibility" value={newVisibility} onChange={setNewVisibility} what="preset" />
+            )}
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setRenaming(null)}>Cancel</Button>
             <Button type="button" disabled={!newName.trim() || updateMut.isPending}
-              onClick={() => renaming?._id && updateMut.mutate({ id: renaming._id, payload: { name: newName.trim() } }, { onSuccess: () => setRenaming(null) })}>
+              onClick={() =>
+                renaming?._id &&
+                updateMut.mutate(
+                  { id: renaming._id, payload: { name: newName.trim(), ...(canShare(renaming) ? { visibility: newVisibility } : {}) } },
+                  { onSuccess: () => setRenaming(null) },
+                )
+              }>
               Save
             </Button>
           </DialogFooter>

@@ -23,9 +23,18 @@ import { DateRangePicker } from "src/components/ui/date-range-picker";
 import type { ReportDataRow, SortDirection } from "../types";
 
 import { allColHeaders } from "../constants";
+import SelectComponent from "@/components/inputComponents/select-component";
+import { useNetworkOptions } from "@/query/useNetwork";
+import { useScope } from "@/query/useScope";
 
 const ReportListTable: React.FC = () => {
   const [initialized, setInitialized] = useState(false);
+  // At org level: narrow the report to one network's delivery.
+  const scope = useScope();
+  const showNetwork = scope.orgLevel && scope.canManageNetworks;
+  const { data: netResp } = useNetworkOptions(showNetwork);
+  const networks: Array<{ id: string; value: string }> = netResp?.data ?? [];
+  const [networkId, setNetworkId] = useState("");
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
@@ -126,6 +135,7 @@ const ReportListTable: React.FC = () => {
       groupBy: filters.groupBy || ["campaign"],
       columns,
       campaignIds: filters.campaignIds,
+      networkId: networkId || undefined,
       startDate: filters.startDate,
       endDate: filters.endDate,
       search: debouncedSearch || undefined,
@@ -135,7 +145,7 @@ const ReportListTable: React.FC = () => {
       page,
       limit,
     };
-  }, [filters, debouncedSearch, timezone, sortConfig, page, limit]);
+  }, [filters, networkId, debouncedSearch, timezone, sortConfig, page, limit]);
 
   const navigate = useNavigate();
 
@@ -397,8 +407,18 @@ const ReportListTable: React.FC = () => {
           />
         </div>
 
-        {/* Right Side: Date Picker Range */}
+        {/* Right Side: network + Date Picker Range */}
         <div className="flex items-center gap-2">
+          {showNetwork && networks.length > 1 && (
+            <div className="w-48">
+              <SelectComponent id="report-network" value={networkId || "__all__"}
+                data={[{ name: "All networks", value: "__all__" }, ...networks.map((n) => ({ name: n.value, value: String(n.id) }))]}
+                onValueChange={(v) => {
+                  setNetworkId(v === "__all__" ? "" : v);
+                  setPage(1);
+                }} />
+            </div>
+          )}
           <DateRangePicker
             value={dateRangeValue}
             onChange={handleDateRangeChange}
