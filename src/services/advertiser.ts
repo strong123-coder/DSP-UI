@@ -24,6 +24,10 @@ export interface Advertiser {
   campaigns?: { total: number; active: number };
   networkId?: string | null;
   networkName?: string | null;
+  // Org users only (never sent to network users): this advertiser's publisher
+  // cut % (null = the network's), and the network's.
+  publisherCut?: number | null;
+  networkPublisherCut?: number | null;
   createdAt?: string;
 }
 

@@ -22,6 +22,8 @@ import { usePresetOptions } from "@/query/usePreset";
 import type { PresetKind } from "@/services/preset";
 import { useNetworkOptions } from "@/query/useNetwork";
 import { useScope } from "@/query/useScope";
+import { useNetwork } from "@/query/useNetwork";
+import PublisherCutField, { cutError, cutPayload } from "@/components/budget/publisher-cut-field";
 
 const schema = z.object({
   name: z.string().trim().min(1, { message: "Advertiser name is required" }).max(120),
@@ -37,6 +39,7 @@ const schema = z.object({
   category: z.string().min(1, { message: "Pick an advertiser category" }),
   alternativeId: z.string().trim().optional(),
   notes: z.string().trim().max(2000).optional(),
+  publisherCut: z.string().refine((v) => !cutError(v), { message: "Publisher cut must be 0–90%" }),
   status: z.enum(["active", "paused"]),
   defaults: z.object({
     geo: z.array(z.string()),
@@ -102,6 +105,9 @@ const AdvertiserForm: React.FC = () => {
   const [pickedNetwork, setNetworkId] = useState(search.get("networkId") || "");
   // The org's only network needs no picking.
   const networkId = pickedNetwork || (networks.length === 1 ? String(networks[0].id) : "");
+  // A new advertiser without its own cut uses the picked network's.
+  const { data: pickedNetResp } = useNetwork(pickNetwork && networkId ? networkId : undefined);
+  const pickedNetworkCut: number | null = pickedNetResp?.data?.data?.publisherCut ?? null;
 
   const { register, control, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -115,6 +121,7 @@ const AdvertiserForm: React.FC = () => {
       category: "",
       alternativeId: "",
       notes: "",
+      publisherCut: "",
       status: "active",
       defaults: { geo: [], currency: "USD", clickUrl: "", mmpPlatform: "appsflyer", campaignPresetId: "", lineItemPresetId: "", targetingPresetId: "" },
     },
@@ -133,6 +140,7 @@ const AdvertiserForm: React.FC = () => {
         category: adv.category || "",
         alternativeId: adv.alternativeId || "",
         notes: adv.notes || "",
+        publisherCut: adv.publisherCut === null || adv.publisherCut === undefined ? "" : String(adv.publisherCut),
         status: adv.status || "active",
         defaults: {
           geo: adv.defaults?.geo || [],
@@ -164,8 +172,11 @@ const AdvertiserForm: React.FC = () => {
   }, [appResp, setValue]);
 
   const onSubmit = (v: FormValues) => {
+    const { publisherCut, ...rest } = v;
     const payload = {
-      ...v,
+      ...rest,
+      // The org's cut: never sent by (or shown to) network users.
+      ...(scope.networkUser ? {} : { publisherCut: cutPayload(publisherCut) }),
       appOs: v.appOs || null,
       appBundle: v.appBundle || null,
       appName: v.appName || null,
@@ -272,6 +283,16 @@ const AdvertiserForm: React.FC = () => {
             <Label htmlFor="notes">Notes</Label>
             <Textarea id="notes" rows={1} placeholder="Notes" {...register("notes")} />
           </div>
+          {!scope.networkUser && (
+            <Controller
+              name="publisherCut"
+              control={control}
+              render={({ field }) => (
+                <PublisherCutField id="publisherCut" value={field.value} onChange={field.onChange} level="advertiser"
+                  inherited={isEdit ? adv?.networkPublisherCut : pickedNetworkCut} />
+              )}
+            />
+          )}
           <div className="space-y-2">
             <Label htmlFor="status">Status</Label>
             <Controller

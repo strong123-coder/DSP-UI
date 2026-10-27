@@ -85,6 +85,7 @@ const NetworkList: React.FC = () => {
                 <TableRow>
                   <TableHead className="pl-5">Network</TableHead>
                   <TableHead>Approval</TableHead>
+                  <TableHead className="text-right">Publisher cut</TableHead>
                   <TableHead className="text-right">Advertisers</TableHead>
                   <TableHead className="text-right">Live campaigns</TableHead>
                   <TableHead className="text-right">Logins</TableHead>
@@ -95,7 +96,7 @@ const NetworkList: React.FC = () => {
               <TableBody>
                 {rows.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-12 text-muted-foreground">
+                    <TableCell colSpan={8} className="text-center py-12 text-muted-foreground">
                       {search ? `No network matches "${search}".` : "No networks yet. Create one, then give it a login."}
                     </TableCell>
                   </TableRow>
@@ -114,6 +115,9 @@ const NetworkList: React.FC = () => {
                           ) : (
                             <span className="text-muted-foreground">Not required</span>
                           )}
+                        </TableCell>
+                        <TableCell className="text-right tabular-nums">
+                          {n.publisherCut ? `${n.publisherCut}%` : <span className="text-muted-foreground">—</span>}
                         </TableCell>
                         <TableCell className="text-right tabular-nums">{n.advertisers ?? 0}</TableCell>
                         <TableCell className="text-right tabular-nums">

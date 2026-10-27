@@ -10,6 +10,7 @@ export interface Network {
   contactEmail?: string | null;
   requireApproval: boolean;
   notes?: string | null;
+  publisherCut?: number | null; // % the org keeps; org users only
   adminId?: string | null;
   // list / get only
   advertisers?: number;
@@ -25,7 +26,9 @@ export interface NetworkParams {
   search?: string;
 }
 
-export type NetworkPayload = Partial<Pick<Network, "name" | "contactName" | "contactEmail" | "requireApproval" | "notes" | "status">>;
+export type NetworkPayload = Partial<
+  Pick<Network, "name" | "contactName" | "contactEmail" | "requireApproval" | "notes" | "status" | "publisherCut">
+>;
 
 export interface NetworkLoginPayload {
   name: string;

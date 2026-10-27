@@ -12,6 +12,7 @@ import LoadingFallback from "@/components/ui/loading-fallback";
 import { useCreateNetwork, useNetwork, useUpdateNetwork } from "@/query/useNetwork";
 import { useScope } from "@/query/useScope";
 import NetworkLogins from "./components/network-logins";
+import PublisherCutField, { cutError, cutPayload } from "@/components/budget/publisher-cut-field";
 import { useEnterNetwork } from "./use-enter-network";
 
 const emailOk = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
@@ -31,6 +32,7 @@ const NetworkForm: React.FC = () => {
   const [contactEmail, setContactEmail] = useState("");
   const [requireApproval, setRequireApproval] = useState(true);
   const [notes, setNotes] = useState("");
+  const [publisherCut, setPublisherCut] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const network = resp?.data?.data;
@@ -41,6 +43,7 @@ const NetworkForm: React.FC = () => {
     setContactEmail(network.contactEmail || "");
     setRequireApproval(network.requireApproval !== false);
     setNotes(network.notes || "");
+    setPublisherCut(network.publisherCut === null || network.publisherCut === undefined ? "" : String(network.publisherCut));
   }, [network]);
 
   if (!scope.canManageNetworks) return <Navigate to="/dashboard" replace />;
@@ -51,6 +54,7 @@ const NetworkForm: React.FC = () => {
     const errs: Record<string, string> = {};
     if (!name.trim()) errs.name = "Give the network a name";
     if (contactEmail.trim() && !emailOk(contactEmail.trim())) errs.contactEmail = "Enter a valid email address";
+    if (cutError(publisherCut)) errs.publisherCut = cutError(publisherCut);
     setErrors(errs);
     if (Object.keys(errs).length) return toast.error(Object.values(errs)[0]);
     const payload = {
@@ -59,6 +63,7 @@ const NetworkForm: React.FC = () => {
       contactEmail: contactEmail.trim() || null,
       requireApproval,
       notes: notes.trim() || null,
+      publisherCut: cutPayload(publisherCut),
     };
     if (isEdit) updateMut.mutate({ id: id!, payload }, { onSuccess: () => navigate("/network/list") });
     // A new network needs a login next, so stay on it.
@@ -114,6 +119,9 @@ const NetworkForm: React.FC = () => {
               </p>
             </div>
             <Switch id="nw-approval" checked={requireApproval} onCheckedChange={setRequireApproval} />
+          </div>
+          <div className="md:col-span-2 max-w-md">
+            <PublisherCutField id="nw-cut" value={publisherCut} onChange={setPublisherCut} level="network" />
           </div>
           <div className="space-y-2 md:col-span-2">
             <Label htmlFor="nw-notes">Notes</Label>
