@@ -132,6 +132,12 @@ export const apiConfig: ApiEndpoint[] = [
   { name: "approvalCount", path: "/api/v1/approval/count" },
   { name: "approvalReview", path: "/api/v1/approval/review" },
   { name: "approvalResubmit", path: "/api/v1/approval/resubmit" },
+  // exchange inventory (line item › Inventory list) + OEM / premium partners
+  { name: "inventoryApps", path: "/api/v1/inventory/apps" },
+  { name: "inventoryFacets", path: "/api/v1/inventory/facets" },
+  { name: "inventoryPartners", path: "/api/v1/inventory/partners" },
+  { name: "inventoryUpload", path: "/api/v1/inventory/upload" },
+  { name: "inventoryUploads", path: "/api/v1/inventory/uploads" },
   // the signed-in user's own permission checklist (org / network team members)
   { name: "userConfigMe", path: "/api/v1/user-config/me" },
   // line items
