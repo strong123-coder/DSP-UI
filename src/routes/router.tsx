@@ -31,6 +31,7 @@ import { SuperAdminDemandNewConfig, SuperAdminDemandEditConfig } from "@/pages/s
 import SuperAdminSupplyConfig from "@/pages/super-admin/supply/supply-config";
 import { SuperAdminSupplyNewConfig, SuperAdminSupplyEditConfig } from "@/pages/super-admin/supply/supply-form-config";
 import SuperAdminMcpReviewConfig from "@/pages/super-admin/mcp-review/mcp-review-config";
+import SuperAdminInventoryConfig from "@/pages/super-admin/inventory/inventory-config";
 import { SupplyLoginConfig, SupplySignupConfig } from "@/pages/supply/auth/supply-auth-config";
 import {
   SupplyServersConfig,
@@ -95,6 +96,7 @@ export const routes = [
       SuperAdminSupplyEditConfig,
       SuperAdminBidConfigConfig,
       SuperAdminMcpReviewConfig,
+      SuperAdminInventoryConfig,
     ],
   },
   // MCP publisher (supply) area: self-serve "Monetize your MCP".

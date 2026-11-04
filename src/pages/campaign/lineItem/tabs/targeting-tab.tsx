@@ -7,6 +7,7 @@ import {
   Globe,
   Handshake,
   Layers,
+  ListChecks,
   MapPin,
   MonitorSmartphone,
   Radio,
@@ -29,20 +30,22 @@ import ValuesInput from "@/components/targeting/values-input";
 import TextIncludeExclude from "@/components/targeting/text-include-exclude";
 import ScheduleGrid from "@/components/targeting/schedule-grid";
 import { geoData } from "@/utils/data/data";
-import { AudienceTargetData, InventoryTypeData } from "@/utils/data/campaignData";
+import { AudienceTargetData } from "@/utils/data/campaignData";
 import { LanguageData, SegmentData, timezoneData } from "@/utils/data/targetingData";
 import { useAdvertiserCategories } from "@/query/useAdvertiser";
 import { useTargetingOptions } from "@/query/useLineItem";
 import { useTargetingListOptions } from "@/query/useTargetingList";
 import { useLineItemNetwork } from "../line-item-network";
+import InventoryListPanel from "./inventory-list-panel";
 import type { TargetingOptions } from "@/services/lineItem";
 import type { LineItemFormValues } from "@/utils/schemas/lineItem";
 
-type SubTab = "geo" | "app" | "content" | "environment" | "platform" | "time" | "segments" | "exchange";
+type SubTab = "geo" | "app" | "inventory" | "content" | "environment" | "platform" | "time" | "segments" | "exchange";
 
 const SUB_TABS: Array<{ id: SubTab; label: string; icon: React.ReactNode }> = [
   { id: "geo", label: "Geo", icon: <MapPin className="w-3.5 h-3.5" /> },
   { id: "app", label: "App/Site", icon: <AppWindow className="w-3.5 h-3.5" /> },
+  { id: "inventory", label: "Inventory list", icon: <ListChecks className="w-3.5 h-3.5" /> },
   { id: "content", label: "Content", icon: <Tags className="w-3.5 h-3.5" /> },
   { id: "environment", label: "Environment", icon: <Layers className="w-3.5 h-3.5" /> },
   { id: "platform", label: "Platform", icon: <Smartphone className="w-3.5 h-3.5" /> },
@@ -67,7 +70,8 @@ const activeSubTabs = (t: LineItemFormValues["targeting"]): Set<SubTab> => {
   if (t.time.slots.length) s.add("time");
   if (t.segments.retargeting.include.length || t.segments.retargeting.exclude.length || t.segments.requireDeviceId ||
     t.segments.audienceTarget === "custom") s.add("segments");
-  if (hasIE(t.exchange.supplyPartners) || hasIE(t.exchange.zones) || t.exchange.inventoryType !== "programmatic") s.add("exchange");
+  if ((t.exchange.oemPremiumPartners || []).length || t.exchange.inventoryType !== "programmatic") s.add("inventory");
+  if (hasIE(t.exchange.supplyPartners) || hasIE(t.exchange.zones)) s.add("exchange");
   return s;
 };
 
@@ -589,8 +593,6 @@ const SegmentsPanel: React.FC<{ campaignId: string; options?: TargetingOptions }
 
 const ExchangePanel: React.FC<{ options?: TargetingOptions }> = ({ options }) => {
   const { watch, setValue } = useFormContext<LineItemFormValues>();
-  const type = watch("targeting.exchange.inventoryType");
-  const partners = watch("targeting.exchange.oemPremiumPartners") || [];
   const sp = options?.supplyPartners ?? [];
   const partnerData = sp.map((p) => ({ name: p.status === "active" ? p.name : `${p.name} (${p.status})`, value: p.id }));
   const zoneData = sp.flatMap((p) => p.zones.map((z) => ({ name: `${z.name ? `${z.name} · ` : ""}${z.zoneId} (${p.name})`, value: z.zoneId })));
@@ -617,35 +619,6 @@ const ExchangePanel: React.FC<{ options?: TargetingOptions }> = ({ options }) =>
           <IncludeExcludePicker id="zones" data={zoneData} value={watch("targeting.exchange.zones")}
             includePlaceholder={zoneData.length ? "Any zone" : "No zones set up"} empty="Any zone"
             onChange={(v) => setValue("targeting.exchange.zones", v, dirty)} />
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Inventory</CardTitle>
-          <CardDescription>Where the ads may appear.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3" role="radiogroup" aria-label="Inventory type">
-            {InventoryTypeData.map((item) => (
-              <button key={item.value} type="button" role="radio" aria-checked={type === item.value}
-                onClick={() => setValue("targeting.exchange.inventoryType", item.value, dirty)}
-                className={`text-left rounded-xl border-2 p-4 transition-colors focus-visible:outline-2 focus-visible:outline-primary ${
-                  type === item.value ? "border-primary bg-primary/5" : "border-border hover:border-ring/40"
-                }`}>
-                <div className="font-semibold text-sm">{item.title}</div>
-                <div className="text-xs text-muted-foreground mt-1">{item.description}</div>
-              </button>
-            ))}
-          </div>
-          {type === "oem_premium_partners" && (
-            <div className="space-y-2">
-              <Label htmlFor="oemPartners">Partners</Label>
-              <ValuesInput id="oemPartners" placeholder="Partner ID"
-                onAdd={(v) => setValue("targeting.exchange.oemPremiumPartners", [...new Set([...partners, ...v])], dirty)} />
-              <SelectedChips include={partners} empty="No partners yet"
-                onRemove={(v) => setValue("targeting.exchange.oemPremiumPartners", partners.filter((x) => x !== v), dirty)} />
-            </div>
-          )}
         </CardContent>
       </Card>
     </div>
@@ -682,6 +655,7 @@ const TargetingTab: React.FC<{ campaignId: string; campaignType: string }> = ({ 
       </div>
       {sub === "geo" && <GeoPanel />}
       {sub === "app" && <AppSitePanel options={options} />}
+      {sub === "inventory" && <InventoryListPanel />}
       {sub === "content" && <ContentPanel />}
       {sub === "environment" && <EnvironmentPanel campaignType={campaignType} />}
       {sub === "platform" && <PlatformPanel options={options} />}
