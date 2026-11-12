@@ -138,6 +138,12 @@ export const apiConfig: ApiEndpoint[] = [
   { name: "inventoryPartners", path: "/api/v1/inventory/partners" },
   { name: "inventoryUpload", path: "/api/v1/inventory/upload" },
   { name: "inventoryUploads", path: "/api/v1/inventory/uploads" },
+  // audience segments (catalog from the workbook + IAB exchange segments)
+  { name: "segmentList", path: "/api/v1/segment/list" },
+  { name: "segmentFacets", path: "/api/v1/segment/facets" },
+  { name: "segmentResolve", path: "/api/v1/segment/resolve" },
+  { name: "segmentUpload", path: "/api/v1/segment/upload" },
+  { name: "segmentUploads", path: "/api/v1/segment/uploads" },
   // the signed-in user's own permission checklist (org / network team members)
   { name: "userConfigMe", path: "/api/v1/user-config/me" },
   // line items

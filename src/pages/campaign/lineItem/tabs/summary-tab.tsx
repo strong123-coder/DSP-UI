@@ -9,6 +9,8 @@ import { useTargetingListOptions } from "@/query/useTargetingList";
 import { useLineItemNetwork } from "../line-item-network";
 import { useBidModifier } from "@/query/useBidModifier";
 import { useDeliveryModifier } from "@/query/useDeliveryModifier";
+import { useSegmentResolve } from "@/query/useSegment";
+import type { Segment } from "@/services/segment";
 import type { TargetingOptions } from "@/services/lineItem";
 import type { LineItemFormValues } from "@/utils/schemas/lineItem";
 
@@ -78,6 +80,9 @@ const SummaryTab: React.FC<{ campaign: any; advertiserName: string }> = ({ campa
   const weighted = v.creatives.some((c) => c.weight !== 1);
   const connName = (x: string) => options?.connectionTypes?.find((d) => String(d.value) === x)?.name || x;
   const deviceName = (x: string) => options?.deviceTypes.find((d) => String(d.value) === x)?.name || x;
+  const { data: segResp } = useSegmentResolve([...t.segments.audiences.include, ...t.segments.audiences.exclude]);
+  const segmentName = (k: string) => (segResp?.data?.data ?? []).find((s: Segment) => s.key === k)?.name || k;
+  const hasIE = (x: { include: unknown[]; exclude: unknown[] }) => x.include.length > 0 || x.exclude.length > 0;
   const partnerName = (id: string) => options?.supplyPartners.find((p) => p.id === id)?.name || id;
   const campaignName = (id: string | null) =>
     !id || id === campaign._id ? "this campaign" : options?.campaigns.find((c) => c.id === id)?.title || id;
@@ -193,9 +198,12 @@ const SummaryTab: React.FC<{ campaign: any; advertiserName: string }> = ({ campa
             <Row label="Advertising ID">{t.segments.requireDeviceId ? "Required" : "Not required"}</Row>
             <Row label="Supply partners">{ieText(t.exchange.supplyPartners, "Any", partnerName)}</Row>
             <Row label="Zones">{ieText(t.exchange.zones, "Any")}</Row>
-            <Row label="Audience">
-              {v.targeting.segments.audienceTarget === "custom"
-                ? `Custom: ${v.targeting.segments.customAudienceIds.join(", ") || "none listed"}`
+            <Row label="Audience segments">
+              {hasIE(t.segments.audiences)
+                ? [
+                    t.segments.audiences.include.length ? `In any of: ${t.segments.audiences.include.map(segmentName).join(", ")}` : "",
+                    t.segments.audiences.exclude.length ? `Not in: ${t.segments.audiences.exclude.map(segmentName).join(", ")}` : "",
+                  ].filter(Boolean).join(" · ")
                 : "All eligible"}
             </Row>
             <Row label="Inventory">

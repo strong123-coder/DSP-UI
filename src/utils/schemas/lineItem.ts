@@ -92,6 +92,7 @@ export const lineItemSchema = z
       segments: z.object({
         audienceTarget: z.enum(["all", "custom"]),
         customAudienceIds: z.array(z.string()),
+        audiences: includeExclude, // segment keys ("in.26", "iab4.243")
         retargeting: z.object({ include: z.array(segmentRef), exclude: z.array(segmentRef) }),
         requireDeviceId: z.boolean(),
       }),
@@ -201,6 +202,7 @@ export const targetingToForm = (t: any, tz: string): LineItemFormValues["targeti
   segments: {
     audienceTarget: t?.segments?.audienceTarget || "all",
     customAudienceIds: t?.segments?.customAudienceIds || [],
+    audiences: ie(t?.segments?.audiences),
     retargeting: {
       include: t?.segments?.retargeting?.include || [],
       exclude: t?.segments?.retargeting?.exclude || [],

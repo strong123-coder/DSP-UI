@@ -25,18 +25,17 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import SelectComponent from "@/components/inputComponents/select-component";
 import IncludeExcludePicker from "@/components/targeting/include-exclude-picker";
-import SelectedChips from "@/components/targeting/selected-chips";
 import ValuesInput from "@/components/targeting/values-input";
 import TextIncludeExclude from "@/components/targeting/text-include-exclude";
 import ScheduleGrid from "@/components/targeting/schedule-grid";
 import { geoData } from "@/utils/data/data";
-import { AudienceTargetData } from "@/utils/data/campaignData";
 import { LanguageData, SegmentData, timezoneData } from "@/utils/data/targetingData";
 import { useAdvertiserCategories } from "@/query/useAdvertiser";
 import { useTargetingOptions } from "@/query/useLineItem";
 import { useTargetingListOptions } from "@/query/useTargetingList";
 import { useLineItemNetwork } from "../line-item-network";
 import InventoryListPanel from "./inventory-list-panel";
+import AudienceSegmentsCard from "./audience-segments-card";
 import type { TargetingOptions } from "@/services/lineItem";
 import type { LineItemFormValues } from "@/utils/schemas/lineItem";
 
@@ -69,7 +68,7 @@ const activeSubTabs = (t: LineItemFormValues["targeting"]): Set<SubTab> => {
     hasIE(t.platform.models) || hasIE(t.platform.carriers) || t.platform.osVersion.min || t.platform.osVersion.max) s.add("platform");
   if (t.time.slots.length) s.add("time");
   if (t.segments.retargeting.include.length || t.segments.retargeting.exclude.length || t.segments.requireDeviceId ||
-    t.segments.audienceTarget === "custom") s.add("segments");
+    hasIE(t.segments.audiences)) s.add("segments");
   if ((t.exchange.oemPremiumPartners || []).length || t.exchange.inventoryType !== "programmatic") s.add("inventory");
   if (hasIE(t.exchange.supplyPartners) || hasIE(t.exchange.zones)) s.add("exchange");
   return s;
@@ -486,8 +485,6 @@ type RetargetRow = { side: "include" | "exclude"; campaignId: string | null; seg
 
 const SegmentsPanel: React.FC<{ campaignId: string; options?: TargetingOptions }> = ({ campaignId, options }) => {
   const { watch, setValue } = useFormContext<LineItemFormValues>();
-  const target = watch("targeting.segments.audienceTarget");
-  const ids = watch("targeting.segments.customAudienceIds") || [];
   const rt = watch("targeting.segments.retargeting");
   const requireId = watch("targeting.segments.requireDeviceId");
 
@@ -511,6 +508,8 @@ const SegmentsPanel: React.FC<{ campaignId: string; options?: TargetingOptions }
 
   return (
     <div className="space-y-5">
+      <AudienceSegmentsCard />
+
       <Card>
         <CardHeader className="flex flex-row items-start justify-between space-y-0 gap-3">
           <div>
@@ -563,28 +562,6 @@ const SegmentsPanel: React.FC<{ campaignId: string; options?: TargetingOptions }
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Custom audiences</CardTitle>
-          <CardDescription>Audience segment IDs from your data partner. Saved with the line item; not used for bidding yet.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2 max-w-sm">
-            <Label htmlFor="audienceTarget">Audience</Label>
-            <SelectComponent id="audienceTarget" value={target} data={AudienceTargetData}
-              onValueChange={(v) => setValue("targeting.segments.audienceTarget", v as "all" | "custom", dirty)} />
-          </div>
-          {target === "custom" && (
-            <div className="space-y-2">
-              <Label htmlFor="audienceIds">Audience IDs</Label>
-              <ValuesInput id="audienceIds" placeholder="Audience segment ID"
-                onAdd={(v) => setValue("targeting.segments.customAudienceIds", [...new Set([...ids, ...v])], dirty)} />
-              <SelectedChips include={ids} empty="No IDs yet"
-                onRemove={(v) => setValue("targeting.segments.customAudienceIds", ids.filter((x) => x !== v), dirty)} />
-            </div>
-          )}
-        </CardContent>
-      </Card>
     </div>
   );
 };
