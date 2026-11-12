@@ -18,6 +18,7 @@ import AdvertiserConfig from "@/pages/advertiser/advertiser-config";
 import NetworkConfig from "@/pages/network/network-config";
 import ApprovalConfig from "@/pages/approval/approval-config";
 import TargetingListConfig from "@/pages/targetingList/targeting-list-config";
+import SegmentConfig from "@/pages/segment/segment-config";
 import BidModifierConfig from "@/pages/bidModifier/bid-modifier-config";
 import DeliveryModifierConfig from "@/pages/deliveryModifier/delivery-modifier-config";
 import PresetConfig from "@/pages/preset/preset-config";
@@ -32,6 +33,7 @@ import SuperAdminSupplyConfig from "@/pages/super-admin/supply/supply-config";
 import { SuperAdminSupplyNewConfig, SuperAdminSupplyEditConfig } from "@/pages/super-admin/supply/supply-form-config";
 import SuperAdminMcpReviewConfig from "@/pages/super-admin/mcp-review/mcp-review-config";
 import SuperAdminInventoryConfig from "@/pages/super-admin/inventory/inventory-config";
+import SuperAdminSegmentsConfig from "@/pages/super-admin/segments/segments-config";
 import { SupplyLoginConfig, SupplySignupConfig } from "@/pages/supply/auth/supply-auth-config";
 import {
   SupplyServersConfig,
@@ -60,6 +62,7 @@ export const routes = [
       AdvertiserConfig,
       CampaignConfig,
       TargetingListConfig,
+      SegmentConfig,
       BidModifierConfig,
       DeliveryModifierConfig,
       PresetConfig,
@@ -97,6 +100,7 @@ export const routes = [
       SuperAdminBidConfigConfig,
       SuperAdminMcpReviewConfig,
       SuperAdminInventoryConfig,
+      SuperAdminSegmentsConfig,
     ],
   },
   // MCP publisher (supply) area: self-serve "Monetize your MCP".

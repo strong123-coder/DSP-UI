@@ -1,4 +1,4 @@
-import { LayoutDashboard, SlidersHorizontal, BarChart3, Server, Radio, Sparkles, ListChecks } from "lucide-react";
+import { LayoutDashboard, SlidersHorizontal, BarChart3, Server, Radio, Sparkles, ListChecks, UsersRound } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 export interface SuperAdminSidebarItem {
@@ -13,6 +13,7 @@ export const superAdminNavMain: SuperAdminSidebarItem[] = [
   { title: "Demand Partners", url: "/super-admin/demand", icon: Server },
   { title: "Supply Partners", url: "/super-admin/supply", icon: Radio },
   { title: "Inventory", url: "/super-admin/inventory", icon: ListChecks },
+  { title: "Segments", url: "/super-admin/segments", icon: UsersRound },
   { title: "Bid Configuration", url: "/super-admin/bid-config", icon: SlidersHorizontal },
   { title: "MCP Review", url: "/super-admin/mcp-review", icon: Sparkles },
 ];

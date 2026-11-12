@@ -90,6 +90,7 @@ export const SidebarConf: SidebarConfiguration = {
       value: "library",
       items: [
         { title: "Targeting lists", url: "/targeting-list/list" },
+        { title: "Audience segments", url: "/segments" },
         { title: "Bid modifiers", url: "/bid-modifier/list" },
         { title: "Delivery modifiers", url: "/delivery-modifier/list" },
         { title: "Presets", url: "/preset" },
