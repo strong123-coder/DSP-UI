@@ -216,14 +216,14 @@ const AppInventory: React.FC = () => {
   );
 };
 
-/* ----------------------------------------------------- OEMs and premium DSPs */
+/* -------------------------------------------------------- OEM partners */
 
 const PremiumPartners: React.FC = () => {
   const { watch, setValue } = useFormContext<LineItemFormValues>();
   const partners: string[] = watch("targeting.exchange.oemPremiumPartners") || [];
   const { data } = useInventoryPartners();
-  const list: InventoryPartners = data?.data?.data ?? { oems: [], dsps: [] };
-  const known = new Set([...list.oems, ...list.dsps]);
+  const list: InventoryPartners = data?.data?.data ?? { oems: [] };
+  const known = new Set(list.oems);
   const other = partners.filter((p) => !known.has(p));
 
   // Any partner picked marks the line item as an OEM / premium partner buy.
@@ -258,13 +258,12 @@ const PremiumPartners: React.FC = () => {
       <CardHeader>
         <CardTitle className="text-base flex items-center gap-2"><Handshake className="w-4 h-4 text-primary" /> OEM and premium partners</CardTitle>
         <CardDescription>
-          The OEMs and high-end DSPs this line item is planned against. Saved on the line item for planning and
+          The OEMs and other partners this line item is planned against. Saved on the line item for planning and
           insertion orders; it doesn't change how the engine bids.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-5">
         {group("OEMs", list.oems)}
-        {group("High-end DSPs", list.dsps)}
         <div className="space-y-2">
           <Label htmlFor="other-partner" className="text-xs uppercase tracking-wide text-muted-foreground">Other partner</Label>
           <ValuesInput id="other-partner" placeholder="Partner name" onAdd={(v) => save([...new Set([...partners, ...v])])} />
