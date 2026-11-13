@@ -31,7 +31,6 @@ export interface InventoryFacets {
 
 export interface InventoryPartners {
   oems: string[];
-  dsps: string[];
 }
 
 export interface InventoryUpload {
